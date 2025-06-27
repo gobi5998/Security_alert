@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:security_alert/screens/login.dart';
 
+import '../provider/auth_provider.dart';
 import '../reuse/customTextfield.dart';
 
 void main() {
@@ -12,195 +15,6 @@ class RegisterPage extends StatefulWidget {
   @override
   State<RegisterPage> createState() => _RegisterPageState();
 }
-
-// class _RegisterPageState extends State<RegisterPage> {
-//   bool _obscurePassword = true;
-//   bool _obscureConfirm = true;
-//
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       body: SafeArea(
-//         child: Padding(
-//           padding: const EdgeInsets.all(20),
-//           child: SingleChildScrollView(
-//             child: Column(
-//               crossAxisAlignment: CrossAxisAlignment.start,
-//               children: [
-//                 const Icon(Icons.arrow_back),
-//                 const SizedBox(height: 16),
-//                 const Center(
-//                   child: Text(
-//                     "Welcome!",
-//                     style: TextStyle(
-//                       fontSize: 32,
-//                       fontWeight: FontWeight.bold,
-//                       color: Color(0xFF064FAD),
-//                     ),
-//                   ),
-//                 ),
-//                 const SizedBox(height: 4),
-//                 const Center(
-//                   child: Text(
-//                     "Sign up to get started.",
-//                     style: TextStyle(fontSize: 14),
-//                   ),
-//                 ),
-//                 const SizedBox(height: 32),
-//
-//                 // Username
-//                 const Text("Username"),
-//                 const SizedBox(height: 8),
-//                 TextField(
-//                   decoration: InputDecoration(
-//                     hintText: 'Username',
-//                     border: OutlineInputBorder(
-//                       borderRadius: BorderRadius.circular(8),
-//                     ),
-//                   ),
-//                 ),
-//                 const SizedBox(height: 16),
-//
-//                 // Email
-//                 const Text("Email"),
-//                 const SizedBox(height: 8),
-//                 TextField(
-//                   decoration: InputDecoration(
-//                     hintText: 'example@gmail.com',
-//                     border: OutlineInputBorder(
-//                       borderRadius: BorderRadius.circular(8),
-//                     ),
-//                   ),
-//                 ),
-//                 const SizedBox(height: 16),
-//
-//                 // Password
-//                 const Text("Password"),
-//                 const SizedBox(height: 8),
-//                 TextField(
-//                   obscureText: _obscurePassword,
-//                   decoration: InputDecoration(
-//                     hintText: '********',
-//                     border: OutlineInputBorder(
-//                       borderRadius: BorderRadius.circular(8),
-//                     ),
-//                     suffixIcon: IconButton(
-//                       icon: Icon(
-//                         _obscurePassword
-//                             ? Icons.visibility_off
-//                             : Icons.visibility,
-//                       ),
-//                       onPressed: () {
-//                         setState(() {
-//                           _obscurePassword = !_obscurePassword;
-//                         });
-//                       },
-//                     ),
-//                   ),
-//                 ),
-//
-//                 const SizedBox(height: 8),
-//
-//                 // Password strength section
-//                 const Text(
-//                   "✔ Password Strength: Strong",
-//                   style: TextStyle(color: Colors.green),
-//                 ),
-//                 const Text("✔ cannot contain your name or email address",
-//                     style: TextStyle(fontSize: 12)),
-//                 const Text("✔ at least 8 characters",
-//                     style: TextStyle(fontSize: 12)),
-//                 const Text("✔ contain numbers or symbols",
-//                     style: TextStyle(fontSize: 12)),
-//                 const SizedBox(height: 16),
-//
-//                 // Confirm Password
-//                 const Text("Confirm Password"),
-//                 const SizedBox(height: 8),
-//                 TextField(
-//                   obscureText: _obscureConfirm,
-//                   decoration: InputDecoration(
-//                     hintText: '********',
-//                     border: OutlineInputBorder(
-//                       borderRadius: BorderRadius.circular(8),
-//                     ),
-//                     suffixIcon: IconButton(
-//                       icon: Icon(
-//                         _obscureConfirm
-//                             ? Icons.visibility_off
-//                             : Icons.visibility,
-//                       ),
-//                       onPressed: () {
-//                         setState(() {
-//                           _obscureConfirm = !_obscureConfirm;
-//                         });
-//                       },
-//                     ),
-//                   ),
-//                 ),
-//                 const SizedBox(height: 24),
-//
-//                 // Social login
-//                 const Center(child: Text("or")),
-//                 const SizedBox(height: 12),
-//                 Row(
-//                   mainAxisAlignment: MainAxisAlignment.center,
-//                   children: [
-//                     CircleAvatar(
-//                       backgroundColor: Colors.white,
-//                       radius: 20,
-//                       child: Image.asset('assets/image/google.png', height: 24),
-//                     ),
-//                     const SizedBox(width: 16),
-//                     CircleAvatar(
-//                       backgroundColor: Colors.white,
-//                       radius: 20,
-//                       child:
-//                       Image.asset('assets/image/facebook.jpg', height: 24),
-//                     ),
-//                   ],
-//                 ),
-//                 const SizedBox(height: 32),
-//
-//                 // Sign Up button
-//                 ElevatedButton(
-//                   onPressed: () {},
-//                   style: ElevatedButton.styleFrom(
-//                     backgroundColor: const Color(0xFF064FAD),
-//                     minimumSize: const Size(double.infinity, 48),
-//                     shape: RoundedRectangleBorder(
-//                       borderRadius: BorderRadius.circular(10),
-//                     ),
-//                   ),
-//                   child: const Text(
-//                     "Sign Up",
-//                     style: TextStyle(color: Colors.white),
-//                   ),
-//                 ),
-//                 const SizedBox(height: 16),
-//
-//                 // Already have account
-//                 Row(
-//                   mainAxisAlignment: MainAxisAlignment.center,
-//                   children: const [
-//                     Text("Already have an account? "),
-//                     Text(
-//                       "Log in",
-//                       style: TextStyle(
-//                         color: Color(0xFF064FAD),
-//                         fontWeight: FontWeight.bold,
-//                       ),
-//                     )
-//                   ],
-//                 )
-//               ],
-//             ),
-//           ),
-//         ),
-//       ),
-//     );
-//   }
-// }
 
 class _RegisterPageState extends State<RegisterPage> {
   bool _obscurePassword = true;
@@ -370,10 +184,31 @@ class _RegisterPageState extends State<RegisterPage> {
                 const SizedBox(height: 15),
 
                 ElevatedButton(
-                  onPressed:
-                       () {
-                    // Navigate or show success
+                  onPressed: () {
+                    if (!isStrong) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text("Password is not strong")),
+                      );
+                    } else if (password != confirmPassword) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text("Passwords do not match")),
+                      );
+                    } else {
+                      final auth = Provider.of<AuthProvider>(context, listen: false);
+                      auth.register(username, email, password);
+
+                      if (auth.isRegistered) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text("Registered Successfully")),
+                        );
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(builder: (context) => const LoginPage()),
+                        );
+                      }
+                    }
                   },
+
 
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF064FAD),
@@ -384,19 +219,25 @@ class _RegisterPageState extends State<RegisterPage> {
                   ),
                   child: const Text("Sign Up", style: TextStyle(color: Colors.white)),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 8),
 
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
-                  children: const [
+                  children:  [
                     Text("Already have an account? "),
-                    Text(
-                      "Log in",
+                    TextButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const LoginPage()),
+                        );
+                      }, child: Text("Login",
                       style: TextStyle(
                         color: Color(0xFF064FAD),
-                        fontWeight: FontWeight.bold,
-                      ),
-                    )
+                        fontFamily: 'Nunito',
+                        fontWeight: FontWeight.bold,),
+                    ),
+                    ),
                   ],
                 )
               ],
@@ -407,4 +248,8 @@ class _RegisterPageState extends State<RegisterPage> {
     );
   }
 }
+
+
+
+
 
