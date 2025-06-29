@@ -5,10 +5,6 @@ import 'package:security_alert/screens/login.dart';
 import '../provider/auth_provider.dart';
 import '../reuse/customTextfield.dart';
 
-void main() {
-  runApp(const MaterialApp(home: RegisterPage()));
-}
-
 class RegisterPage extends StatefulWidget {
   const RegisterPage({Key? key}) : super(key: key);
 
@@ -20,10 +16,15 @@ class _RegisterPageState extends State<RegisterPage> {
   bool _obscurePassword = true;
   bool _obscureConfirm = true;
 
-  String username = '';
-  String email = '';
-  String password = '';
-  String confirmPassword = '';
+  final TextEditingController _usernameController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _confirmPasswordController = TextEditingController();
+
+  String get username => _usernameController.text;
+  String get email => _emailController.text;
+  String get password => _passwordController.text;
+  String get confirmPassword => _confirmPasswordController.text;
 
   bool get hasMinLength => password.length >= 8;
   bool get hasNumberOrSymbol => RegExp(r'[0-9!@#\$&*~]').hasMatch(password);
@@ -32,7 +33,18 @@ class _RegisterPageState extends State<RegisterPage> {
   bool get isStrong => hasMinLength && hasNumberOrSymbol && notContainName && notContainEmail;
 
   @override
+  void dispose() {
+    _usernameController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final authProvider = Provider.of<AuthProvider>(context);
+
     return Scaffold(
       body: SafeArea(
         child: Padding(
@@ -41,7 +53,10 @@ class _RegisterPageState extends State<RegisterPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(Icons.arrow_back),
+                IconButton(
+                  icon: const Icon(Icons.arrow_back),
+                  onPressed: () => Navigator.pop(context),
+                ),
                 const SizedBox(height: 16),
                 const Center(
                   child: Text(
@@ -62,26 +77,60 @@ class _RegisterPageState extends State<RegisterPage> {
                 ),
                 const SizedBox(height: 32),
 
+                // Error message display
+                if (authProvider.errorMessage.isNotEmpty)
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(12),
+                    margin: const EdgeInsets.only(bottom: 16),
+                    decoration: BoxDecoration(
+                      color: Colors.red.shade50,
+                      border: Border.all(color: Colors.red.shade200),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.error_outline, color: Colors.red.shade600, size: 20),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            authProvider.errorMessage,
+                            style: TextStyle(color: Colors.red.shade700, fontSize: 14),
+                          ),
+                        ),
+                        IconButton(
+                          icon: Icon(Icons.close, color: Colors.red.shade600, size: 20),
+                          onPressed: () => authProvider.clearError(),
+                        ),
+                      ],
+                    ),
+                  ),
+
                 // Username
                 const Text("Username"),
                 const SizedBox(height: 8),
-
-
-                CustomTextField(hintText: 'Username',),
+                CustomTextField(
+                  hintText: 'Username',
+                  controller: _usernameController,
+                ),
                 const SizedBox(height: 16),
 
                 // Email
                 const Text("Email"),
                 const SizedBox(height: 8),
-                CustomTextField(hintText: 'Example@gmail.com'),
+                CustomTextField(
+                  hintText: 'Example@gmail.com',
+                  controller: _emailController,
+                ),
                 const SizedBox(height: 16),
 
                 // Password
                 const Text("Password"),
                 const SizedBox(height: 8),
                 TextField(
+                  controller: _passwordController,
                   obscureText: _obscurePassword,
-                  onChanged: (val) => setState(() => password = val),
+                  onChanged: (val) => setState(() {}),
                   decoration: InputDecoration(
                     hintText: '********',
                     hintStyle: const TextStyle(
@@ -136,8 +185,9 @@ class _RegisterPageState extends State<RegisterPage> {
                 const Text("Confirm Password"),
                 const SizedBox(height: 8),
                 TextField(
+                  controller: _confirmPasswordController,
                   obscureText: _obscureConfirm,
-                  onChanged: (val) => setState(() => confirmPassword = val),
+                  onChanged: (val) => setState(() {}),
                   decoration: InputDecoration(
                     hintText: '********',
                     hintStyle: const TextStyle(
@@ -146,7 +196,7 @@ class _RegisterPageState extends State<RegisterPage> {
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
                       borderSide: const BorderSide(
-                        color: Colors.black, // Border color when focused
+                        color: Colors.black,
                         width: 2.0,
                       ),
                     ),
@@ -184,7 +234,14 @@ class _RegisterPageState extends State<RegisterPage> {
                 const SizedBox(height: 15),
 
                 ElevatedButton(
-                  onPressed: () {
+                  onPressed: authProvider.isLoading ? null : () async {
+                    if (username.isEmpty || email.isEmpty || password.isEmpty || confirmPassword.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text("Please fill in all fields")),
+                      );
+                      return;
+                    }
+
                     if (!isStrong) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text("Password is not strong")),
@@ -194,10 +251,8 @@ class _RegisterPageState extends State<RegisterPage> {
                         const SnackBar(content: Text("Passwords do not match")),
                       );
                     } else {
-                      final auth = Provider.of<AuthProvider>(context, listen: false);
-                      auth.register(username, email, password);
-
-                      if (auth.isRegistered) {
+                      final success = await authProvider.register(username, email, password);
+                      if (success) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(content: Text("Registered Successfully")),
                         );
@@ -208,8 +263,6 @@ class _RegisterPageState extends State<RegisterPage> {
                       }
                     }
                   },
-
-
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF064FAD),
                     minimumSize: const Size(double.infinity, 48),
@@ -217,26 +270,37 @@ class _RegisterPageState extends State<RegisterPage> {
                       borderRadius: BorderRadius.circular(10),
                     ),
                   ),
-                  child: const Text("Sign Up", style: TextStyle(color: Colors.white)),
+                  child: authProvider.isLoading
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                          ),
+                        )
+                      : const Text("Sign Up", style: TextStyle(color: Colors.white)),
                 ),
                 const SizedBox(height: 8),
 
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children:  [
-                    Text("Already have an account? "),
+                    const Text("Already have an account? "),
                     TextButton(
                       onPressed: () {
                         Navigator.push(
                           context,
                           MaterialPageRoute(builder: (context) => const LoginPage()),
                         );
-                      }, child: Text("Login",
-                      style: TextStyle(
-                        color: Color(0xFF064FAD),
-                        fontFamily: 'Nunito',
-                        fontWeight: FontWeight.bold,),
-                    ),
+                      }, 
+                      child: const Text("Login",
+                        style: TextStyle(
+                          color: Color(0xFF064FAD),
+                          fontFamily: 'Nunito',
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
                   ],
                 )

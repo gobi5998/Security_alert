@@ -3,16 +3,35 @@ import 'package:provider/provider.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import '../provider/dashboard_provider.dart';
 import '../widget/graph_widget.dart';
+import 'appDrawer.dart';
+import '../services/biometric_service.dart';
 
-class DashboardPage extends StatelessWidget {
+class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
+
+  @override
+  State<DashboardPage> createState() => _DashboardPageState();
+}
+
+class _DashboardPageState extends State<DashboardPage> {
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+
+  @override
+  void initState() {
+    super.initState();
+    // Load dashboard data when the page is initialized
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<DashboardProvider>(context, listen: false).loadDashboardData();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     final provider = Provider.of<DashboardProvider>(context);
 
     return Scaffold(
-
+      key: _scaffoldKey,
+      drawer: const DashboardDrawer(),
       extendBody: true,
       backgroundColor: Colors.transparent,
       extendBodyBehindAppBar: true,
@@ -20,14 +39,41 @@ class DashboardPage extends StatelessWidget {
         backgroundColor: Colors.transparent,
         elevation: 0,
         title: const Text("Security Alert", style: TextStyle(color: Colors.white)),
-        actions: const [Icon(Icons.notifications, color: Colors.white)],
+        leading: IconButton(
+          icon: const Icon(Icons.menu, color: Colors.white),
+          onPressed: () => _scaffoldKey.currentState?.openDrawer(),
+        ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.notifications, color: Colors.white),
+            onPressed: () {
+              // TODO: Navigate to notifications
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.refresh, color: Colors.white),
+            onPressed: () {
+              provider.loadDashboardData();
+            },
+          ),
+          // Test biometric button (remove in production)
+          IconButton(
+            icon: const Icon(Icons.fingerprint, color: Colors.white),
+            onPressed: () async {
+              await BiometricService.testBiometric();
+              final result = await BiometricService.authenticateWithBiometrics();
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Biometric test result: $result')),
+              );
+            },
+          ),
+        ],
       ),
       bottomNavigationBar: Container(
         decoration: const BoxDecoration(),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               child: Row(
@@ -68,91 +114,145 @@ class DashboardPage extends StatelessWidget {
             end: Alignment.bottomCenter,
           ),
         ),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: ListView(
-            children: [
-              const SizedBox(height: 8),
-              CarouselSlider(
-                options: CarouselOptions(
-                  height: 160.0,
-                  enlargeCenterPage: true,
-                  enableInfiniteScroll: true,
-                  autoPlay: true,
-                ),
-                items: [
-                  "assets/image/security1.jpg",
-                  "assets/image/security2.png",
-                  "assets/image/security3.jpg",
-                  "assets/image/security4.jpg",
-                  "assets/image/security5.jpg",
-                  "assets/image/security6.jpg",
-                ].map((imagePath) {
-                  return Builder(
-                    builder: (BuildContext context) {
-                      return ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: Image.asset(
-                          imagePath,
-                          fit: BoxFit.cover,
-                          width: MediaQuery.of(context).size.width,
-                        ),
-                      );
-                    },
-                  );
-                }).toList(),
-              ),
-
-               const SizedBox(height: 16),
-
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.blue.shade100,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Column(
-                  children: provider.reportedFeatures.entries.map((entry) {
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 8.0),
+        child: Stack(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: ListView(
+                children: [
+                  const SizedBox(height: 8),
+                  
+                  // Error message display
+                  if (provider.errorMessage.isNotEmpty)
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(12),
+                      margin: const EdgeInsets.only(bottom: 16),
+                      decoration: BoxDecoration(
+                        color: Colors.red.shade50,
+                        border: Border.all(color: Colors.red.shade200),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
                       child: Row(
                         children: [
-                          Expanded(flex: 2, child: Text(entry.key)),
+                          Icon(Icons.error_outline, color: Colors.red.shade600, size: 20),
+                          const SizedBox(width: 8),
                           Expanded(
-                            flex: 5,
-                            child: LinearProgressIndicator(
-                              value: entry.value,
-                              color: Colors.blue,
-                              backgroundColor: Colors.white,
+                            child: Text(
+                              provider.errorMessage,
+                              style: TextStyle(color: Colors.red.shade700, fontSize: 14),
                             ),
                           ),
-                          const SizedBox(width: 8),
-                          Text("${(entry.value * 100).toInt()}%"),
+                          IconButton(
+                            icon: Icon(Icons.close, color: Colors.red.shade600, size: 20),
+                            onPressed: () => provider.clearError(),
+                          ),
                         ],
                       ),
-                    );
-                  }).toList(),
-                ),
-              ),
+                    ),
 
-              const SizedBox(height: 16),
+                  CarouselSlider(
+                    options: CarouselOptions(
+                      height: 160.0,
+                      enlargeCenterPage: true,
+                      enableInfiniteScroll: true,
+                      autoPlay: true,
+                    ),
+                    items: [
+                      "assets/image/security1.jpg",
+                      "assets/image/security2.png",
+                      "assets/image/security3.jpg",
+                      "assets/image/security4.jpg",
+                      "assets/image/security5.jpg",
+                      "assets/image/security6.jpg",
+                    ].map((imagePath) {
+                      return Builder(
+                        builder: (BuildContext context) {
+                          return ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: Image.asset(
+                              imagePath,
+                              fit: BoxFit.cover,
+                              width: MediaQuery.of(context).size.width,
+                            ),
+                          );
+                        },
+                      );
+                    }).toList(),
+                  ),
 
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: const [
-                  _StatCard(label: '50K+', desc: 'Scams Reported'),
-                  _StatCard(label: '10K+', desc: 'Malware Samples'),
-                  _StatCard(label: '24/7', desc: 'Threat Monitoring'),
+                  const SizedBox(height: 16),
+
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.blue.shade100,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Column(
+                      children: provider.reportedFeatures.entries.map((entry) {
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 8.0),
+                          child: Row(
+                            children: [
+                              Expanded(flex: 2, child: Text(entry.key)),
+                              Expanded(
+                                flex: 5,
+                                child: LinearProgressIndicator(
+                                  value: entry.value,
+                                  color: Colors.blue,
+                                  backgroundColor: Colors.white,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Text("${(entry.value * 100).toInt()}%"),
+                            ],
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      _StatCard(
+                        label: provider.stats?.totalAlerts.toString() ?? '50K+',
+                        desc: 'Total Alerts',
+                      ),
+                      _StatCard(
+                        label: provider.stats?.resolvedAlerts.toString() ?? '10K+',
+                        desc: 'Resolved',
+                      ),
+                      _StatCard(
+                        label: '${provider.stats?.riskScore.toInt() ?? 75}%',
+                        desc: 'Risk Score',
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  const GraphWidget(),
+
+                  const SizedBox(height: 12),
                 ],
               ),
-
-              const SizedBox(height: 16),
-
-              const GraphWidget(),
-
-              const SizedBox(height: 12),
-            ],
-          ),
+            ),
+            
+            // Loading overlay
+            if (provider.isLoading)
+              Container(
+                color: Colors.black.withOpacity(0.3),
+                child: const Center(
+                  child: CircularProgressIndicator(
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  ),
+                ),
+              ),
+          ],
         ),
       ),
     );
@@ -226,3 +326,4 @@ class _BottomReportButton extends StatelessWidget {
     );
   }
 }
+

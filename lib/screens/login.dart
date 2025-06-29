@@ -4,6 +4,7 @@ import 'package:security_alert/screens/register.dart';
 
 import '../provider/auth_provider.dart';
 import '../reuse/customTextfield.dart';
+import 'dashboard_page.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -45,8 +46,38 @@ class _LoginPageState extends State<LoginPage> {
                   style: TextStyle(fontSize: 35, fontWeight: FontWeight.bold, color: Color(0xFF064FAD)),
                 ),
                 const SizedBox(height: 8),
-                const Text("Let’s continue the journey.", style: TextStyle(fontSize: 14, color: Colors.black)),
+                const Text("Let's continue the journey.", style: TextStyle(fontSize: 14, color: Colors.black)),
                 const SizedBox(height: 32),
+                
+                // Error message display
+                if (authProvider.errorMessage.isNotEmpty)
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(12),
+                    margin: const EdgeInsets.only(bottom: 16),
+                    decoration: BoxDecoration(
+                      color: Colors.red.shade50,
+                      border: Border.all(color: Colors.red.shade200),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.error_outline, color: Colors.red.shade600, size: 20),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            authProvider.errorMessage,
+                            style: TextStyle(color: Colors.red.shade700, fontSize: 14),
+                          ),
+                        ),
+                        IconButton(
+                          icon: Icon(Icons.close, color: Colors.red.shade600, size: 20),
+                          onPressed: () => authProvider.clearError(),
+                        ),
+                      ],
+                    ),
+                  ),
+                
                 Align(
                   alignment: Alignment.centerLeft,
                   child: Text('Username', style: TextStyle(fontFamily: 'Nunito', fontSize: 16, fontWeight: FontWeight.w500)),
@@ -83,16 +114,23 @@ class _LoginPageState extends State<LoginPage> {
                 ),
                 const SizedBox(height: 32),
                 ElevatedButton(
-                  onPressed: () {
+                  onPressed: authProvider.isLoading ? null : () async {
                     final username = _usernameController.text.trim();
                     final password = _passwordController.text.trim();
-                    authProvider.login(username, password);
-                    // Navigate to home if login succeeds
-                    if (authProvider.isLoggedIn) {
+                    
+                    if (username.isEmpty || password.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text("Please fill in all fields")),
+                      );
+                      return;
+                    }
+                    
+                    final success = await authProvider.login(username, password);
+                    if (success) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text("Login Successful")),
                       );
-                      // Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const HomePage()));
+                      Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const DashboardPage()));
                     }
                   },
                   style: ElevatedButton.styleFrom(
@@ -100,15 +138,25 @@ class _LoginPageState extends State<LoginPage> {
                     minimumSize: const Size(double.infinity, 48),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
                   ),
-                  child: const Text("Log In", style: TextStyle(fontFamily: 'Nunito', color: Colors.white)),
+                  child: authProvider.isLoading
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                          ),
+                        )
+                      : const Text("Log In", style: TextStyle(fontFamily: 'Nunito', color: Colors.white)),
                 ),
                 const SizedBox(height: 16),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text("Don’t have an account?", style: TextStyle(fontFamily: 'Nunito')),
+                    const Text("Don't have an account?", style: TextStyle(fontFamily: 'Nunito')),
                     TextButton(
                       onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const RegisterPage())),
+                      
                       child: const Text("SignUp", style: TextStyle(color: Color(0xFF064FAD), fontWeight: FontWeight.bold)),
                     ),
                   ],
