@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:security_alert/screens/login.dart';
 
+import '../custom/customTextfield.dart';
 import '../provider/auth_provider.dart';
-import '../reuse/customTextfield.dart';
+
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({Key? key}) : super(key: key);
@@ -121,6 +122,7 @@ class _RegisterPageState extends State<RegisterPage> {
                 CustomTextField(
                   hintText: 'Example@gmail.com',
                   controller: _emailController,
+
                 ),
                 const SizedBox(height: 16),
 

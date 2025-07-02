@@ -42,8 +42,7 @@ dependencies:
   local_auth: ^2.1.8
   local_auth_android: ^1.0.39
   local_auth_ios: ^1.1.5
-  connectivity_plus: ^6.1.4
-
+  file_picker: ^10.2.0
 dev_dependencies:
   flutter_test:
     sdk: flutter

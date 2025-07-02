@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:carousel_slider/carousel_slider.dart';
+import 'package:security_alert/screens/report/report_scam_1.dart';
 import '../provider/dashboard_provider.dart';
 import '../widget/graph_widget.dart';
 import 'appDrawer.dart';
 import '../services/biometric_service.dart';
+import 'malware/report_malware_1.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -82,7 +84,7 @@ class _DashboardPageState extends State<DashboardPage> {
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 4),
                     child: ElevatedButton(
-                      onPressed: () {},
+                      onPressed: () {Navigator.push(context, MaterialPageRoute(builder: (context) => const ScamReportPage1()));},
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Color(0xFF064FAD),
                         shape: RoundedRectangleBorder(
@@ -102,7 +104,9 @@ class _DashboardPageState extends State<DashboardPage> {
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 4),
                     child: ElevatedButton(
-                      onPressed: () {},
+                      onPressed: () {
+                        Navigator.push(context, MaterialPageRoute(builder: (context) => const MalwareReportPage1()));
+                      },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Color(0xFF064FAD),
                         shape: RoundedRectangleBorder(
