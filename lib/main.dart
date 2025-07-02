@@ -27,8 +27,38 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: const AuthWrapper(),
+      home: const SplashScreen(),
     );
+  }
+}
+
+class SplashToAuth extends StatefulWidget {
+  const SplashToAuth({super.key});
+
+  @override
+  State<SplashToAuth> createState() => _SplashToAuthState();
+}
+
+class _SplashToAuthState extends State<SplashToAuth> {
+  bool _showAuthWrapper = false;
+
+  @override
+  void initState() {
+    super.initState();
+    Future.delayed(const Duration(seconds: 2), () {
+      setState(() {
+        _showAuthWrapper = true;
+      });
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_showAuthWrapper) {
+      return const AuthWrapper();
+    } else {
+      return const SplashScreen();
+    }
   }
 }
 
@@ -132,3 +162,4 @@ class _AuthWrapperState extends State<AuthWrapper> {
     );
   }
 }
+

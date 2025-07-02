@@ -1,6 +1,7 @@
 class ApiConfig {
   // Base URL for the API
-  static const String baseUrl = 'https://685e7da87b57aebd2af9a21d.mockapi.io'; // Replace with your actual API base URL
+  static const String baseUrl = 'https://685e7da87b57aebd2af9a21d.mockapi.io'; 
+  // Replace with your actual API base URL 
   
   // API Endpoints
   static const String loginEndpoint = '/login';
