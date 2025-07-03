@@ -4,7 +4,6 @@ import 'package:security_alert/screens/report/report_scam_2.dart';
 import '../../custom/CustomDropdown.dart';
 import '../../custom/customTextfield.dart';
 
-
 class ScamReportPage1 extends StatefulWidget {
   const ScamReportPage1({super.key});
 
@@ -41,40 +40,58 @@ class _ScamReportPage1State extends State<ScamReportPage1> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Report Scam')),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            children: [
-              CustomDropdown(
-                label: "Scam Type",
-                hint: "Select a Scam Type",
-                value: _scamType,
-                items: const ['Phishing', 'Investment', 'Romance'],
-                onChanged: (val) => setState(() => _scamType = val),
-              ),
-              const SizedBox(height: 16),
-              CustomTextField(controller: _phoneController, hintText: "+91-XXXXXXX"),
-              const SizedBox(height: 16),
-              CustomTextField(controller: _emailController,  hintText: "email@example.com"),
-              const SizedBox(height: 16),
-              CustomTextField(controller: _websiteController,  hintText: "www.example.com"),
-              const SizedBox(height: 16),
-              CustomDescription(controller: _descriptionController,  hintText: "Describe scam", maxLines: 5, label: 'CustomDescription', hint: 'Sometimg Type',),
-              const SizedBox(height: 24),
-              ElevatedButton(
-                onPressed: goToNextPage,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF064FAD),
-                  minimumSize: const Size(double.infinity, 48),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          return SingleChildScrollView(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: constraints.maxHeight),
+              child: IntrinsicHeight(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        CustomDropdown(
+                          label: "Scam Type",
+                          hint: "Select a Scam Type",
+                          value: _scamType,
+                          items: const ['Phishing', 'Investment', 'Romance'],
+                          onChanged: (val) => setState(() => _scamType = val),
+                        ),
+                        const SizedBox(height: 16),
+                        CustomTextField(controller: _phoneController, hintText: "+91-XXXXXXX", label: 'Phone',),
+                        const SizedBox(height: 16),
+                        CustomTextField(controller: _emailController, hintText: "email@example.com", label: 'Email',),
+                        const SizedBox(height: 16),
+                        CustomTextField(controller: _websiteController, hintText: "www.example.com", label: 'Website',),
+                        const SizedBox(height: 16),
+                        CustomDescription(
+                          controller: _descriptionController,
+                          hintText: "Describe scam",
+                          maxLines: 5,
+                          label: 'CustomDescription',
+                          hint: 'Something Type',
+                        ),
+                        const SizedBox(height: 24),
+                        ElevatedButton(
+                          onPressed: goToNextPage,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF064FAD),
+                            minimumSize: const Size(double.infinity, 48),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          ),
+                          child: const Text("Next", style: TextStyle(color: Colors.white)),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-                child: const Text("Next", style: TextStyle(color: Colors.white)),
               ),
-            ],
-          ),
-        ),
+            ),
+          );
+        },
       ),
     );
   }

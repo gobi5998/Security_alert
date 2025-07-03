@@ -3,7 +3,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import '../../custom/CustomDropdown.dart';
 import '../../custom/Success_page.dart';
-import '../../custom/customTextfield.dart';
+
 
 
 class ScamReportPage2 extends StatefulWidget {
@@ -17,8 +17,8 @@ class _ScamReportPage2State extends State<ScamReportPage2> {
   PlatformFile? selectedFile;
   final _formKey = GlobalKey<FormState>();
 
-  final TextEditingController _nameController = TextEditingController();
-  final TextEditingController _systemAffectedController = TextEditingController();
+  // final TextEditingController _nameController = TextEditingController();
+  // final TextEditingController _systemAffectedController = TextEditingController();
   String? _selectedSeverity;
 
   void pickFile() async {
@@ -75,83 +75,94 @@ class _ScamReportPage2State extends State<ScamReportPage2> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Report Malware')),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text("Upload infected files", style: TextStyle(fontWeight: FontWeight.bold)),
-              const SizedBox(height: 8),
-              ListTile(
-                onTap: pickFile,
-                leading: const Icon(Icons.add),
-                title: const Text("Add Screenshots\nlimit: 0/5"),
-              ),
-              ListTile(
-                onTap: pickFile,
-                leading: const Icon(Icons.mic),
-                title: const Text("Add Voice Message\nLimit: 5mb"),
-              ),
-              ListTile(
-                onTap: pickFile,
-                leading: const Icon(Icons.file_copy),
-                title: const Text("Add Documents\nLimit: 5mb"),
-              ),
-              if (selectedFile != null)
-                Padding(
-                  padding: const EdgeInsets.only(top: 8.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      appBar: AppBar(title: const Text('Report Scam')),
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          return SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: constraints.maxHeight),
+              child: IntrinsicHeight(
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Expanded(
-                        child: Text("Selected: \${selectedFile!.name}",
-                          style: const TextStyle(fontSize: 12),
-                          overflow: TextOverflow.ellipsis,
-                        ),
+                      const Text("Upload infected files", style: TextStyle(fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 8),
+                      ListTile(
+                        onTap: pickFile,
+                        leading: const Icon(Icons.add),
+                        title: const Text("Add Screenshots\nlimit: 0/5"),
                       ),
-                      IconButton(
-                        icon: const Icon(Icons.close, size: 18),
-                        onPressed: () => setState(() => selectedFile = null),
-                      )
+                      ListTile(
+                        onTap: pickFile,
+                        leading: const Icon(Icons.mic),
+                        title: const Text("Add Voice Message\nLimit: 5mb"),
+                      ),
+                      ListTile(
+                        onTap: pickFile,
+                        leading: const Icon(Icons.file_copy),
+                        title: const Text("Add Documents\nLimit: 5mb"),
+                      ),
+                      if (selectedFile != null)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 8.0),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  "Selected: ${selectedFile!.name}",
+                                  style: const TextStyle(fontSize: 12),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.close, size: 18),
+                                onPressed: () => setState(() => selectedFile = null),
+                              )
+                            ],
+                          ),
+                        ),
+                      const SizedBox(height: 24),
+
+                      // Dropdown
+                      CustomDropdown(
+                        label: "Alert Severity Levels",
+                        hint: "Select a Scam Type",
+                        value: _selectedSeverity,
+                        items: const ['High', 'Medium', 'Low'],
+                        onChanged: (val) => setState(() => _selectedSeverity = val),
+                      ),
+
+
+                      const SizedBox(height: 24),
+                      ElevatedButton(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const ReportSuccess(label: 'Scam Report'),
+                            ),
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF064FAD),
+                          minimumSize: const Size(double.infinity, 48),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        ),
+                        child: const Text("Submit", style: TextStyle(color: Colors.white)),
+                      ),
                     ],
                   ),
                 ),
-              const SizedBox(height: 24),
-
-              const Text("Report malware attack details", style: TextStyle(fontWeight: FontWeight.bold)),
-              const SizedBox(height: 16),
-
-              CustomTextField(controller: _nameController,  hintText: "Enter name"),
-              const SizedBox(height: 16),
-
-              CustomTextField(controller: _systemAffectedController,  hintText: "Enter system name"),
-              const SizedBox(height: 16),
-
-              CustomDropdown(
-                label: "Alert Severity Levels",
-                hint: "Select a Scam Type",
-                value: _selectedSeverity,
-                items: const ['High', 'Medium', 'Low'],
-                onChanged: (val) => setState(() => _selectedSeverity = val),
               ),
-
-              const SizedBox(height: 24),
-              ElevatedButton(
-                onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ReportSuccess(label: 'Scam Report'))),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF064FAD),
-                  minimumSize: const Size(double.infinity, 48),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                ),
-                child: const Text("Submit", style: TextStyle(color: Colors.white)),
-              ),
-            ],
-          ),
-        ),
+            ),
+          );
+        },
       ),
     );
   }
+
 }

@@ -10,12 +10,14 @@ class GraphWidget extends StatelessWidget {
     final provider = Provider.of<DashboardProvider>(context);
 
     return Container(
+
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.blue.shade100,
+        color: Colors.black.withOpacity(0.2),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text("Thread Analysis", style: TextStyle(fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),

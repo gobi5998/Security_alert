@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import '../models/dashboard_stats_model.dart';
 import '../models/security_alert_model.dart';
-
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 
@@ -31,7 +30,7 @@ class DashboardProvider with ChangeNotifier {
       }
     }
     return {
-      'Reported Spam': 0.28,
+      'Reported Spam': 0.29,
       'Reported Malware': 0.68,
       'Reported Fraud': 0.50,
       'Others': 0.04,

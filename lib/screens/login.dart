@@ -20,151 +20,155 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
-    final viewInsets = MediaQuery.of(context).viewInsets.bottom;
 
     return Scaffold(
       body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                const SizedBox(height: 24),
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: IconButton(
-                    icon: const Icon(Icons.arrow_back, color: Colors.black),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Image.asset('assets/image/login.png', height: 180),
-                const SizedBox(height: 16),
-                const Text(
-                  "Good to see you!",
-                  style: TextStyle(fontSize: 35, fontWeight: FontWeight.bold, color: Color(0xFF064FAD)),
-                ),
-                const SizedBox(height: 8),
-                const Text("Let's continue the journey.", style: TextStyle(fontSize: 14, color: Colors.black)),
-                const SizedBox(height: 32),
-                
-                // Error message display
-                if (authProvider.errorMessage.isNotEmpty)
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(12),
-                    margin: const EdgeInsets.only(bottom: 16),
-                    decoration: BoxDecoration(
-                      color: Colors.red.shade50,
-                      border: Border.all(color: Colors.red.shade200),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Row(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                child: IntrinsicHeight(
+                  child: Center(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        Icon(Icons.error_outline, color: Colors.red.shade600, size: 20),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            authProvider.errorMessage,
-                            style: TextStyle(color: Colors.red.shade700, fontSize: 14),
+                        const SizedBox(height: 24),
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: IconButton(
+                            icon: const Icon(Icons.arrow_back, color: Colors.black),
+                            onPressed: () => Navigator.pop(context),
                           ),
                         ),
-                        IconButton(
-                          icon: Icon(Icons.close, color: Colors.red.shade600, size: 20),
-                          onPressed: () => authProvider.clearError(),
+                        const SizedBox(height: 16),
+                        Image.asset('assets/image/login.png', height: 180),
+                        const SizedBox(height: 16),
+                        const Text(
+                          "Good to see you!",
+                          style: TextStyle(fontSize: 35, fontWeight: FontWeight.bold, color: Color(0xFF064FAD)),
+                        ),
+                        const SizedBox(height: 8),
+                        const Text("Let's continue the journey.", style: TextStyle(fontSize: 14, color: Colors.black)),
+                        const SizedBox(height: 32),
+
+                        if (authProvider.errorMessage.isNotEmpty)
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(12),
+                            margin: const EdgeInsets.only(bottom: 16),
+                            decoration: BoxDecoration(
+                              color: Colors.red.shade50,
+                              border: Border.all(color: Colors.red.shade200),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(Icons.error_outline, color: Colors.red.shade600, size: 20),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    authProvider.errorMessage,
+                                    style: TextStyle(color: Colors.red.shade700, fontSize: 14),
+                                  ),
+                                ),
+                                IconButton(
+                                  icon: Icon(Icons.close, color: Colors.red.shade600, size: 20),
+                                  onPressed: () => authProvider.clearError(),
+                                ),
+                              ],
+                            ),
+                          ),
+
+                        CustomTextField(hintText: 'username', controller: _usernameController, label: 'Username'),
+                        const SizedBox(height: 16),
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text('Password', style: TextStyle(fontFamily: 'Nunito', fontSize: 16, fontWeight: FontWeight.w500)),
+                        ),
+                        TextField(
+                          controller: _passwordController,
+                          obscureText: _obscureText,
+                          decoration: InputDecoration(
+                            hintText: 'Password',
+                            hintStyle: const TextStyle(fontFamily: 'Nunito', color: Colors.grey),
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.0)),
+                            suffixIcon: IconButton(
+                              icon: Icon(_obscureText ? Icons.visibility_off : Icons.visibility),
+                              onPressed: () => setState(() => _obscureText = !_obscureText),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                        const Text("or", style: TextStyle(fontFamily: 'Nunito', color: Colors.grey)),
+                        const SizedBox(height: 12),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            CircleAvatar(backgroundColor: Colors.white, radius: 20, child: Image.asset('assets/image/google.png', height: 50)),
+                            const SizedBox(width: 16),
+                            CircleAvatar(backgroundColor: Colors.white, radius: 20, child: Image.asset('assets/image/facebook.jpg', height: 50)),
+                          ],
+                        ),
+                        const SizedBox(height: 32),
+                        ElevatedButton(
+                          onPressed: authProvider.isLoading ? null : () async {
+                            final username = _usernameController.text.trim();
+                            final password = _passwordController.text.trim();
+
+                            if (username.isEmpty || password.isEmpty) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text("Please fill in all fields")),
+                              );
+                              return;
+                            }
+
+                            final success = await authProvider.login(username, password);
+                            if (success) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text("Login Successful")),
+                              );
+                              Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const DashboardPage()));
+                            }
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF064FAD),
+                            minimumSize: const Size(double.infinity, 48),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                          ),
+                          child: authProvider.isLoading
+                              ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                            ),
+                          )
+                              : const Text("Log In", style: TextStyle(fontFamily: 'Nunito', color: Colors.white)),
+                        ),
+                        const SizedBox(height: 16),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Text("Don't have an account?", style: TextStyle(fontFamily: 'Nunito')),
+                            TextButton(
+                              onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const RegisterPage())),
+                              child: const Text("SignUp", style: TextStyle(color: Color(0xFF064FAD), fontWeight: FontWeight.bold)),
+                            ),
+                          ],
                         ),
                       ],
                     ),
                   ),
-                
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text('Username', style: TextStyle(fontFamily: 'Nunito', fontSize: 16, fontWeight: FontWeight.w500)),
                 ),
-                CustomTextField(hintText: 'username', controller: _usernameController),
-                const SizedBox(height: 16),
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text('Password', style: TextStyle(fontFamily: 'Nunito', fontSize: 16, fontWeight: FontWeight.w500)),
-                ),
-                TextField(
-                  controller: _passwordController,
-                  obscureText: _obscureText,
-                  decoration: InputDecoration(
-                    hintText: 'Password',
-                    hintStyle: const TextStyle(fontFamily: 'Nunito', color: Colors.grey),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.0)),
-                    suffixIcon: IconButton(
-                      icon: Icon(_obscureText ? Icons.visibility_off : Icons.visibility),
-                      onPressed: () => setState(() => _obscureText = !_obscureText),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 24),
-                const Text("or", style: TextStyle(fontFamily: 'Nunito', color: Colors.grey)),
-                const SizedBox(height: 12),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    CircleAvatar(backgroundColor: Colors.white, radius: 20, child: Image.asset('assets/image/google.png', height: 50)),
-                    const SizedBox(width: 16),
-                    CircleAvatar(backgroundColor: Colors.white, radius: 20, child: Image.asset('assets/image/facebook.jpg', height: 50)),
-                  ],
-                ),
-                const SizedBox(height: 32),
-                ElevatedButton(
-                  onPressed: authProvider.isLoading ? null : () async {
-                    final username = _usernameController.text.trim();
-                    final password = _passwordController.text.trim();
-                    
-                    if (username.isEmpty || password.isEmpty) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text("Please fill in all fields")),
-                      );
-                      return;
-                    }
-                    
-                    final success = await authProvider.login(username, password);
-                    if (success) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text("Login Successful")),
-                      );
-                      Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const DashboardPage()));
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF064FAD),
-                    minimumSize: const Size(double.infinity, 48),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-                  ),
-                  child: authProvider.isLoading
-                      ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                          ),
-                        )
-                      : const Text("Log In", style: TextStyle(fontFamily: 'Nunito', color: Colors.white)),
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Text("Don't have an account?", style: TextStyle(fontFamily: 'Nunito')),
-                    TextButton(
-                      onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const RegisterPage())),
-                      
-                      child: const Text("SignUp", style: TextStyle(color: Color(0xFF064FAD), fontWeight: FontWeight.bold)),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
+              ),
+            );
+          },
         ),
       ),
     );
   }
+
 }

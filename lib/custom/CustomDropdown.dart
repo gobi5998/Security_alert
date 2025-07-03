@@ -39,6 +39,9 @@ class _CustomDropdownState extends State<CustomDropdown> {
         const SizedBox(height: 6),
         DropdownButtonFormField<String>(
           value: widget.value,
+          icon: Image.asset("assets/icon/Vector.png",
+            width: 16,
+            height: 16),
           decoration: InputDecoration(
             border: const OutlineInputBorder(),
             hintText: widget.hint,
@@ -47,7 +50,16 @@ class _CustomDropdownState extends State<CustomDropdown> {
               color: Colors.grey,
               fontFamily: 'Nunito',
             ),
+            enabledBorder: OutlineInputBorder(
+              borderSide: BorderSide(color: Colors.black),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderSide: BorderSide(color: Colors.black),
+              borderRadius: BorderRadius.circular(8),
+            ),
           ),
+
           items: widget.items.map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
           onChanged: widget.onChanged,
           validator: (val) => val == null ? "Required" : null,
