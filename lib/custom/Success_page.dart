@@ -20,8 +20,8 @@ class _ReportSuccessState extends State<ReportSuccess> {
             child: SingleChildScrollView(
               child: ConstrainedBox(
                 constraints: BoxConstraints(
-                  minHeight: constraints.maxHeight * 0.4,
-                  maxWidth: 400, // optional max width for large screens
+                  minHeight: 200,
+                  maxWidth: 500, // optional max width for large screens
                 ),
                 child: Container(
                   padding: const EdgeInsets.all(24),

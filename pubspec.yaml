@@ -40,9 +40,8 @@ dependencies:
   dio: ^5.4.0
   shared_preferences: ^2.2.2
   local_auth: ^2.1.8
-  local_auth_android: ^1.0.39
-  local_auth_ios: ^1.1.5
   file_picker: ^10.2.0
+  fl_chart: ^1.0.0
 dev_dependencies:
   flutter_test:
     sdk: flutter

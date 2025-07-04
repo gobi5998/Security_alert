@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:security_alert/screens/report/report_scam_1.dart';
 import '../custom/PeriodDropdown.dart';
+import '../custom/customButton.dart';
 import '../provider/dashboard_provider.dart';
 import '../widget/graph_widget.dart';
 import 'appDrawer.dart';
@@ -73,16 +74,17 @@ class _DashboardPageState extends State<DashboardPage> {
         ],
       ),
       bottomNavigationBar: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Color(0xFFf0f2f5), // Light gray at the top
-              Color(0xFFfcfcfc), // White at the bottom
-            ],
-          ),
-        ),
+        // decoration: const BoxDecoration(
+        //   // color: Color(0xFFf0f2f5),
+        //   gradient: LinearGradient(
+        //     begin: Alignment.topLeft,
+        //     end: Alignment.bottomRight,
+        //     colors: [
+        //       Color(0xFFb3c9e6), // Light blue
+        //       Color(0xFFFFFFFF), // White // White at the bottom
+        //     ],
+        //   ),
+        // ),
 
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -96,63 +98,39 @@ class _DashboardPageState extends State<DashboardPage> {
                   Expanded(
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 4),
-                      child: ElevatedButton(
-                        onPressed: () {Navigator.push(context, MaterialPageRoute(builder: (context) => const ScamReportPage1()));},
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Color(0xFF064FAD),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          elevation: 0,
-                        ),
-                        child: const Text(
-                          'Report Scam',
-                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 4),
-                      child: ElevatedButton(
-                        onPressed: () {
-                          Navigator.push(context, MaterialPageRoute(builder: (context) => const MalwareReportPage1()));
+                        child: CustomButton(text: 'Report Scam', onPressed: () async {
+                          Navigator.push(context, MaterialPageRoute(builder: (context) => const ScamReportPage1()));
+                          return;
                         },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Color(0xFF064FAD),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          elevation: 0,
-                        ),
-                        child: const Text(
-                          'Report Malware',
-                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                        ),
-                      ),
+                          fontSize: 14,
+                          borderCircular: 12,
+                          fontWeight: FontWeight.bold,)
+
                     ),
                   ),
                   Expanded(
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 4),
-                      child: ElevatedButton(
-                        onPressed: () {},
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Color(0xFF064FAD),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          elevation: 0,
-                        ),
-                        child: const Text(
-                          'Report Fraud',
-                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                        ),
-                      ),
+                      child: CustomButton(text: 'Report Malware', onPressed: () async {
+                          Navigator.push(context, MaterialPageRoute(builder: (context) => const MalwareReportPage1()));
+                          return;
+                          },
+                           fontSize: 14,
+                           borderCircular: 12,
+                          fontWeight: FontWeight.bold,)
+                    ),
+                  ),
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                        child: CustomButton(text: 'Report Fraud', onPressed: () async {
+                          Navigator.push(context, MaterialPageRoute(builder: (context) => const MalwareReportPage1()));
+                          return;
+                        },
+                          fontSize: 14,
+                          borderCircular: 12,
+                          fontWeight: FontWeight.bold,)
+
                     ),
                   ),
                 ],
@@ -163,7 +141,7 @@ class _DashboardPageState extends State<DashboardPage> {
               backgroundColor: Colors.transparent,
               elevation: 8,
               selectedItemColor: Colors.white,
-              unselectedItemColor: Colors.white60,
+              // unselectedItemColor: Colors.white60,
               type: BottomNavigationBarType.fixed,
               items: const [
                 BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
@@ -207,32 +185,32 @@ class _DashboardPageState extends State<DashboardPage> {
 
                           // Show error message
                           if (provider.errorMessage.isNotEmpty)
-                            Container(
-                              width: double.infinity,
-                              padding: const EdgeInsets.all(12),
-                              margin: const EdgeInsets.only(bottom: 16),
-                              decoration: BoxDecoration(
-                                color: Colors.red.shade50,
-                                border: Border.all(color: Colors.red.shade200),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Row(
-                                children: [
-                                  Icon(Icons.error_outline, color: Colors.red.shade600, size: 20),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: Text(
-                                      provider.errorMessage,
-                                      style: TextStyle(color: Colors.red.shade700, fontSize: 14),
-                                    ),
-                                  ),
-                                  IconButton(
-                                    icon: Icon(Icons.close, color: Colors.red.shade600, size: 20),
-                                    onPressed: () => provider.clearError(),
-                                  ),
-                                ],
-                              ),
-                            ),
+                            // Container(
+                            //   width: double.infinity,
+                            //   padding: const EdgeInsets.all(12),
+                            //   margin: const EdgeInsets.only(bottom: 16),
+                            //   decoration: BoxDecoration(
+                            //     color: Colors.red.shade50,
+                            //     border: Border.all(color: Colors.red.shade200),
+                            //     borderRadius: BorderRadius.circular(8),
+                            //   ),
+                            //   child: Row(
+                            //     children: [
+                            //       Icon(Icons.error_outline, color: Colors.red.shade600, size: 20),
+                            //       const SizedBox(width: 8),
+                            //       Expanded(
+                            //         child: Text(
+                            //           provider.errorMessage,
+                            //           style: TextStyle(color: Colors.red.shade700, fontSize: 14),
+                            //         ),
+                            //       ),
+                            //       IconButton(
+                            //         icon: Icon(Icons.close, color: Colors.red.shade600, size: 20),
+                            //         onPressed: () => provider.clearError(),
+                            //       ),
+                            //     ],
+                            //   ),
+                            // ),
 
                           // Carousel
                           Container(
@@ -382,7 +360,7 @@ class _DashboardPageState extends State<DashboardPage> {
 
                           const SizedBox(height: 16),
 
-                          const GraphWidget(),
+                          ThreadAnalysisCard(),
 
                           const SizedBox(height: 12),
                         ],
@@ -484,48 +462,48 @@ class _StatCard extends StatelessWidget {
 
 
 
-class _ReportButton extends StatelessWidget {
-  final String label;
-  final IconData icon;
-
-  const _ReportButton({required this.label, required this.icon});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        CircleAvatar(
-          radius: 26,
-          backgroundColor: Colors.white,
-          child: Icon(icon, color: Color(0xFF1E3A8A)),
-        ),
-        const SizedBox(height: 6),
-        Text(
-          label,
-          style: const TextStyle(color: Colors.white, fontSize: 12),
-        ),
-      ],
-    );
-  }
-}
-
-class _BottomReportButton extends StatelessWidget {
-  final String label;
-  const _BottomReportButton({required this.label});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(
-        label,
-        style: const TextStyle(color: Color(0xFF064FAD), fontWeight: FontWeight.bold),
-      ),
-    );
-  }
-}
+// class _ReportButton extends StatelessWidget {
+//   final String label;
+//   final IconData icon;
+//
+//   const _ReportButton({required this.label, required this.icon});
+//
+//   @override
+//   Widget build(BuildContext context) {
+//     return Column(
+//       children: [
+//         CircleAvatar(
+//           radius: 26,
+//           backgroundColor: Colors.white,
+//           child: Icon(icon, color: Color(0xFF1E3A8A)),
+//         ),
+//         const SizedBox(height: 6),
+//         Text(
+//           label,
+//           style: const TextStyle(color: Colors.white, fontSize: 12),
+//         ),
+//       ],
+//     );
+//   }
+// }
+//
+// class _BottomReportButton extends StatelessWidget {
+//   final String label;
+//   const _BottomReportButton({required this.label});
+//
+//   @override
+//   Widget build(BuildContext context) {
+//     return Container(
+//       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+//       decoration: BoxDecoration(
+//         color: Colors.white,
+//         borderRadius: BorderRadius.circular(20),
+//       ),
+//       child: Text(
+//         label,
+//         style: const TextStyle(color: Color(0xFF064FAD), fontWeight: FontWeight.bold),
+//       ),
+//     );
+//   }
+// }
 
