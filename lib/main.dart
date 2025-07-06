@@ -1,5 +1,9 @@
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
+import 'package:hive/hive.dart';
+import 'package:hive_flutter/adapters.dart';
 import 'package:provider/provider.dart';
+import 'package:security_alert/screens/scam/scam_report_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:security_alert/provider/auth_provider.dart';
 import 'package:security_alert/provider/dashboard_provider.dart';
@@ -8,12 +12,30 @@ import 'package:security_alert/screens/dashboard_page.dart';
 import 'package:security_alert/screens/login.dart';
 import 'package:security_alert/services/biometric_service.dart';
 
-void main() {
+import 'models/scam_report_model.dart';
+import 'models/scam_report_provider.dart';
+
+void main() async{
+
+  WidgetsFlutterBinding.ensureInitialized();
+  await Hive.initFlutter();
+
+  Hive.registerAdapter(ScamReportModelAdapter());
+  await Hive.openBox<ScamReportModel>('scam_reports');
+
+  Connectivity().onConnectivityChanged.listen((result) {
+    if (result != ConnectivityResult.none) {
+      ScamReportService.syncReports();
+    }
+  });
+
+
   runApp(
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => DashboardProvider()),
+        ChangeNotifierProvider(create: (_) => ScamReportProvider()),
       ],
       child: const MyApp(),
     ),

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:carousel_slider/carousel_slider.dart';
-import 'package:security_alert/screens/report/report_scam_1.dart';
+import 'package:security_alert/screens/scam/report_scam_1.dart';
+
 import '../custom/PeriodDropdown.dart';
+import '../custom/bottomnavigation.dart';
 import '../custom/customButton.dart';
 import '../provider/dashboard_provider.dart';
 import '../widget/graph_widget.dart';
@@ -40,6 +42,15 @@ class _DashboardPageState extends State<DashboardPage> {
       backgroundColor: Colors.transparent,
       extendBodyBehindAppBar: true,
       appBar: AppBar(
+        flexibleSpace: Container(
+        decoration: const BoxDecoration(
+        gradient: LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.center,
+        colors: <Color>[
+        Color(0xFF236cc5), // Start color
+        Color(0xFF236cc5),],),),),
+
         backgroundColor: Colors.transparent,
         elevation: 0,
         title: const Text("Security Alert", style: TextStyle(color: Colors.white)),
@@ -74,8 +85,8 @@ class _DashboardPageState extends State<DashboardPage> {
         ],
       ),
       bottomNavigationBar: Container(
-        // decoration: const BoxDecoration(
-        //   // color: Color(0xFFf0f2f5),
+        decoration: const BoxDecoration(
+          color: Color(0xFFf0f2f5),
         //   gradient: LinearGradient(
         //     begin: Alignment.topLeft,
         //     end: Alignment.bottomRight,
@@ -84,7 +95,7 @@ class _DashboardPageState extends State<DashboardPage> {
         //       Color(0xFFFFFFFF), // White // White at the bottom
         //     ],
         //   ),
-        // ),
+        ),
 
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -99,7 +110,7 @@ class _DashboardPageState extends State<DashboardPage> {
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 4),
                         child: CustomButton(text: 'Report Scam', onPressed: () async {
-                          Navigator.push(context, MaterialPageRoute(builder: (context) => const ScamReportPage1()));
+                          Navigator.push(context, MaterialPageRoute(builder: (context) => const ReportScam1()));
                           return;
                         },
                           fontSize: 14,
@@ -138,20 +149,28 @@ class _DashboardPageState extends State<DashboardPage> {
             ),
             // Bottom navigation bar
             BottomNavigationBar(
-              backgroundColor: Colors.transparent,
+              backgroundColor:  Color(0xFFf0f2f5),
               elevation: 8,
-              selectedItemColor: Colors.white,
+              selectedItemColor: Colors.black,
               // unselectedItemColor: Colors.white60,
-              type: BottomNavigationBarType.fixed,
-              items: const [
-                BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-                BottomNavigationBarItem(icon: Icon(Icons.system_update), label: 'Update'),
-                BottomNavigationBarItem(icon: Icon(Icons.warning), label: 'Alert'),
-                BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
+              // type: BottomNavigationBarType.fixed,
+              items: [
+                  // const BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+                customBottomNavItem(imagePath: 'assets/icon/Home.png', label: 'Home',),
+                // BottomNavigationBarItem(
+                //   icon: Image.asset(
+                //     'assets/icon/Home.png',
+                //     width: 24,
+                //     height: 24,
+                //   ),
+                //   label: 'Home',
+                // ),
+                customBottomNavItem(imagePath: 'assets/icon/Alert.png', label: 'Alert',),
+        customBottomNavItem(imagePath: 'assets/icon/Profile.png', label: 'Profile',),
               ],
               onTap: (index) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Tapped: \\${['Home', 'Update', 'Alert', 'Profile'][index]}')),
+                  SnackBar(content: Text('Tapped: \\${['Home','Alert', 'Profile'][index]}')),
                 );
               },
             ),

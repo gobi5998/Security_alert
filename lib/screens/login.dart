@@ -80,7 +80,8 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                       ),
 
-                    CustomTextField(hintText: 'username', controller: _usernameController, label: 'Username'),
+                    CustomTextField(hintText: 'username', controller: _usernameController, label: 'Username',validator: (val) =>
+            val == null || val.isEmpty ? 'Required' : null,),
                     const SizedBox(height: 16),
                     Align(
                       alignment: Alignment.centerLeft,

@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:security_alert/screens/profile_page.dart';
+import 'package:security_alert/screens/subscriptionPage/subscription_plans_page.dart';
+import 'package:security_alert/screens/theard_database.dart';
 import '../provider/auth_provider.dart';
 import '../screens/login.dart';
-
+import 'server_reports_page.dart';
 class DashboardDrawer extends StatelessWidget {
   const DashboardDrawer();
 
@@ -28,7 +31,9 @@ class DashboardDrawer extends StatelessWidget {
                       const SizedBox(width: 8),
                       const CircleAvatar(
                         radius: 18,
-                        backgroundImage: AssetImage('assets/image/security1.jpg'), // Use your logo asset
+                        backgroundImage: AssetImage(
+                          'assets/image/security1.jpg',
+                        ), // Use your logo asset
                       ),
                       const SizedBox(width: 8),
                       const Text(
@@ -49,15 +54,23 @@ class DashboardDrawer extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-            _DrawerMenuItem(
-              icon: Icons.person,
-              label: 'Profile',
-              onTap: () {},
-            ),
+            _DrawerMenuItem(icon: Icons.person, label: 'Profile', onTap: () {Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => ProfilePage(),
+                  ),
+                );}),
             _DrawerMenuItem(
               icon: Icons.bug_report,
               label: 'Thread Data Base',
-              onTap: () {},
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => ThreadDatabaseFilterPage(),
+                  ),
+                );
+              },
             ),
             _DrawerMenuItem(
               icon: Icons.search,
@@ -67,7 +80,14 @@ class DashboardDrawer extends StatelessWidget {
             _DrawerMenuItem(
               icon: Icons.attach_money,
               label: 'Subscription',
-              onTap: () {},
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => SubscriptionPlansPage(),
+                  ),
+                );
+              },
             ),
             _DrawerMenuItem(
               icon: Icons.star_border,
@@ -84,6 +104,16 @@ class DashboardDrawer extends StatelessWidget {
               label: 'Feedback',
               onTap: () {},
             ),
+            ListTile(
+              leading: Icon(Icons.cloud),
+              title: Text('Server Reports'),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => ServerReportsPage()),
+                );
+              },
+            ),
             const Spacer(),
             _DrawerMenuItem(
               icon: Icons.logout,
@@ -91,11 +121,14 @@ class DashboardDrawer extends StatelessWidget {
               color: Colors.redAccent,
               onTap: () async {
                 // Use the local context for navigation and provider
-                await Provider.of<AuthProvider>(context, listen: false).logout();
+                await Provider.of<AuthProvider>(
+                  context,
+                  listen: false,
+                ).logout();
                 Navigator.of(context).pop(); // Close the drawer
                 Navigator.of(context).pushAndRemoveUntil(
                   MaterialPageRoute(builder: (_) => const LoginPage()),
-                  (route) => false,
+                      (route) => false,
                 );
               },
             ),

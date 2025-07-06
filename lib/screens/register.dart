@@ -110,13 +110,16 @@ class _RegisterPageState extends State<RegisterPage> {
                     CustomTextField(
                       hintText: 'Username',
                       controller: _usernameController,
-                      label: 'Username',
+                      label: 'Username',validator: (val) =>
+                    val == null || val.isEmpty ? 'Required' : null,
                     ),
                     const SizedBox(height: 16),
                     CustomTextField(
                       hintText: 'Example@gmail.com',
                       controller: _emailController,
                       label: 'Email',
+                      validator: (val) =>
+                      val == null || val.isEmpty ? 'Required' : null,
                     ),
                     const SizedBox(height: 16),
 

@@ -1,6 +1,6 @@
 class ApiConfig {
   // Base URL for the API
-  static const String baseUrl = 'https://685e7da87b57aebd2af9a21d.mockapi.io'; 
+  static const String baseUrl = 'https://d11a-2409-40f4-40cb-8085-21e5-2a91-d3a3-6fc5.ngrok-free.app/api';
   // Replace with your actual API base URL 
   
   // API Endpoints
