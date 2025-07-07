@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:carousel_slider/carousel_slider.dart';
+import 'package:security_alert/scam/report_scam_1.dart';
 import '../provider/dashboard_provider.dart';
 import '../widget/graph_widget.dart';
 import 'appDrawer.dart';
 import '../services/biometric_service.dart';
+import '../scam/scam_sync_service.dart';
+import 'package:http/http.dart' as http;
+import '../config/api_config.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -15,14 +19,38 @@ class DashboardPage extends StatefulWidget {
 
 class _DashboardPageState extends State<DashboardPage> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  int _unsyncedCount = 0;
 
   @override
   void initState() {
     super.initState();
     // Load dashboard data when the page is initialized
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<DashboardProvider>(context, listen: false).loadDashboardData();
+      Provider.of<DashboardProvider>(
+        context,
+        listen: false,
+      ).loadDashboardData();
+      _loadUnsyncedCount();
     });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Refresh unsynced count when dependencies change (e.g., after navigation)
+    _loadUnsyncedCount();
+  }
+
+  Future<void> _loadUnsyncedCount() async {
+    try {
+      final syncService = ScamSyncService();
+      final count = await syncService.getUnsyncedCount();
+      setState(() {
+        _unsyncedCount = count;
+      });
+    } catch (e) {
+      print('Error loading unsynced count: $e');
+    }
   }
 
   @override
@@ -38,7 +66,10 @@ class _DashboardPageState extends State<DashboardPage> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        title: const Text("Security Alert", style: TextStyle(color: Colors.white)),
+        title: const Text(
+          "Security Alert",
+          style: TextStyle(color: Colors.white),
+        ),
         leading: IconButton(
           icon: const Icon(Icons.menu, color: Colors.white),
           onPressed: () => _scaffoldKey.currentState?.openDrawer(),
@@ -50,21 +81,113 @@ class _DashboardPageState extends State<DashboardPage> {
               // TODO: Navigate to notifications
             },
           ),
-          IconButton(
-            icon: const Icon(Icons.refresh, color: Colors.white),
-            onPressed: () {
-              provider.loadDashboardData();
-            },
+          Stack(
+            children: [
+              IconButton(
+                icon: const Icon(Icons.sync, color: Colors.white),
+                onPressed: () async {
+                  // Show loading indicator
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Syncing reports...'),
+                      duration: Duration(seconds: 2),
+                    ),
+                  );
+
+                  // Import and use the sync service
+                  try {
+                    final syncService = ScamSyncService();
+                    final result = await syncService.syncReports();
+
+                    // Reload dashboard data and unsynced count
+                    provider.loadDashboardData();
+                    await _loadUnsyncedCount();
+
+                    if (result['success']) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(result['message']),
+                          backgroundColor: Colors.green,
+                        ),
+                      );
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(result['message']),
+                          backgroundColor: Colors.orange,
+                          duration: const Duration(seconds: 4),
+                        ),
+                      );
+                    }
+                  } catch (e) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Sync failed: $e'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  }
+                },
+              ),
+              if (_unsyncedCount > 0)
+                Positioned(
+                  right: 8,
+                  top: 8,
+                  child: Container(
+                    padding: const EdgeInsets.all(2),
+                    decoration: BoxDecoration(
+                      color: Colors.red,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    constraints: const BoxConstraints(
+                      minWidth: 16,
+                      minHeight: 16,
+                    ),
+                    child: Text(
+                      '$_unsyncedCount',
+                      style: const TextStyle(color: Colors.white, fontSize: 10),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ),
+            ],
           ),
           // Test biometric button (remove in production)
           IconButton(
             icon: const Icon(Icons.fingerprint, color: Colors.white),
             onPressed: () async {
               await BiometricService.testBiometric();
-              final result = await BiometricService.authenticateWithBiometrics();
+              final result =
+                  await BiometricService.authenticateWithBiometrics();
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(content: Text('Biometric test result: $result')),
               );
+            },
+          ),
+          // Test server connection button (remove in production)
+          IconButton(
+            icon: const Icon(Icons.wifi, color: Colors.white),
+            onPressed: () async {
+              try {
+                final response = await http.get(
+                  Uri.parse('${ApiConfig.baseUrl}scam-reports'),
+                );
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Server test: Status ${response.statusCode}'),
+                    backgroundColor: response.statusCode == 200
+                        ? Colors.green
+                        : Colors.orange,
+                  ),
+                );
+              } catch (e) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Server test failed: $e'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
             },
           ),
         ],
@@ -82,7 +205,14 @@ class _DashboardPageState extends State<DashboardPage> {
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 4),
                     child: ElevatedButton(
-                      onPressed: () {},
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => ReportScam1(),
+                          ),
+                        );
+                      },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Color(0xFF064FAD),
                         shape: RoundedRectangleBorder(
@@ -93,7 +223,10 @@ class _DashboardPageState extends State<DashboardPage> {
                       ),
                       child: const Text(
                         'Report Scam',
-                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ),
@@ -102,7 +235,14 @@ class _DashboardPageState extends State<DashboardPage> {
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 4),
                     child: ElevatedButton(
-                      onPressed: () {},
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const ReportScam1(),
+                          ),
+                        );
+                      },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Color(0xFF064FAD),
                         shape: RoundedRectangleBorder(
@@ -113,7 +253,10 @@ class _DashboardPageState extends State<DashboardPage> {
                       ),
                       child: const Text(
                         'Report Malware',
-                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ),
@@ -133,7 +276,10 @@ class _DashboardPageState extends State<DashboardPage> {
                       ),
                       child: const Text(
                         'Report Fraud',
-                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ),
@@ -150,13 +296,26 @@ class _DashboardPageState extends State<DashboardPage> {
             type: BottomNavigationBarType.fixed,
             items: const [
               BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-              BottomNavigationBarItem(icon: Icon(Icons.system_update), label: 'Update'),
-              BottomNavigationBarItem(icon: Icon(Icons.warning), label: 'Alert'),
-              BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.system_update),
+                label: 'Update',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.warning),
+                label: 'Alert',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.person),
+                label: 'Profile',
+              ),
             ],
             onTap: (index) {
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Tapped: \\${['Home', 'Update', 'Alert', 'Profile'][index]}')),
+                SnackBar(
+                  content: Text(
+                    'Tapped: \\${['Home', 'Update', 'Alert', 'Profile'][index]}',
+                  ),
+                ),
               );
             },
           ),
@@ -177,7 +336,7 @@ class _DashboardPageState extends State<DashboardPage> {
               child: ListView(
                 children: [
                   const SizedBox(height: 8),
-                  
+
                   // Error message display
                   if (provider.errorMessage.isNotEmpty)
                     Container(
@@ -191,16 +350,27 @@ class _DashboardPageState extends State<DashboardPage> {
                       ),
                       child: Row(
                         children: [
-                          Icon(Icons.error_outline, color: Colors.red.shade600, size: 20),
+                          Icon(
+                            Icons.error_outline,
+                            color: Colors.red.shade600,
+                            size: 20,
+                          ),
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
                               provider.errorMessage,
-                              style: TextStyle(color: Colors.red.shade700, fontSize: 14),
+                              style: TextStyle(
+                                color: Colors.red.shade700,
+                                fontSize: 14,
+                              ),
                             ),
                           ),
                           IconButton(
-                            icon: Icon(Icons.close, color: Colors.red.shade600, size: 20),
+                            icon: Icon(
+                              Icons.close,
+                              color: Colors.red.shade600,
+                              size: 20,
+                            ),
                             onPressed: () => provider.clearError(),
                           ),
                         ],
@@ -214,27 +384,28 @@ class _DashboardPageState extends State<DashboardPage> {
                       enableInfiniteScroll: true,
                       autoPlay: true,
                     ),
-                    items: [
-                      "assets/image/security1.jpg",
-                      "assets/image/security2.png",
-                      "assets/image/security3.jpg",
-                      "assets/image/security4.jpg",
-                      "assets/image/security5.jpg",
-                      "assets/image/security6.jpg",
-                    ].map((imagePath) {
-                      return Builder(
-                        builder: (BuildContext context) {
-                          return ClipRRect(
-                            borderRadius: BorderRadius.circular(12),
-                            child: Image.asset(
-                              imagePath,
-                              fit: BoxFit.cover,
-                              width: MediaQuery.of(context).size.width,
-                            ),
+                    items:
+                        [
+                          "assets/image/security1.jpg",
+                          "assets/image/security2.png",
+                          "assets/image/security3.jpg",
+                          "assets/image/security4.jpg",
+                          "assets/image/security5.jpg",
+                          "assets/image/security6.jpg",
+                        ].map((imagePath) {
+                          return Builder(
+                            builder: (BuildContext context) {
+                              return ClipRRect(
+                                borderRadius: BorderRadius.circular(12),
+                                child: Image.asset(
+                                  imagePath,
+                                  fit: BoxFit.cover,
+                                  width: MediaQuery.of(context).size.width,
+                                ),
+                              );
+                            },
                           );
-                        },
-                      );
-                    }).toList(),
+                        }).toList(),
                   ),
 
                   const SizedBox(height: 16),
@@ -255,7 +426,9 @@ class _DashboardPageState extends State<DashboardPage> {
                               Expanded(
                                 flex: 5,
                                 child: LinearProgressIndicator(
-                                  value: (entry.value is int) ? entry.value.toDouble() : entry.value,
+                                  value: (entry.value is int)
+                                      ? entry.value.toDouble()
+                                      : entry.value,
                                   color: Colors.blue,
                                   backgroundColor: Colors.white,
                                 ),
@@ -279,7 +452,8 @@ class _DashboardPageState extends State<DashboardPage> {
                         desc: 'Total Alerts',
                       ),
                       _StatCard(
-                        label: provider.stats?.resolvedAlerts.toString() ?? '10K+',
+                        label:
+                            provider.stats?.resolvedAlerts.toString() ?? '10K+',
                         desc: 'Resolved',
                       ),
                       _StatCard(
@@ -297,7 +471,7 @@ class _DashboardPageState extends State<DashboardPage> {
                 ],
               ),
             ),
-            
+
             // Loading overlay
             if (provider.isLoading)
               Container(
@@ -330,7 +504,10 @@ class _StatCard extends StatelessWidget {
       ),
       child: Column(
         children: [
-          Text(label, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          Text(
+            label,
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
           Text(desc, textAlign: TextAlign.center),
         ],
       ),
@@ -354,10 +531,7 @@ class _ReportButton extends StatelessWidget {
           child: Icon(icon, color: Color(0xFF1E3A8A)),
         ),
         const SizedBox(height: 6),
-        Text(
-          label,
-          style: const TextStyle(color: Colors.white, fontSize: 12),
-        ),
+        Text(label, style: const TextStyle(color: Colors.white, fontSize: 12)),
       ],
     );
   }
@@ -377,9 +551,11 @@ class _BottomReportButton extends StatelessWidget {
       ),
       child: Text(
         label,
-        style: const TextStyle(color: Color(0xFF064FAD), fontWeight: FontWeight.bold),
+        style: const TextStyle(
+          color: Color(0xFF064FAD),
+          fontWeight: FontWeight.bold,
+        ),
       ),
     );
   }
 }
-

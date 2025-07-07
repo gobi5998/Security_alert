@@ -14,12 +14,14 @@ class DashboardProvider with ChangeNotifier {
   DashboardStats? _stats;
   List<SecurityAlert> _alerts = [];
   String _selectedTab = '1D';
+  bool _isOnline = true;
 
   bool get isLoading => _isLoading;
   String get errorMessage => _errorMessage;
   DashboardStats? get stats => _stats;
   List<SecurityAlert> get alerts => _alerts;
   String get selectedTab => _selectedTab;
+  bool get isOnline => _isOnline;
 
   // Fallback data when API is not available
   Map<String, double> get reportedFeatures {
@@ -52,20 +54,71 @@ class DashboardProvider with ChangeNotifier {
       _errorMessage = '';
       notifyListeners();
 
-      // Load dashboard stats
-      final statsData = await _apiService.getDashboardStats();
-      _stats = DashboardStats.fromJson(statsData);
+      // Check connectivity
+      final connectivityResult = await Connectivity().checkConnectivity();
+      _isOnline = connectivityResult != ConnectivityResult.none;
+      
+      final prefs = await SharedPreferences.getInstance();
 
-      // Load security alerts
-      final alertsData = await _apiService.getSecurityAlerts();
-      _alerts = alertsData.map((json) => SecurityAlert.fromJson(json)).toList();
+      if (_isOnline) {
+        // Online: fetch from API and cache
+        try {
+          // Load dashboard stats
+          final statsData = await _apiService.getDashboardStats();
+          _stats = DashboardStats.fromJson(statsData);
+          
+          // Cache the stats data
+          await prefs.setString('dashboard_stats', jsonEncode(statsData));
+
+          // Load security alerts
+          final alertsData = await _apiService.getSecurityAlerts();
+          _alerts = alertsData.map((json) => SecurityAlert.fromJson(json)).toList();
+          
+          // Cache the alerts data
+          await prefs.setString('dashboard_alerts', jsonEncode(alertsData));
+          
+          _errorMessage = ''; // Clear any previous offline error
+        } catch (e) {
+          // API failed, try to load from cache
+          await _loadFromCache(prefs);
+          _errorMessage = 'Unable to fetch latest data. Showing cached data.';
+        }
+      } else {
+        // Offline: load from cache
+        await _loadFromCache(prefs);
+        if (_stats == null && _alerts.isEmpty) {
+          _errorMessage = 'No offline data available. Please connect to the internet.';
+        } else {
+          _errorMessage = 'You are offline. Showing cached data.';
+        }
+      }
 
     } catch (e) {
       _errorMessage = e.toString().replaceAll('Exception: ', '');
-      // Keep fallback data if API fails
+      // Keep fallback data if everything fails
     } finally {
       _isLoading = false;
       notifyListeners();
+    }
+  }
+
+  Future<void> _loadFromCache(SharedPreferences prefs) async {
+    try {
+      // Load cached stats
+      final cachedStats = prefs.getString('dashboard_stats');
+      if (cachedStats != null) {
+        _stats = DashboardStats.fromJson(jsonDecode(cachedStats));
+      }
+
+      // Load cached alerts
+      final cachedAlerts = prefs.getString('dashboard_alerts');
+      if (cachedAlerts != null) {
+        final alertsList = jsonDecode(cachedAlerts) as List;
+        _alerts = alertsList.map((json) => SecurityAlert.fromJson(json)).toList();
+      }
+    } catch (e) {
+      print('Error loading cached data: $e');
+      // If cache is corrupted, keep existing data or fallback
     }
   }
 
