@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
-import '../models/scam_report_model.dart';
+import '../../models/scam_report_model.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -50,7 +50,7 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
 
     // Send to backend
     final response = await http.post(
-      Uri.parse('${ApiConfig.baseUrl}scam-reports'),
+      Uri.parse('${ApiConfig.baseUrl}scam_reports'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({
         'title': report.title,
@@ -71,6 +71,9 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
         type: report.type,
         severity: report.severity,
         date: report.date,
+        email: report.email,
+        phone: report.phone,
+        website: report.website,
         isSynced: true,
       );
       await box.put(key, syncedReport);

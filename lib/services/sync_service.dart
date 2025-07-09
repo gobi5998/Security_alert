@@ -15,8 +15,8 @@ abstract class SyncableReport {
 
 class SyncService {
   static Future<void> syncAllUnsynced<T extends SyncableReport>(
-    String boxName,
-  ) async {
+      String boxName,
+      ) async {
     final connectivityResult = await Connectivity().checkConnectivity();
     final isOnline = connectivityResult != ConnectivityResult.none;
     if (!isOnline) return;

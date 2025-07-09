@@ -32,9 +32,13 @@ class ScamReportService {
           Uri.parse('https://your-backend-url/api/scam-reports'),
           headers: {'Content-Type': 'application/json'},
           body: jsonEncode({
+
             'title': report.title,
             'description': report.description,
             'type': report.type,
+            'email': report.email,
+            'phone': report.phone,
+            'website': report.type,
             'severity': report.severity,
             'date': report.date.toIso8601String(),
             // Add other fields as needed
@@ -50,6 +54,9 @@ class ScamReportService {
             type: report.type,
             severity: report.severity,
             date: report.date,
+            email: report.email,
+            phone: report.phone,
+            website: report.website,
             isSynced: true,
           );
           await box.put(key, syncedReport);

@@ -36,7 +36,7 @@ class _PeriodDropdownState extends State<PeriodDropdown> {
         selectedItemBuilder: (BuildContext context) {
           return _options.map((String option) {
             return Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(8),

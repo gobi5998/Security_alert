@@ -5,7 +5,7 @@ import '../config/api_config.dart';
 class ApiService {
   late Dio _dio;
   bool _useMockData = false;
-  
+
   ApiService() {
     _dio = Dio(BaseOptions(
       baseUrl: ApiConfig.baseUrl,
@@ -13,7 +13,7 @@ class ApiService {
       receiveTimeout: Duration(seconds: ApiConfig.receiveTimeout),
       headers: ApiConfig.defaultHeaders,
     ));
-    
+
     // Add interceptors for logging and token management
     if (ApiConfig.enableLogging) {
       _dio.interceptors.add(LogInterceptor(
@@ -22,7 +22,7 @@ class ApiService {
         logPrint: (obj) => print(obj),
       ));
     }
-    
+
     _dio.interceptors.add(InterceptorsWrapper(
       onRequest: (options, handler) async {
         // Add auth token if available
@@ -36,13 +36,13 @@ class ApiService {
       onError: (error, handler) {
         print('API Error: ${error.message}');
         print('API Error Response: ${error.response?.data}');
-        
+
         // If it's a connection error, switch to mock data
-        if (error.type == DioExceptionType.connectionError || 
+        if (error.type == DioExceptionType.connectionError ||
             error.type == DioExceptionType.connectionTimeout) {
           _useMockData = true;
         }
-        
+
         handler.next(error);
       },
     ));
@@ -52,23 +52,23 @@ class ApiService {
   Future<Map<String, dynamic>> login(String username, String password) async {
     try {
       print('Attempting login with username: $username');
-      
+
       // If using mock data, return mock response
       if (_useMockData) {
         return _getMockLoginResponse(username);
       }
-      
+
       final response = await _dio.post(ApiConfig.loginEndpoint, data: {
         'username': username,
         'password': password,
       });
-      
+
       print('Login response: ${response.data}');
-      
+
       if (response.statusCode == 200 || response.statusCode == 201) {
         // Handle different possible response structures
         Map<String, dynamic> responseData = response.data;
-        
+
         // Save token if it exists in the response
         if (responseData.containsKey('token')) {
           final prefs = await SharedPreferences.getInstance();
@@ -77,7 +77,7 @@ class ApiService {
           final prefs = await SharedPreferences.getInstance();
           await prefs.setString('auth_token', responseData['access_token']);
         }
-        
+
         // If the response doesn't contain user data, create a mock user
         if (!responseData.containsKey('user')) {
           responseData['user'] = {
@@ -88,7 +88,7 @@ class ApiService {
             'updated_at': DateTime.now().toIso8601String(),
           };
         }
-        
+
         return responseData;
       }
       throw Exception('Login failed - Status: ${response.statusCode}');
@@ -96,15 +96,15 @@ class ApiService {
       print('DioException during login: ${e.message}');
       print('Response data: ${e.response?.data}');
       print('Response status: ${e.response?.statusCode}');
-      
+
       // If API is not available, use mock data
-      if (e.type == DioExceptionType.connectionError || 
+      if (e.type == DioExceptionType.connectionError ||
           e.type == DioExceptionType.connectionTimeout ||
           e.response?.statusCode == 404) {
         print('Using mock data for login');
         return _getMockLoginResponse(username);
       }
-      
+
       if (e.response?.statusCode == 401) {
         throw Exception('Invalid username or password');
       } else {
@@ -134,23 +134,23 @@ class ApiService {
   Future<Map<String, dynamic>> register(String username, String email, String password) async {
     try {
       print('Attempting registration with username: $username, email: $email');
-      
+
       // If using mock data, return mock response
       if (_useMockData) {
         return _getMockRegisterResponse(username, email);
       }
-      
+
       final response = await _dio.post(ApiConfig.registerEndpoint, data: {
         'username': username,
         'email': email,
         'password': password,
       });
-      
+
       print('Registration response: ${response.data}');
-      
+
       if (response.statusCode == 200 || response.statusCode == 201) {
         Map<String, dynamic> responseData = response.data;
-        
+
         // Save token if it exists in the response
         if (responseData.containsKey('token')) {
           final prefs = await SharedPreferences.getInstance();
@@ -159,7 +159,7 @@ class ApiService {
           final prefs = await SharedPreferences.getInstance();
           await prefs.setString('auth_token', responseData['access_token']);
         }
-        
+
         // If the response doesn't contain user data, create a mock user
         if (!responseData.containsKey('user')) {
           responseData['user'] = {
@@ -170,22 +170,22 @@ class ApiService {
             'updated_at': DateTime.now().toIso8601String(),
           };
         }
-        
+
         return responseData;
       }
       throw Exception('Registration failed - Status: ${response.statusCode}');
     } on DioException catch (e) {
       print('DioException during registration: ${e.message}');
       print('Response data: ${e.response?.data}');
-      
+
       // If API is not available, use mock data
-      if (e.type == DioExceptionType.connectionError || 
+      if (e.type == DioExceptionType.connectionError ||
           e.type == DioExceptionType.connectionTimeout ||
           e.response?.statusCode == 404) {
         print('Using mock data for registration');
         return _getMockRegisterResponse(username, email);
       }
-      
+
       if (e.response?.statusCode == 409) {
         throw Exception('Username or email already exists');
       } else if (e.response?.statusCode == 400) {
@@ -234,7 +234,7 @@ class ApiService {
       if (_useMockData) {
         return _getMockSecurityAlerts();
       }
-      
+
       final response = await _dio.get(ApiConfig.securityAlertsEndpoint);
       if (response.statusCode == 200) {
         // Handle different response structures
@@ -282,7 +282,7 @@ class ApiService {
       if (_useMockData) {
         return _getMockDashboardStats();
       }
-      
+
       final response = await _dio.get(ApiConfig.dashboardStatsEndpoint);
       if (response.statusCode == 200) {
         return response.data;
@@ -323,7 +323,7 @@ class ApiService {
       if (_useMockData) {
         return {'message': 'Issue reported successfully (mock data)'};
       }
-      
+
       final response = await _dio.post(ApiConfig.reportSecurityIssueEndpoint, data: issueData);
       if (response.statusCode == 201) {
         return response.data;
@@ -340,7 +340,7 @@ class ApiService {
       if (_useMockData) {
         return _getMockThreatHistory();
       }
-      
+
       final response = await _dio.get(ApiConfig.threatHistoryEndpoint, queryParameters: {
         'period': period,
       });
@@ -376,7 +376,7 @@ class ApiService {
       if (_useMockData) {
         return _getMockUserProfile();
       }
-      
+
       final response = await _dio.get(ApiConfig.userProfileEndpoint);
       if (response.statusCode == 200) {
         return response.data;
@@ -394,7 +394,7 @@ class ApiService {
       'id': '1',
       'username': 'demo_user',
       'email': 'demo@example.com',
-     
+
     };
   }
 
@@ -403,7 +403,7 @@ class ApiService {
       if (_useMockData) {
         return {'message': 'Profile updated successfully (mock data)'};
       }
-      
+
       final response = await _dio.put(ApiConfig.updateProfileEndpoint, data: profileData);
       if (response.statusCode == 200) {
         return response.data;
@@ -432,4 +432,4 @@ class ApiService {
         return 'An unexpected error occurred.';
     }
   }
-} 
+}

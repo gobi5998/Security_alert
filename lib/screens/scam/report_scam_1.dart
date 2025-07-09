@@ -73,11 +73,15 @@ class _ReportScam1State extends State<ReportScam1> {
           final syncedReport = ScamReportModel(
             id: report.id,
             title: report.title,
+            email: report.email,
+            phone: report.phone,
+            website: report.website,
             description: report.description,
             type: report.type,
             severity: report.severity,
             date: report.date,
             isSynced: true,
+
           );
           await box.put(key, syncedReport);
         }
@@ -219,6 +223,9 @@ class _ReportScam1State extends State<ReportScam1> {
           severity: report.severity,
           date: report.date,
           isSynced: true,
+          email: report.email,
+          phone: report.phone,
+          website: report.website,
         );
         await box.add(syncedReport);
         if (mounted) {

@@ -1,16 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:carousel_slider/carousel_slider.dart';
+import 'package:security_alert/custom/Image/image.dart';
 import 'package:security_alert/screens/scam/report_scam_1.dart';
-
 import '../custom/PeriodDropdown.dart';
 import '../custom/bottomnavigation.dart';
 import '../custom/customButton.dart';
 import '../provider/dashboard_provider.dart';
 import '../widget/graph_widget.dart';
-import 'appDrawer.dart';
+import '../widget/Drawer/appDrawer.dart';
 import '../services/biometric_service.dart';
+import 'ReportedFeatureCard.dart';
+import 'ReportedFeatureItem.dart';
+import 'alert.dart';
 import 'malware/report_malware_1.dart';
+import 'server_reports_page.dart';
+import 'menu/profile_page.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -27,7 +32,10 @@ class _DashboardPageState extends State<DashboardPage> {
     super.initState();
     // Load dashboard data when the page is initialized
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<DashboardProvider>(context, listen: false).loadDashboardData();
+      Provider.of<DashboardProvider>(
+        context,
+        listen: false,
+      ).loadDashboardData();
     });
   }
 
@@ -43,27 +51,32 @@ class _DashboardPageState extends State<DashboardPage> {
       extendBodyBehindAppBar: true,
       appBar: AppBar(
         flexibleSpace: Container(
-        decoration: const BoxDecoration(
-        gradient: LinearGradient(
-        begin: Alignment.topLeft,
-        end: Alignment.center,
-        colors: <Color>[
-        Color(0xFF236cc5), // Start color
-        Color(0xFF236cc5),],),),),
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.center,
+              colors: <Color>[
+                Color(0xFF236cc5), // Start color
+                Color(0xFF236cc5),
+              ],
+            ),
+          ),
+        ),
 
         backgroundColor: Colors.transparent,
         elevation: 0,
-        title: const Text("Security Alert", style: TextStyle(color: Colors.white)),
+        title: const Text(
+          "Security Alert",
+          style: TextStyle(color: Colors.white),
+        ),
         leading: IconButton(
-          icon: const Icon(Icons.menu, color: Colors.white),
+          icon: Image.asset('assets/icon/menu.png'),
           onPressed: () => _scaffoldKey.currentState?.openDrawer(),
         ),
         actions: [
           IconButton(
             icon: const Icon(Icons.notifications, color: Colors.white),
-            onPressed: () {
-              // TODO: Navigate to notifications
-            },
+            onPressed: () {},
           ),
           IconButton(
             icon: const Icon(Icons.refresh, color: Colors.white),
@@ -76,7 +89,8 @@ class _DashboardPageState extends State<DashboardPage> {
             icon: const Icon(Icons.fingerprint, color: Colors.white),
             onPressed: () async {
               await BiometricService.testBiometric();
-              final result = await BiometricService.authenticateWithBiometrics();
+              final result =
+                  await BiometricService.authenticateWithBiometrics();
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(content: Text('Biometric test result: $result')),
               );
@@ -85,17 +99,7 @@ class _DashboardPageState extends State<DashboardPage> {
         ],
       ),
       bottomNavigationBar: Container(
-        decoration: const BoxDecoration(
-          color: Color(0xFFf0f2f5),
-        //   gradient: LinearGradient(
-        //     begin: Alignment.topLeft,
-        //     end: Alignment.bottomRight,
-        //     colors: [
-        //       Color(0xFFb3c9e6), // Light blue
-        //       Color(0xFFFFFFFF), // White // White at the bottom
-        //     ],
-        //   ),
-        ),
+        decoration: const BoxDecoration(color: Color(0xFFf0f2f5)),
 
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -109,39 +113,61 @@ class _DashboardPageState extends State<DashboardPage> {
                   Expanded(
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 4),
-                        child: CustomButton(text: 'Report Scam', onPressed: () async {
-                          Navigator.push(context, MaterialPageRoute(builder: (context) => const ReportScam1()));
+                      child: CustomButton(
+                        text: 'Report Scam',
+                        onPressed: () async {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const ReportScam1(),
+                            ),
+                          );
                           return;
                         },
-                          fontSize: 14,
-                          borderCircular: 12,
-                          fontWeight: FontWeight.bold,)
-
+                        fontSize: 14,
+                        borderCircular: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                   Expanded(
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 4),
-                      child: CustomButton(text: 'Report Malware', onPressed: () async {
-                          Navigator.push(context, MaterialPageRoute(builder: (context) => const MalwareReportPage1()));
+                      child: CustomButton(
+                        text: 'Report Malware',
+                        onPressed: () async {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const MalwareReportPage1(),
+                            ),
+                          );
                           return;
-                          },
-                           fontSize: 14,
-                           borderCircular: 12,
-                          fontWeight: FontWeight.bold,)
+                        },
+                        fontSize: 14,
+                        borderCircular: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                   Expanded(
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 4),
-                        child: CustomButton(text: 'Report Fraud', onPressed: () async {
-                          Navigator.push(context, MaterialPageRoute(builder: (context) => const MalwareReportPage1()));
+                      child: CustomButton(
+                        text: 'Report Fraud',
+                        onPressed: () async {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const MalwareReportPage1(),
+                            ),
+                          );
                           return;
                         },
-                          fontSize: 14,
-                          borderCircular: 12,
-                          fontWeight: FontWeight.bold,)
-
+                        fontSize: 14,
+                        borderCircular: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ],
@@ -149,29 +175,40 @@ class _DashboardPageState extends State<DashboardPage> {
             ),
             // Bottom navigation bar
             BottomNavigationBar(
-              backgroundColor:  Color(0xFFf0f2f5),
+              backgroundColor: Color(0xFFf0f2f5),
               elevation: 8,
               selectedItemColor: Colors.black,
-              // unselectedItemColor: Colors.white60,
-              // type: BottomNavigationBarType.fixed,
+
               items: [
-                  // const BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-                customBottomNavItem(imagePath: 'assets/icon/Home.png', label: 'Home',),
-                // BottomNavigationBarItem(
-                //   icon: Image.asset(
-                //     'assets/icon/Home.png',
-                //     width: 24,
-                //     height: 24,
-                //   ),
-                //   label: 'Home',
-                // ),
-                customBottomNavItem(imagePath: 'assets/icon/Alert.png', label: 'Alert',),
-        customBottomNavItem(imagePath: 'assets/icon/Profile.png', label: 'Profile',),
+                customBottomNavItem(
+                    BottomNav: BottomNav.home,
+                    label: 'Home'),
+
+                customBottomNavItem(
+                    BottomNav: BottomNav.alert,
+                    label: 'Alert'),
+                customBottomNavItem(
+                  BottomNav: BottomNav.profile,
+                  label: 'Profile',
+                ),
               ],
               onTap: (index) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Tapped: \\${['Home','Alert', 'Profile'][index]}')),
-                );
+                if (index == 1) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => AlertPage(),
+                    ),
+                  );
+                } else if (index == 2) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => ProfilePage(),
+                    ),
+                  );
+                }
+                // Do nothing for Home (index 0)
               },
             ),
           ],
@@ -196,7 +233,9 @@ class _DashboardPageState extends State<DashboardPage> {
                 Padding(
                   padding: const EdgeInsets.all(16),
                   child: ConstrainedBox(
-                    constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                    constraints: BoxConstraints(
+                      minHeight: constraints.maxHeight,
+                    ),
                     child: IntrinsicHeight(
                       child: ListView(
                         children: [
@@ -204,106 +243,90 @@ class _DashboardPageState extends State<DashboardPage> {
 
                           // Show error message
                           if (provider.errorMessage.isNotEmpty)
-                            // Container(
-                            //   width: double.infinity,
-                            //   padding: const EdgeInsets.all(12),
-                            //   margin: const EdgeInsets.only(bottom: 16),
-                            //   decoration: BoxDecoration(
-                            //     color: Colors.red.shade50,
-                            //     border: Border.all(color: Colors.red.shade200),
-                            //     borderRadius: BorderRadius.circular(8),
-                            //   ),
-                            //   child: Row(
-                            //     children: [
-                            //       Icon(Icons.error_outline, color: Colors.red.shade600, size: 20),
-                            //       const SizedBox(width: 8),
-                            //       Expanded(
-                            //         child: Text(
-                            //           provider.errorMessage,
-                            //           style: TextStyle(color: Colors.red.shade700, fontSize: 14),
-                            //         ),
-                            //       ),
-                            //       IconButton(
-                            //         icon: Icon(Icons.close, color: Colors.red.shade600, size: 20),
-                            //         onPressed: () => provider.clearError(),
-                            //       ),
-                            //     ],
-                            //   ),
-                            // ),
-
-                          // Carousel
-                          Container(
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
+                            // Carousel
+                            Container(
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
                                 color: Colors.black.withOpacity(0.2),
-                              borderRadius: BorderRadius.circular(8)
-                            ),
-
-                            child: CarouselSlider(
-                              options: CarouselOptions(
-                                height: 170.0,
-                                enlargeCenterPage: true,
-                                enableInfiniteScroll: true,
-                                autoPlay: true,
+                                borderRadius: BorderRadius.circular(8),
                               ),
-                              items: [
-                                "assets/image/security1.jpg",
-                                "assets/image/security2.png",
-                                "assets/image/security3.jpg",
-                                "assets/image/security4.jpg",
-                                "assets/image/security5.jpg",
-                                "assets/image/security6.jpg",
-                              ].map((imagePath) {
-                                return Builder(
-                                  builder: (BuildContext context) {
-                                    return ClipRRect(
-                                      borderRadius: BorderRadius.circular(12),
-                                      child: Image.asset(
-                                        imagePath,
-                                        fit: BoxFit.cover,
-                                        width: MediaQuery.of(context).size.width,
-                                      ),
-                                    );
-                                  },
-                                );
-                              }).toList(),
-                            ),
-                          ),
-                          // ScamCarousel(),
 
+                              child: CarouselSlider(
+                                options: CarouselOptions(
+                                  height: 170.0,
+                                  enlargeCenterPage: true,
+                                  enableInfiniteScroll: true,
+                                  autoPlay: true,
+                                ),
+                                items:
+                                    [
+                                      "assets/image/security1.jpg",
+                                      "assets/image/security2.png",
+                                      "assets/image/security3.jpg",
+                                      "assets/image/security4.jpg",
+                                      "assets/image/security5.jpg",
+                                      "assets/image/security6.jpg",
+                                    ].map((imagePath) {
+                                      return Builder(
+                                        builder: (BuildContext context) {
+                                          return ClipRRect(
+                                            borderRadius: BorderRadius.circular(
+                                              12,
+                                            ),
+                                            child: Image.asset(
+                                              imagePath,
+                                              fit: BoxFit.cover,
+                                              width: MediaQuery.of(
+                                                context,
+                                              ).size.width,
+                                            ),
+                                          );
+                                        },
+                                      );
+                                    }).toList(),
+                              ),
+                            ),
+
+                          // ScamCarousel(),
                           const SizedBox(height: 16),
 
                           // Feature stats
-                          Container(
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: Colors.black.withOpacity(0.2),
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            child: Column(
-                              children: provider.reportedFeatures.entries.map((entry) {
-                                return Padding(
-                                  padding: const EdgeInsets.symmetric(vertical: 8.0),
-                                  child: Row(
-                                    children: [
-                                      Expanded(flex: 2, child: Text(entry.key)),
-                                      Expanded(
-                                        flex: 5,
-                                        child: LinearProgressIndicator(
-                                          value: (entry.value is int) ? entry.value.toDouble() : entry.value,
-                                          color: Colors.blue,
-                                          backgroundColor: Colors.white,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Text("${(entry.value * 100).toInt()}%"),
-                                    ],
-                                  ),
-                                );
-                              }).toList(),
-                            ),
-                          ),
-
+                          // Container(
+                          //   padding: const EdgeInsets.all(16),
+                          //   decoration: BoxDecoration(
+                          //     color: Colors.black.withOpacity(0.2),
+                          //     borderRadius: BorderRadius.circular(16),
+                          //   ),
+                          //   child: Column(
+                          //     children: provider.reportedFeatures.entries.map((
+                          //       entry,
+                          //     ) {
+                          //       return Padding(
+                          //         padding: const EdgeInsets.symmetric(
+                          //           vertical: 8.0,
+                          //         ),
+                          //         child: Row(
+                          //           children: [
+                          //             Expanded(flex: 2, child: Text(entry.key)),
+                          //             Expanded(
+                          //               flex: 5,
+                          //               child: LinearProgressIndicator(
+                          //                 value: (entry.value is int)
+                          //                     ? entry.value.toDouble()
+                          //                     : entry.value,
+                          //                 color: Colors.blue,
+                          //                 backgroundColor: Colors.white,
+                          //               ),
+                          //             ),
+                          //             const SizedBox(width: 8),
+                          //             Text("${(entry.value * 100).toInt()}%"),
+                          //           ],
+                          //         ),
+                          //       );
+                          //     }).toList(),
+                          //   ),
+                          // ),
+                          ReportedFeaturesPanel(),
                           const SizedBox(height: 16),
 
                           // Stats
@@ -314,13 +337,13 @@ class _DashboardPageState extends State<DashboardPage> {
                             decoration: BoxDecoration(
                               color: Colors.black.withOpacity(0.2),
                               borderRadius: BorderRadius.circular(20),
-
                             ),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
                                   children: [
                                     const Text(
                                       "Thread Statistics",
@@ -330,7 +353,7 @@ class _DashboardPageState extends State<DashboardPage> {
                                         fontSize: 18,
                                       ),
                                     ),
-                                    PeriodDropdown()
+                                    PeriodDropdown(),
                                     // Container(
                                     //   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                                     //   decoration: BoxDecoration(
@@ -354,7 +377,8 @@ class _DashboardPageState extends State<DashboardPage> {
                                 ),
                                 const SizedBox(height: 18),
                                 Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
                                   children: [
                                     _StatCard(
                                       label: '50K+',
@@ -403,7 +427,6 @@ class _DashboardPageState extends State<DashboardPage> {
           },
         ),
       ),
-
     );
   }
 }
@@ -430,7 +453,9 @@ class _StatCard extends StatelessWidget {
             margin: const EdgeInsets.symmetric(horizontal: 1),
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 24),
             decoration: BoxDecoration(
-              color: highlight ? const Color(0xFF042E6F) : const Color(0xFF064FAD),
+              color: highlight
+                  ? const Color(0xFF042E6F)
+                  : const Color(0xFF064FAD),
               borderRadius: BorderRadius.circular(12),
               boxShadow: [
                 BoxShadow(
@@ -479,8 +504,6 @@ class _StatCard extends StatelessWidget {
   }
 }
 
-
-
 // class _ReportButton extends StatelessWidget {
 //   final String label;
 //   final IconData icon;
@@ -525,4 +548,3 @@ class _StatCard extends StatelessWidget {
 //     );
 //   }
 // }
-

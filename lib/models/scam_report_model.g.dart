@@ -19,31 +19,40 @@ class ScamReportModelAdapter extends TypeAdapter<ScamReportModel> {
     return ScamReportModel(
       id: fields[0] as String,
       title: fields[1] as String,
-      description: fields[2] as String,
-      type: fields[3] as String,
-      severity: fields[4] as String,
-      date: fields[5] as DateTime,
-      isSynced: fields[6] as bool,
+      email: fields[2] as String,
+      phone: fields[3] as String,
+      website: fields[4] as String,
+      description: fields[5] as String,
+      type: fields[6] as String,
+      severity: fields[7] as String,
+      date: fields[8] as DateTime,
+      isSynced: fields[9] as bool,
     );
   }
 
   @override
   void write(BinaryWriter writer, ScamReportModel obj) {
     writer
-      ..writeByte(7)
+      ..writeByte(10)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
       ..write(obj.title)
       ..writeByte(2)
-      ..write(obj.description)
+      ..write(obj.email)
       ..writeByte(3)
-      ..write(obj.type)
+      ..write(obj.phone)
       ..writeByte(4)
-      ..write(obj.severity)
+      ..write(obj.website)
       ..writeByte(5)
-      ..write(obj.date)
+      ..write(obj.description)
       ..writeByte(6)
+      ..write(obj.type)
+      ..writeByte(7)
+      ..write(obj.severity)
+      ..writeByte(8)
+      ..write(obj.date)
+      ..writeByte(9)
       ..write(obj.isSynced);
   }
 

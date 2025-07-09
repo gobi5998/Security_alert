@@ -5,6 +5,7 @@ import 'package:security_alert/custom/CustomDropdown.dart';
 import 'package:security_alert/custom/customButton.dart';
 import '../../models/scam_report_model.dart';
 import '../dashboard_page.dart';
+import 'scam_remote_service.dart';
 
 class ReportScam2 extends StatefulWidget {
   final String scamType;
@@ -27,23 +28,138 @@ class _ReportScam2State extends State<ReportScam2> {
   String? severity;
   int screenshotCount = 0;
   final List<String> severityLevels = ['Low', 'Medium', 'High', 'Critical'];
+  final ScamRemoteService _remoteService = ScamRemoteService();
+  bool _isSubmitting = false;
 
   Future<void> _saveReport() async {
-    final box = Hive.box<ScamReportModel>('scam_reports');
-    final connectivityResult = await Connectivity().checkConnectivity();
-    final isOnline = connectivityResult != ConnectivityResult.none;
-    final report = ScamReportModel(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      title: widget.scamType,
-      description: widget.description ?? '',
-      type: widget.scamType,
-      severity: severity ?? 'Medium',
-      date: DateTime.now(),
-      isSynced: isOnline,
-    );
-    await box.add(report);
-  }
+    if (_isSubmitting) return;
+    
+    setState(() {
+      _isSubmitting = true;
+    });
 
+    try {
+      final box = Hive.box<ScamReportModel>('scam_reports');
+      final connectivityResult = await Connectivity().checkConnectivity();
+      final isOnline = connectivityResult != ConnectivityResult.none;
+      
+      // Create a comprehensive description including all collected data
+      String fullDescription = widget.description ?? '';
+      String phone = widget.phone ?? '';
+      String email = widget.email ?? '';
+      String website = widget.website ?? '';
+
+      // if (widget.phone != null && widget.phone!.isNotEmpty) {
+      //   fullDescription += '\n\nPhone: ${widget.phone}';
+      // }
+      // if (widget.email != null && widget.email!.isNotEmpty) {
+      //   fullDescription += '\nEmail: ${widget.email}';
+      // }
+      // if (widget.website != null && widget.website!.isNotEmpty) {
+      //   fullDescription += '\nWebsite: ${widget.website}';
+      // }
+      
+      final report = ScamReportModel(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        title: '${widget.scamType} Scam Report',
+        email: email,
+        phone: phone,
+        website: website,
+        description: fullDescription,
+        type: widget.scamType,
+        severity: severity ?? 'Medium',
+        date: DateTime.now(),
+        isSynced: false,
+       // Start as false, will be updated after sync attempt
+      );
+
+      // Save to local storage first
+      await box.add(report);
+
+
+      // Try to sync with backend if online
+      if (isOnline) {
+        try {
+          bool syncSuccess = await _remoteService.sendReport(report);
+          if (syncSuccess) {
+            // Update the report as synced
+            final syncedReport = ScamReportModel(
+              id: report.id,
+              title: report.title,
+              email: report.email,
+              phone: report.phone,
+              website: report.website,
+              description: report.description,
+              type: report.type,
+              severity: report.severity,
+              date: report.date,
+              isSynced: true,
+
+            );
+            // Find and update the report in the box
+            final reports = box.values.toList();
+            for (int i = 0; i < reports.length; i++) {
+              if (reports[i].id == report.id) {
+                await box.putAt(i, syncedReport);
+                break;
+              }
+            }
+            
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Report submitted successfully and synced with server!'),
+                  backgroundColor: Colors.green,
+                ),
+              );
+            }
+          } else {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Report saved locally. Will sync when connection is restored.'),
+                  backgroundColor: Colors.orange,
+                ),
+              );
+            }
+          }
+        } catch (e) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Report saved locally. Sync failed: ${e.toString()}'),
+                backgroundColor: Colors.orange,
+              ),
+            );
+          }
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Report saved locally. Will sync when connection is restored.'),
+              backgroundColor: Colors.orange,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to save report: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSubmitting = false;
+        });
+      }
+    }
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -92,19 +208,26 @@ class _ReportScam2State extends State<ReportScam2> {
               CustomDropdown(label: 'Alert Severity Levels', hint: 'Select a Severity Level', items: severityLevels, value: severity, onChanged: (val) => setState(() => severity = val,),),
                SizedBox(height: 24),
 
-              CustomButton(text: 'Submit', onPressed: () async {
-                if (_formKey.currentState!.validate()) {
-                  await _saveReport();
-                  if (!mounted) return;
-                  Navigator.pushAndRemoveUntil(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const DashboardPage(),
-                    ),
-                        (route) => false,
-                  );
-                }
-              }, fontWeight: FontWeight.normal)
+
+              CustomButton(
+                text: _isSubmitting ? 'Submitting...' : 'Submit', 
+                onPressed: _isSubmitting ? null : () async {
+                  if (_formKey.currentState!.validate()) {
+                    await _saveReport();
+                    if (!mounted) return;
+
+                    Navigator.pushAndRemoveUntil(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const DashboardPage(),
+                      ),
+                          (route) => false,
+
+                    );
+                  }
+                }, 
+                fontWeight: FontWeight.normal
+              )
               // SizedBox(
               //   width: double.infinity,
               //   child: ElevatedButton(
