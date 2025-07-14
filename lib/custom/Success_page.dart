@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../screens/dashboard_page.dart';
 
 class ReportSuccess extends StatefulWidget {
   final String label;
@@ -48,6 +49,27 @@ class _ReportSuccessState extends State<ReportSuccess> {
                       const Text(
                         "Successfully Submit",
                         style: TextStyle(fontSize: 16),
+                      ),
+                      const SizedBox(height: 24),
+                      ElevatedButton(
+                        onPressed: () {
+                          Navigator.pushAndRemoveUntil(
+                            context,
+                            MaterialPageRoute(builder: (_) => const DashboardPage()),
+                            (route) => false,
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.green,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                        ),
+                        child: const Text(
+                          'Go to Dashboard',
+                          style: TextStyle(fontSize: 16, color: Colors.white, fontWeight: FontWeight.bold),
+                        ),
                       ),
                     ],
                   ),

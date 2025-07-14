@@ -5,6 +5,7 @@ import '../custom/customButton.dart';
 import '../custom/customTextfield.dart';
 import '../provider/auth_provider.dart';
 import 'dashboard_page.dart';
+import 'reset_password_request.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -80,8 +81,7 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                       ),
 
-                    CustomTextField(hintText: 'username', controller: _usernameController, label: 'Username',validator: (val) =>
-            val == null || val.isEmpty ? 'Required' : null,),
+                    CustomTextField(hintText: 'username', controller: _usernameController, label: 'Username', ),
                     const SizedBox(height: 16),
                     Align(
                       alignment: Alignment.centerLeft,
@@ -100,7 +100,29 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 8),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => ResetPasswordRequestScreen(),
+                            ),
+                          );
+                        },
+                        child: const Text(
+                          'Forgot Password?',
+                          style: TextStyle(
+                            color: Color(0xFF064FAD),
+                            fontWeight: FontWeight.w500,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 5),
                     const Text("or", style: TextStyle(fontFamily: 'Nunito', color: Colors.grey)),
                     const SizedBox(height: 12),
                     Row(
@@ -112,31 +134,35 @@ class _LoginPageState extends State<LoginPage> {
                       ],
                     ),
                     const SizedBox(height: 32),
-                    CustomButton(text: 'Login',onPressed: authProvider.isLoading ? null : () async {
-                      final username = _usernameController.text.trim();
-                      final password = _passwordController.text.trim();
+                    CustomButton(
+                      text: 'Login',
+                      onPressed: authProvider.isLoading ? null : () async {
+                        final username = _usernameController.text.trim();
+                        final password = _passwordController.text.trim();
 
-                      if (username.isEmpty || password.isEmpty) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text("Please fill in all fields")),
-                        );
-                        return;
-                      }
+                        if (username.isEmpty || password.isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text("Please fill in all fields")),
+                          );
+                          return;
+                        }
 
-                      final success = await authProvider.login(username, password);
-                      if (success) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text("Login Successful")),
-                        );
-                        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const DashboardPage()));
-                      }
-                    },
-                        borderCircular: 6,
-                        width: 350,
-                        height: 55,
+                        final success = await authProvider.login(username, password);
+                        if (success) {
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(builder: (_) => const DashboardPage()),
+                          );
+                        } else {
+                          // Error message is handled by authProvider and shown in the UI
+                        }
+                      },
+                      isLoading: authProvider.isLoading,
+                      borderCircular: 6,
+                      width: 350,
+                      height: 55,
                       fontSize: 16,
-                      isLoading: authProvider.isLoading, fontWeight: FontWeight.w600,
-
+                      fontWeight: FontWeight.w600,
                     ),
 
 

@@ -9,6 +9,7 @@ import 'package:security_alert/custom/customTextfield.dart';
 import '../../models/scam_report_model.dart';
 import 'report_scam_2.dart';
 import 'view_pending_reports.dart';
+import 'scam_report_service.dart';
 
 class ReportScam1 extends StatefulWidget {
   const ReportScam1({Key? key}) : super(key: key);
@@ -50,50 +51,10 @@ class _ReportScam1State extends State<ReportScam1> {
         _isOnline = result != ConnectivityResult.none;
       });
       if (_isOnline) {
-        _syncReports();
+        print('Internet connection restored, syncing reports...');
+        ScamReportService.syncReports();
       }
     });
-  }
-
-  Future<void> _saveReportOffline(ScamReportModel report) async {
-    final box = Hive.box<ScamReportModel>('scam_reports');
-    await box.add(report);
-  }
-
-  Future<void> _syncReports() async {
-    final box = Hive.box<ScamReportModel>('scam_reports');
-    final reports = box.values.toList();
-    for (int i = 0; i < reports.length; i++) {
-      final report = reports[i];
-      if (!report.isSynced) {
-        bool success = await _sendReportToBackend(report);
-        if (success) {
-          // Update the report as synced
-          final key = box.keyAt(i);
-          final syncedReport = ScamReportModel(
-            id: report.id,
-            title: report.title,
-            email: report.email,
-            phone: report.phone,
-            website: report.website,
-            description: report.description,
-            type: report.type,
-            severity: report.severity,
-            date: report.date,
-            isSynced: true,
-
-          );
-          await box.put(key, syncedReport);
-        }
-      }
-    }
-  }
-
-  Future<bool> _sendReportToBackend(ScamReportModel report) async {
-    // TODO: Implement your API call here
-    // Return true if successful, false otherwise
-    await Future.delayed(Duration(milliseconds: 500)); // Simulate network
-    return true;
   }
 
   @override
@@ -112,7 +73,9 @@ class _ReportScam1State extends State<ReportScam1> {
           key: _formKey,
           child: ListView(
             children: [
-              CustomDropdown(label: 'Scam Type', hint: 'Select a Scam Type', items: scamTypes, value: scamType, onChanged: (val) => setState(() => scamType = val),),
+              CustomDropdown(label: 'Scam Type', hint: 'Select a Scam Type',
+                items: scamTypes, value: scamType,
+                onChanged: (val) => setState(() => scamType = val),),
 
               const SizedBox(height: 16),
               const Text(
@@ -123,8 +86,7 @@ class _ReportScam1State extends State<ReportScam1> {
               CustomTextField(label: 'Phone*',hintText: '+91-979864483',
                 onChanged:(val) => phone = val,
                 keyboardType: TextInputType.phone,
-                  validator: (val) =>
-                  val == null || val.isEmpty ? 'Required' : null,),
+                 ),
               // TextFormField(
               //   keyboardType: TextInputType.phone,
               //   decoration: const InputDecoration(
@@ -140,8 +102,7 @@ class _ReportScam1State extends State<ReportScam1> {
               CustomTextField(label: 'Email*',hintText: 'fathanah@gmail.com',
                 onChanged:(val) => email = val,
                 keyboardType: TextInputType.emailAddress,
-                validator: (val) =>
-                val == null || val.isEmpty ? 'Required' : null,),
+               ),
               // TextFormField(
               //   keyboardType: TextInputType.emailAddress,
               //   decoration: const InputDecoration(
@@ -157,8 +118,7 @@ class _ReportScam1State extends State<ReportScam1> {
               CustomTextField(label: 'Website',hintText: 'www.fathanah.com',
                 onChanged:(val) => website = val,
                 keyboardType: TextInputType.webSearch,
-                validator: (val) =>
-                val == null || val.isEmpty ? 'Required' : null,),
+                ),
               // TextFormField(
               //   decoration: const InputDecoration(
               //     labelText: 'Website',
@@ -171,8 +131,7 @@ class _ReportScam1State extends State<ReportScam1> {
               CustomTextField(label: 'Description*',hintText: 'Describe the scam...',
                 onChanged:(val) => description = val,
                 keyboardType: TextInputType.text,
-                validator: (val) =>
-                val == null || val.isEmpty ? 'Required' : null,),
+                ),
               // TextFormField(
               //   maxLines: 4,
               //   decoration: const InputDecoration(
@@ -210,46 +169,19 @@ class _ReportScam1State extends State<ReportScam1> {
   }
 
   Future<void> submitMalwareReport(ScamReportModel report) async {
-    final box = Hive.box<ScamReportModel>('scam_reports');
-    if (_isOnline) {
-      bool success = await _sendReportToBackend(report);
-      if (success) {
-        // Save as synced
-        final syncedReport = ScamReportModel(
-          id: report.id,
-          title: report.title,
-          description: report.description,
-          type: report.type,
-          severity: report.severity,
-          date: report.date,
-          isSynced: true,
-          email: report.email,
-          phone: report.phone,
-          website: report.website,
-        );
-        await box.add(syncedReport);
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Report sent and saved as synced!')),
-          );
-        }
-      } else {
-        // Save as not synced
-        await box.add(report);
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Report saved locally (not synced).')),
-          );
-        }
-      }
-    } else {
-      // Save as not synced
-      await box.add(report);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('No internet. Report saved offline.')),
-        );
-      }
+    // Use the centralized service to save and sync the report
+    await ScamReportService.saveReport(report);
+    
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(report.isSynced 
+            ? 'Report sent and saved as synced!' 
+            : 'Report saved locally. Will sync when connection is restored.'),
+          backgroundColor: report.isSynced ? Colors.green : Colors.orange,
+        ),
+      );
     }
   }
 }
+  

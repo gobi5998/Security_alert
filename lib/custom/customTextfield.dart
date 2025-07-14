@@ -17,7 +17,7 @@ class CustomTextField extends StatelessWidget {
     this.obscureText = false,
     this.keyboardType = TextInputType.text,
     this.onChanged,
-    required validator,
+
   }) : super(key: key);
 
   get validater =>  (val) =>
@@ -36,7 +36,7 @@ class CustomTextField extends StatelessWidget {
         Text(label, style: const TextStyle(fontWeight: FontWeight.w500)),
         const SizedBox(height: 6),
         TextFormField(
-          validator:  validater,
+          validator: (val) => val == null || val.isEmpty ? 'Required' : null,
           controller: controller,
           obscureText: obscureText,
           keyboardType: keyboardType,

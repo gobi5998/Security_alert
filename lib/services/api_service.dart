@@ -53,7 +53,7 @@ class ApiService {
     try {
       print('Attempting login with username: $username');
 
-      // If using mock data, return mock response
+      // Only use mock data if explicitly enabled for development
       if (_useMockData) {
         return _getMockLoginResponse(username);
       }
@@ -66,7 +66,6 @@ class ApiService {
       print('Login response: ${response.data}');
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        // Handle different possible response structures
         Map<String, dynamic> responseData = response.data;
 
         // Save token if it exists in the response
@@ -78,15 +77,9 @@ class ApiService {
           await prefs.setString('auth_token', responseData['access_token']);
         }
 
-        // If the response doesn't contain user data, create a mock user
+        // If the response doesn't contain user data, create a mock user (should not happen in production)
         if (!responseData.containsKey('user')) {
-          responseData['user'] = {
-            'id': responseData['id'] ?? '1',
-            'username': username,
-            'email': responseData['email'] ?? '$username@example.com',
-            'created_at': DateTime.now().toIso8601String(),
-            'updated_at': DateTime.now().toIso8601String(),
-          };
+          throw Exception('Login failed: No user data returned from server.');
         }
 
         return responseData;
@@ -97,14 +90,6 @@ class ApiService {
       print('Response data: ${e.response?.data}');
       print('Response status: ${e.response?.statusCode}');
 
-      // If API is not available, use mock data
-      if (e.type == DioExceptionType.connectionError ||
-          e.type == DioExceptionType.connectionTimeout ||
-          e.response?.statusCode == 404) {
-        print('Using mock data for login');
-        return _getMockLoginResponse(username);
-      }
-
       if (e.response?.statusCode == 401) {
         throw Exception('Invalid username or password');
       } else {
@@ -112,8 +97,8 @@ class ApiService {
       }
     } catch (e) {
       print('General exception during login: $e');
-      // Fallback to mock data
-      return _getMockLoginResponse(username);
+      // Do not fallback to mock data in production
+      throw Exception('Login failed: Unable to reach authentication server.');
     }
   }
 
@@ -131,64 +116,62 @@ class ApiService {
     };
   }
 
-  Future<Map<String, dynamic>> register(String username, String email, String password) async {
+  Future<Map<String, dynamic>> register(String firstname, String lastname, String username, String password) async {
     try {
-      print('Attempting registration with username: $username, email: $email');
-
-      // If using mock data, return mock response
-      if (_useMockData) {
-        return _getMockRegisterResponse(username, email);
-      }
-
-      final response = await _dio.post(ApiConfig.registerEndpoint, data: {
+      // Print the payload for debugging
+      final payload = {
+        'firstName': firstname,
+        'lastName': lastname,
         'username': username,
-        'email': email,
         'password': password,
-      });
+      };
+      print('Registration payload: $payload');
+
+      final response = await _dio.post(ApiConfig.registerEndpoint, data: payload);
 
       print('Registration response: ${response.data}');
+      print('Type of response.data: ${response.data.runtimeType}');
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        Map<String, dynamic> responseData = response.data;
-
-        // Save token if it exists in the response
-        if (responseData.containsKey('token')) {
-          final prefs = await SharedPreferences.getInstance();
-          await prefs.setString('auth_token', responseData['token']);
-        } else if (responseData.containsKey('access_token')) {
-          final prefs = await SharedPreferences.getInstance();
-          await prefs.setString('auth_token', responseData['access_token']);
+        if (response.data is Map<String, dynamic> && response.data['user'] is Map<String, dynamic>) {
+          Map<String, dynamic> responseData = response.data;
+          // Save token if it exists in the response
+          if (responseData.containsKey('token')) {
+            final prefs = await SharedPreferences.getInstance();
+            await prefs.setString('auth_token', responseData['token']);
+          } else if (responseData.containsKey('access_token')) {
+            final prefs = await SharedPreferences.getInstance();
+            await prefs.setString('auth_token', responseData['access_token']);
+          }
+          return responseData;
+        } else {
+          print('Unexpected response format: ${response.data}');
+          throw Exception('Invalid registration response format');
         }
-
-        // If the response doesn't contain user data, create a mock user
-        if (!responseData.containsKey('user')) {
-          responseData['user'] = {
-            'id': responseData['id'] ?? '1',
-            'username': username,
-            'email': email,
-            'created_at': DateTime.now().toIso8601String(),
-            'updated_at': DateTime.now().toIso8601String(),
-          };
+      } else {
+        // Print backend error message if available
+        if (response.data is Map<String, dynamic> && response.data['message'] != null) {
+          throw Exception(response.data['message']);
         }
-
-        return responseData;
+        throw Exception('Registration failed - Status: ${response.statusCode}');
       }
-      throw Exception('Registration failed - Status: ${response.statusCode}');
     } on DioException catch (e) {
       print('DioException during registration: ${e.message}');
       print('Response data: ${e.response?.data}');
-
       // If API is not available, use mock data
       if (e.type == DioExceptionType.connectionError ||
           e.type == DioExceptionType.connectionTimeout ||
           e.response?.statusCode == 404) {
         print('Using mock data for registration');
-        return _getMockRegisterResponse(username, email);
+        return _getMockRegisterResponse(firstname, lastname, username);
       }
-
       if (e.response?.statusCode == 409) {
         throw Exception('Username or email already exists');
       } else if (e.response?.statusCode == 400) {
+        // Print backend error message if available
+        if (e.response?.data is Map<String, dynamic> && e.response?.data['message'] != null) {
+          throw Exception(e.response?.data['message']);
+        }
         throw Exception('Invalid registration data');
       } else {
         throw Exception(e.response?.data?['message'] ?? 'Registration failed: ${e.message}');
@@ -196,16 +179,17 @@ class ApiService {
     } catch (e) {
       print('General exception during registration: $e');
       // Fallback to mock data
-      return _getMockRegisterResponse(username, email);
+      return _getMockRegisterResponse(firstname, lastname, username);
     }
   }
 
-  Map<String, dynamic> _getMockRegisterResponse(String username, String email) {
+  Map<String, dynamic> _getMockRegisterResponse(String firstname, String lastname, String username) {
     return {
       'user': {
         'id': '1',
+        'firstname':firstname,
+        'lastname':lastname,
         'username': username,
-        'email': email,
       },
       'token': 'mock_token_${DateTime.now().millisecondsSinceEpoch}',
       'message': 'Registration successful (mock data)',
@@ -415,21 +399,126 @@ class ApiService {
     }
   }
 
-  // Helper method to handle network errors
-  String _handleError(DioException error) {
-    switch (error.type) {
-      case DioExceptionType.connectionTimeout:
-      case DioExceptionType.sendTimeout:
-      case DioExceptionType.receiveTimeout:
-        return 'Connection timeout. Please check your internet connection.';
-      case DioExceptionType.badResponse:
-        return error.response?.data['message'] ?? 'Server error occurred.';
-      case DioExceptionType.cancel:
-        return 'Request was cancelled.';
-      case DioExceptionType.connectionError:
-        return 'No internet connection.';
-      default:
-        return 'An unexpected error occurred.';
-    }
-  }
+  // // Password reset endpoints
+  // Future<Map<String, dynamic>> forgotPassword(String email) async {
+  //   try {
+  //     print('Requesting password reset for email: $email');
+
+  //     if (_useMockData) {
+  //       return _getMockForgotPasswordResponse(email);
+  //     }
+
+  //     final response = await _dio.post(ApiConfig.forgotPasswordEndpoint, data: {
+  //       'email': email,
+  //     });
+
+  //     print('Forgot password response: ${response.data}');
+
+  //     if (response.statusCode == 200 || response.statusCode == 201) {
+  //       return response.data;
+  //     }
+  //     throw Exception('Failed to send password reset email');
+  //   } on DioException catch (e) {
+  //     print('DioException during forgot password: ${e.message}');
+  //     print('Response data: ${e.response?.data}');
+
+  //     // If API is not available, use mock data
+  //     if (e.type == DioExceptionType.connectionError ||
+  //         e.type == DioExceptionType.connectionTimeout ||
+  //         e.response?.statusCode == 404) {
+  //       print('Using mock data for forgot password');
+  //       return _getMockForgotPasswordResponse(email);
+  //     }
+
+  //     if (e.response?.statusCode == 404) {
+  //       throw Exception('Email not found');
+  //     } else if (e.response?.statusCode == 400) {
+  //       throw Exception('Invalid email address');
+  //     } else {
+  //       throw Exception(e.response?.data?['message'] ?? 'Failed to send password reset email: ${e.message}');
+  //     }
+  //   } catch (e) {
+  //     print('General exception during forgot password: $e');
+  //     // Fallback to mock data
+  //     return _getMockForgotPasswordResponse(email);
+  //   }
+  // }
+
+  // Map<String, dynamic> _getMockForgotPasswordResponse(String email) {
+  //   return {
+  //     'message': 'Password reset link sent to $email (mock data)',
+  //     'email': email,
+  //     'status': 'success',
+  //   };
+  // }
+
+  // Future<Map<String, dynamic>> resetPassword(String token, String newPassword) async {
+  //   try {
+  //     print('Resetting password with token');
+
+  //     if (_useMockData) {
+  //       return _getMockResetPasswordResponse();
+  //     }
+
+  //     final response = await _dio.post(ApiConfig.resetPasswordEndpoint, data: {
+  //       'token': token,
+  //       'password': newPassword,
+  //     });
+
+  //     print('Reset password response: ${response.data}');
+
+  //     if (response.statusCode == 200 || response.statusCode == 201) {
+  //       return response.data;
+  //     }
+  //     throw Exception('Failed to reset password');
+  //   } on DioException catch (e) {
+  //     print('DioException during reset password: ${e.message}');
+  //     print('Response data: ${e.response?.data}');
+
+  //     // If API is not available, use mock data
+  //     if (e.type == DioExceptionType.connectionError ||
+  //         e.type == DioExceptionType.connectionTimeout ||
+  //         e.response?.statusCode == 404) {
+  //       print('Using mock data for reset password');
+  //       return _getMockResetPasswordResponse();
+  //     }
+
+  //     if (e.response?.statusCode == 400) {
+  //       throw Exception('Invalid or expired token');
+  //     } else if (e.response?.statusCode == 422) {
+  //       throw Exception('Password does not meet requirements');
+  //     } else {
+  //       throw Exception(e.response?.data?['message'] ?? 'Failed to reset password: ${e.message}');
+  //     }
+  //   } catch (e) {
+  //     print('General exception during reset password: $e');
+  //     // Fallback to mock data
+  //     return _getMockResetPasswordResponse();
+  //   }
+  // }
+
+  // Map<String, dynamic> _getMockResetPasswordResponse() {
+  //   return {
+  //     'message': 'Password reset successfully (mock data)',
+  //     'status': 'success',
+  //   };
+  // }
+
+  // // Helper method to handle network errors
+  // String _handleError(DioException error) {
+  //   switch (error.type) {
+  //     case DioExceptionType.connectionTimeout:
+  //     case DioExceptionType.sendTimeout:
+  //     case DioExceptionType.receiveTimeout:
+  //       return 'Connection timeout. Please check your internet connection.';
+  //     case DioExceptionType.badResponse:
+  //       return error.response?.data['message'] ?? 'Server error occurred.';
+  //     case DioExceptionType.cancel:
+  //       return 'Request was cancelled.';
+  //     case DioExceptionType.connectionError:
+  //       return 'No internet connection.';
+  //     default:
+  //       return 'An unexpected error occurred.';
+  //   }
+  // }
 }

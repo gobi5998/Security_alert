@@ -1,15 +1,19 @@
 class ApiConfig {
   // Base URL for the API
   static const String baseUrl =
-      'https://0caa1d8b0a4d.ngrok-free.app/api/';
+      'https://74f62209ab0d.ngrok-free.app/api/';
   // Replace with your actual API base URL
 
   // API Endpoints
-  static const String loginEndpoint = '/auth/login';
-  static const String registerEndpoint = '/auth/register';
+  // static const String loginEndpoint = '/auth/login-user';
+  static const String loginEndpoint = 'auth/Login';
+  // static const String registerEndpoint = '/auth/create-user';
+  static const String registerEndpoint ='/auth/register';
   static const String logoutEndpoint = '/auth/logout';
   static const String userProfileEndpoint = '/auth/profile';
   static const String updateProfileEndpoint = '/auth/profile';
+  static const String forgotPasswordEndpoint = '/auth/forgot-password';
+  static const String resetPasswordEndpoint = '/auth/reset-password';
 
   // Security endpoints
   static const String securityAlertsEndpoint = '/alerts';

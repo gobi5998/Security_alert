@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import 'package:security_alert/screens/menu/profile_page.dart';
 import 'package:security_alert/screens/subscriptionPage/subscription_plans_page.dart';
 import 'package:security_alert/screens/menu/theard_database.dart';
+import 'package:security_alert/provider/auth_provider.dart';
+import 'package:security_alert/screens/login.dart';
 
 import '../../custom/Image/image.dart';
 import 'drawer_menu_item.dart';
@@ -86,7 +88,20 @@ class DashboardDrawer extends StatelessWidget {
               label: 'Feedback',
               routeName: '/feedback',
             ),
-
+            const SizedBox(height: 16),
+            const Divider(color: Colors.white54),
+            ListTile(
+              leading: const Icon(Icons.logout, color: Colors.red),
+              title: const Text('Logout', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+              onTap: () async {
+                await Provider.of<AuthProvider>(context, listen: false).logout();
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(builder: (_) => const LoginPage()),
+                  (route) => false,
+                );
+              },
+            ),
             const SizedBox(height: 16),
           ],
         ),

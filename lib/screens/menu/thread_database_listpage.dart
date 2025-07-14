@@ -5,6 +5,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:security_alert/config/api_config.dart';
+import '../scam/scam_report_service.dart';
 
 class ThreadDatabaseListPage extends StatefulWidget {
   final String searchQuery;
@@ -48,43 +49,40 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
       return;
     }
 
-    // Send to backend
-    final response = await http.post(
-      Uri.parse('${ApiConfig.baseUrl}scam_reports'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({
-        'title': report.title,
-        'description': report.description,
-        'type': report.type,
-        'severity': report.severity,
-        'date': report.date.toIso8601String(),
-      }),
-    );
-
-    if (response.statusCode == 200 || response.statusCode == 201) {
-      final box = Hive.box<ScamReportModel>('scam_reports');
-      final key = box.keyAt(index);
-      final syncedReport = ScamReportModel(
-        id: report.id,
-        title: report.title,
-        description: report.description,
-        type: report.type,
-        severity: report.severity,
-        date: report.date,
-        email: report.email,
-        phone: report.phone,
-        website: report.website,
-        isSynced: true,
-      );
-      await box.put(key, syncedReport);
-      setState(() {});
+    try {
+      // Use the centralized service to sync the report
+      bool success = await ScamReportService.sendToBackend(report);
+      
+      if (success) {
+        // Update the report as synced in the local database
+        final box = Hive.box<ScamReportModel>('scam_reports');
+        final key = box.keyAt(index);
+        final syncedReport = ScamReportModel(
+          id: report.id,
+          title: report.title,
+          description: report.description,
+          type: report.type,
+          severity: report.severity,
+          email: report.email,
+          phone: report.phone,
+          website: report.website,
+          date: report.date,
+          isSynced: true,
+        );
+        await box.put(key, syncedReport);
+        setState(() {});
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Report synced successfully!')));
+      } else {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to sync with server.')));
+      }
+    } catch (e) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('Report synced successfully!')));
-    } else {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Failed to sync with server.')));
+      ).showSnackBar(SnackBar(content: Text('Error syncing report: $e')));
     }
   }
 

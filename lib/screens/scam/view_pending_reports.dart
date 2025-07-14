@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
-
 import 'package:provider/provider.dart';
-
-import '../../models/scam_report_provider.dart';
+import '../../provider/scam_report_provider.dart';
 
 
 class ViewPendingReports extends StatelessWidget {

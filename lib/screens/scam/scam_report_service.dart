@@ -4,21 +4,22 @@ import 'dart:convert';
 import 'package:connectivity_plus/connectivity_plus.dart';
 
 import '../../models/scam_report_model.dart';
+import '../../config/api_config.dart';
 
 class ScamReportService {
-  static final _box = Hive.box('scam_reports');
+  static final _box = Hive.box<ScamReportModel>('scam_reports');
 
-  static Future<void> saveReport(Map<String, dynamic> report) async {
+  static Future<void> saveReport(ScamReportModel report) async {
     final connectivity = await Connectivity().checkConnectivity();
     if (connectivity != ConnectivityResult.none) {
       // Try to send to backend
       bool success = await sendToBackend(report);
-      if (!success) {
-        await _box.add(report);
+      if (success) {
+        report.isSynced = true;
       }
-    } else {
-      await _box.add(report);
     }
+    // Always save to local storage
+    await _box.add(report);
   }
 
   static Future<void> syncReports() async {
@@ -27,51 +28,89 @@ class ScamReportService {
     for (int i = 0; i < reports.length; i++) {
       final report = reports[i];
       if (!report.isSynced) {
-        // Replace with your actual backend API endpoint and payload
-        final response = await http.post(
-          Uri.parse('https://your-backend-url/api/scam-reports'),
-          headers: {'Content-Type': 'application/json'},
-          body: jsonEncode({
+        try {
+          final response = await http.post(
+            Uri.parse('${ApiConfig.baseUrl}scam-reports'),
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+            },
+            body: jsonEncode({
+              'title': report.title,
+              'description': report.description,
+              'type': report.type,
+              'email': report.email,
+              'phone': report.phone,
+              'website': report.website, // Fixed: was report.type
+              'severity': report.severity,
 
-            'title': report.title,
-            'description': report.description,
-            'type': report.type,
-            'email': report.email,
-            'phone': report.phone,
-            'website': report.type,
-            'severity': report.severity,
-            'date': report.date.toIso8601String(),
-            // Add other fields as needed
-          }),
-        );
-        if (response.statusCode == 200 || response.statusCode == 201) {
-          // Update as synced
-          final key = box.keyAt(i);
-          final syncedReport = ScamReportModel(
-            id: report.id,
-            title: report.title,
-            description: report.description,
-            type: report.type,
-            severity: report.severity,
-            date: report.date,
-            email: report.email,
-            phone: report.phone,
-            website: report.website,
-            isSynced: true,
+              'date': report.date.toIso8601String(),
+              'id': report.id,
+            }),
           );
-          await box.put(key, syncedReport);
+          
+          print('Sync response status: ${response.statusCode}');
+          print('Sync response body: ${response.body}');
+          
+          if (response.statusCode == 200 || response.statusCode == 201) {
+            // Update as synced
+            final key = box.keyAt(i);
+            final syncedReport = ScamReportModel(
+              id: report.id,
+              title: report.title,
+              description: report.description,
+              type: report.type,
+              severity: report.severity,
+              date: report.date,
+              email: report.email,
+              phone: report.phone,
+              website: report.website,
+              isSynced: true,
+            );
+            await box.put(key, syncedReport);
+            print('Successfully synced report: ${report.id}');
+          } else {
+            print('Failed to sync report. Status: ${response.statusCode}, Body: ${response.body}');
+          }
+        } catch (e) {
+          print('Error syncing report: $e');
         }
       }
     }
   }
 
-  static Future<bool> sendToBackend(Map<String, dynamic> report) async {
-    // TODO: Implement your API call here
-    // Return true if successful, false otherwise
-    return true;
+  static Future<bool> sendToBackend(ScamReportModel report) async {
+    try {
+      final response = await http.post(
+        Uri.parse('${ApiConfig.baseUrl}scam-reports'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: jsonEncode({
+          'title': report.title,
+          'description': report.description,
+          'type': report.type,
+          'email': report.email,
+          'phone': report.phone,
+          'website': report.website,
+          'severity': report.severity,
+          'date': report.date.toIso8601String(),
+          'id': report.id,
+        }),
+      );
+      
+      print('Send to backend response status: ${response.statusCode}');
+      print('Send to backend response body: ${response.body}');
+      
+      return response.statusCode == 200 || response.statusCode == 201;
+    } catch (e) {
+      print('Error sending to backend: $e');
+      return false;
+    }
   }
 
-  static List<Map<String, dynamic>> getLocalReports() {
-    return _box.values.map((e) => Map<String, dynamic>.from(e)).toList();
+  static List<ScamReportModel> getLocalReports() {
+    return _box.values.toList();
   }
 }

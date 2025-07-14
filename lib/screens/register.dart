@@ -19,25 +19,29 @@ class _RegisterPageState extends State<RegisterPage> {
   bool _obscureConfirm = true;
 
   final TextEditingController _usernameController = TextEditingController();
-  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _firstnameController = TextEditingController();
+  final TextEditingController _lastnameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController = TextEditingController();
 
   String get username => _usernameController.text;
-  String get email => _emailController.text;
+  String get firstname => _firstnameController.text;
+  String get lastname => _lastnameController.text;
   String get password => _passwordController.text;
   String get confirmPassword => _confirmPasswordController.text;
 
   bool get hasMinLength => password.length >= 8;
   bool get hasNumberOrSymbol => RegExp(r'[0-9!@#\$&*~]').hasMatch(password);
   bool get notContainName => !password.toLowerCase().contains(username.toLowerCase());
-  bool get notContainEmail => !password.toLowerCase().contains(email.toLowerCase());
+  bool get notContainEmail => !password.toLowerCase().contains(username.toLowerCase());
   bool get isStrong => hasMinLength && hasNumberOrSymbol && notContainName && notContainEmail;
 
   @override
   void dispose() {
+    
+    _firstnameController.dispose();
+    _lastnameController.dispose();
     _usernameController.dispose();
-    _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
@@ -108,19 +112,29 @@ class _RegisterPageState extends State<RegisterPage> {
                       ),
 
                     CustomTextField(
+                      hintText: 'firstname',
+                      controller: _firstnameController,
+                      label: 'firstname'
+                    ),
+                    SizedBox(height: 10,),
+                    CustomTextField(
+                      hintText: 'lastname',
+                      controller: _lastnameController,
+                      label: 'lastname'
+                    ),
+                    CustomTextField(
                       hintText: 'Username',
                       controller: _usernameController,
-                      label: 'Username',validator: (val) =>
-                    val == null || val.isEmpty ? 'Required' : null,
+                      label: 'Username'
                     ),
                     const SizedBox(height: 16),
-                    CustomTextField(
-                      hintText: 'Example@gmail.com',
-                      controller: _emailController,
-                      label: 'Email',
-                      validator: (val) =>
-                      val == null || val.isEmpty ? 'Required' : null,
-                    ),
+                    // CustomTextField(
+                    //   hintText: 'Example@gmail.com',
+                    //   controller: _emailController,
+                    //   label: 'Email',
+                    //   validator: (val) =>
+                    //   val == null || val.isEmpty ? 'Required' : null,
+                    // ),
                     const SizedBox(height: 16),
 
                     const Text("Password"),
@@ -128,7 +142,7 @@ class _RegisterPageState extends State<RegisterPage> {
                     TextField(
                       controller: _passwordController,
                       obscureText: _obscurePassword,
-                      onChanged: (val) => setState(() {}),
+                      // onChanged: (val) => setState(() {}),
                       decoration: InputDecoration(
                         hintText: '********',
                         hintStyle: const TextStyle(color: Colors.grey),
@@ -144,43 +158,43 @@ class _RegisterPageState extends State<RegisterPage> {
                     ),
                     const SizedBox(height: 8),
 
-                    Text(
-                      "✔ Password Strength: ${isStrong ? "Strong" : "Weak"}",
-                      style: TextStyle(color: isStrong ? Colors.green : Color(0xFF064FAD)),
-                    ),
-                    Text(
-                      "✔ cannot contain your name or email address",
-                      style: TextStyle(fontSize: 12, color: (notContainName && notContainEmail) ? Colors.black : Color(0xFF064FAD)),
-                    ),
-                    Text(
-                      "✔ at least 8 characters",
-                      style: TextStyle(fontSize: 12, color: hasMinLength ? Colors.black : Color(0xFF064FAD)),
-                    ),
-                    Text(
-                      "✔ contain numbers or symbols",
-                      style: TextStyle(fontSize: 12, color: hasNumberOrSymbol ? Colors.black : Color(0xFF064FAD)),
-                    ),
+                    // Text(
+                    //   "✔ Password Strength: ${isStrong ? "Strong" : "Weak"}",
+                    //   style: TextStyle(color: isStrong ? Colors.green : Color(0xFF064FAD)),
+                    // ),
+                    // Text(
+                    //   "✔ cannot contain your name or email address",
+                    //   style: TextStyle(fontSize: 12, color: (notContainName && notContainEmail) ? Colors.black : Color(0xFF064FAD)),
+                    // ),
+                    // Text(
+                    //   "✔ at least 8 characters",
+                    //   style: TextStyle(fontSize: 12, color: hasMinLength ? Colors.black : Color(0xFF064FAD)),
+                    // ),
+                    // Text(
+                    //   "✔ contain numbers or symbols",
+                    //   style: TextStyle(fontSize: 12, color: hasNumberOrSymbol ? Colors.black : Color(0xFF064FAD)),
+                    // ),
 
-                    const SizedBox(height: 16),
-                    const Text("Confirm Password"),
-                    const SizedBox(height: 8),
-                    TextField(
-                      controller: _confirmPasswordController,
-                      obscureText: _obscureConfirm,
-                      onChanged: (val) => setState(() {}),
-                      decoration: InputDecoration(
-                        hintText: '********',
-                        hintStyle: const TextStyle(color: Colors.grey),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: const BorderSide(color: Colors.black),
-                        ),
-                        suffixIcon: IconButton(
-                          icon: Icon(_obscureConfirm ? Icons.visibility_off : Icons.visibility),
-                          onPressed: () => setState(() => _obscureConfirm = !_obscureConfirm),
-                        ),
-                      ),
-                    ),
+                    // const SizedBox(height: 16),
+                    // const Text("Confirm Password"),
+                    // const SizedBox(height: 8),
+                    // TextField(
+                    //   controller: _confirmPasswordController,
+                    //   obscureText: _obscureConfirm,
+                    //   onChanged: (val) => setState(() {}),
+                    //   decoration: InputDecoration(
+                    //     hintText: '********',
+                    //     hintStyle: const TextStyle(color: Colors.grey),
+                    //     border: OutlineInputBorder(
+                    //       borderRadius: BorderRadius.circular(8),
+                    //       borderSide: const BorderSide(color: Colors.black),
+                    //     ),
+                    //     suffixIcon: IconButton(
+                    //       icon: Icon(_obscureConfirm ? Icons.visibility_off : Icons.visibility),
+                    //       onPressed: () => setState(() => _obscureConfirm = !_obscureConfirm),
+                    //     ),
+                    //   ),
+                    // ),
                     const SizedBox(height: 15),
                     const Center(child: Text("or")),
                     const SizedBox(height: 15),
@@ -201,24 +215,16 @@ class _RegisterPageState extends State<RegisterPage> {
                       ],
                     ),
                     const SizedBox(height: 15),
-                    CustomButton(text: 'Sign Up',  onPressed: authProvider.isLoading ? null : () async {
-                      if (username.isEmpty || email.isEmpty || password.isEmpty || confirmPassword.isEmpty) {
+                    CustomButton(text: 'Sign Up',  onPressed: 
+                    authProvider.isLoading ? null : () async {
+                      if ( firstname.isEmpty || lastname.isEmpty ||username.isEmpty || password.isEmpty) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(content: Text("Please fill in all fields")),
                         );
                         return;
                       }
-
-                      if (!isStrong) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text("Password is not strong")),
-                        );
-                      } else if (password != confirmPassword) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text("Passwords do not match")),
-                        );
-                      } else {
-                        final success = await authProvider.register(username, email, password);
+                      {
+                        final success = await authProvider.register(firstname, lastname, username, password);
                         if (success) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(content: Text("Registered Successfully")),
