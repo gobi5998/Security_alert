@@ -8,7 +8,7 @@ part of 'scam_report_model.dart';
 
 class ScamReportModelAdapter extends TypeAdapter<ScamReportModel> {
   @override
-  final int typeId = 1;
+  final int typeId = 0;
 
   @override
   ScamReportModel read(BinaryReader reader) {
@@ -17,19 +17,19 @@ class ScamReportModelAdapter extends TypeAdapter<ScamReportModel> {
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
     return ScamReportModel(
-      id: fields[0] as String,
-      title: fields[1] as String,
-      description: fields[2] as String,
-      type: fields[3] as String,
-      severity: fields[4] as String,
-      date: fields[5] as DateTime,
-      isSynced: fields[6] as bool,
-      screenshotPaths: (fields[7] as List).cast<String>(),
-      documentPaths: (fields[8] as List).cast<String>(),
-      voicePaths: (fields[12] as List).cast<String>(),
-      phone: fields[9] as String?,
-      email: fields[10] as String?,
-      website: fields[11] as String?,
+      id: fields[0] as String?,
+      reportCategoryId: fields[1] as String?,
+      reportTypeId: fields[2] as String?,
+      alertLevels: fields[3] as String?,
+      phoneNumber: fields[4] as String?,
+      email: fields[5] as String?,
+      website: fields[6] as String?,
+      description: fields[7] as String?,
+      createdAt: fields[8] as DateTime?,
+      updatedAt: fields[9] as DateTime?,
+      isSynced: fields[10] as bool?,
+      screenshotPaths: (fields[11] as List).cast<String>(),
+      documentPaths: (fields[12] as List).cast<String>(),
     );
   }
 
@@ -40,29 +40,29 @@ class ScamReportModelAdapter extends TypeAdapter<ScamReportModel> {
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
-      ..write(obj.title)
+      ..write(obj.reportCategoryId)
       ..writeByte(2)
-      ..write(obj.description)
+      ..write(obj.reportTypeId)
       ..writeByte(3)
-      ..write(obj.type)
+      ..write(obj.alertLevels)
       ..writeByte(4)
-      ..write(obj.severity)
+      ..write(obj.phoneNumber)
       ..writeByte(5)
-      ..write(obj.date)
-      ..writeByte(6)
-      ..write(obj.isSynced)
-      ..writeByte(7)
-      ..write(obj.screenshotPaths)
-      ..writeByte(8)
-      ..write(obj.documentPaths)
-      ..writeByte(9)
-      ..write(obj.phone)
-      ..writeByte(10)
       ..write(obj.email)
-      ..writeByte(11)
+      ..writeByte(6)
       ..write(obj.website)
+      ..writeByte(7)
+      ..write(obj.description)
+      ..writeByte(8)
+      ..write(obj.createdAt)
+      ..writeByte(9)
+      ..write(obj.updatedAt)
+      ..writeByte(10)
+      ..write(obj.isSynced)
+      ..writeByte(11)
+      ..write(obj.screenshotPaths)
       ..writeByte(12)
-      ..write(obj.voicePaths);
+      ..write(obj.documentPaths);
   }
 
   @override

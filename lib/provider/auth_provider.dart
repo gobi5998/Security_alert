@@ -256,6 +256,9 @@ class AuthProvider with ChangeNotifier {
       notifyListeners();
 
       final response = await _apiService.login(username, password);
+      if (response == null || response['user'] == null) {
+        throw Exception('Invalid response from server');
+      }
       _currentUser = User.fromJson(response['user']);
       _isLoggedIn = true;
       _errorMessage = '';

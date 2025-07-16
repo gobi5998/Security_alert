@@ -1,12 +1,14 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
+import '../../models/fraud_report_model.dart';
 import '../../models/scam_report_model.dart';
-import 'scam_local_service.dart';
-import 'scam_remote_service.dart';
+import 'fraud_local_service.dart';
+import 'fraud_remote_service.dart';
+
 import 'dart:io';
 
-class ScamSyncService {
-  final ScamLocalService _localService = ScamLocalService();
-  final ScamRemoteService _remoteService = ScamRemoteService();
+class FraudSyncService {
+  final FraudLocalService _localService = FraudLocalService();
+  final FraudRemoteService _remoteService = FraudRemoteService();
 
   Future<Map<String, dynamic>> syncReports() async {
     var connectivity = await Connectivity().checkConnectivity();
@@ -14,9 +16,9 @@ class ScamSyncService {
       throw Exception('No internet connection available');
     }
 
-    List<ScamReportModel> reports = await _localService.getAllReports();
-    List<ScamReportModel> unsyncedReports = reports
-        .where((r) => r.isSynced != true)
+    List<FraudReportModel> reports = await _localService.getAllReports();
+    List<FraudReportModel> unsyncedReports = reports
+        .where((r) => !r.isSynced)
         .toList();
 
     if (unsyncedReports.isEmpty) {
@@ -65,11 +67,11 @@ class ScamSyncService {
           syncedCount++;
         } else {
           failedCount++;
-          failedReports.add(report.reportCategoryId ?? report.id ?? 'Unknown');
+          failedReports.add(report.title);
         }
       } catch (e) {
         failedCount++;
-        failedReports.add('Report ID: \'${report.id ?? 'Unknown'}\' (Error: $e)');
+        failedReports.add('${report.title} (Error: $e)');
       }
     }
 
@@ -85,7 +87,7 @@ class ScamSyncService {
   }
 
   Future<int> getUnsyncedCount() async {
-    List<ScamReportModel> reports = await _localService.getAllReports();
-    return reports.where((r) => r.isSynced != true).length;
+    List<FraudReportModel> reports = await _localService.getAllReports();
+    return reports.where((r) => !r.isSynced).length;
   }
 }

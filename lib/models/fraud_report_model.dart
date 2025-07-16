@@ -3,7 +3,7 @@ import '../services/sync_service.dart';
 part 'fraud_report_model.g.dart';
 
 @HiveType(typeId: 1)
-class Fraudreportmodel extends HiveObject implements SyncableReport {
+class FraudReportModel extends HiveObject implements SyncableReport {
   @HiveField(0)
   String id;
 
@@ -43,7 +43,7 @@ class Fraudreportmodel extends HiveObject implements SyncableReport {
   @HiveField(12)
   List<String> voicePaths;
 
-  Fraudreportmodel({
+  FraudReportModel({
     required this.id,
     required this.title,
     required this.name,
@@ -72,7 +72,7 @@ class Fraudreportmodel extends HiveObject implements SyncableReport {
   };
 
   @override
-  String get endpoint => 'scam-reports';
+  String get endpoint => '/reports';
 
   Map<String, dynamic> toJson() => {
     'id': id,
@@ -87,7 +87,7 @@ class Fraudreportmodel extends HiveObject implements SyncableReport {
     'isSynced': isSynced,
   };
 
-  static Fraudreportmodel fromJson(Map<String, dynamic> json) => Fraudreportmodel(
+  static FraudReportModel fromJson(Map<String, dynamic> json) => FraudReportModel(
     id: json['id'] as String,
     title: json['title'] as String,
     name: json['name'] as String,
@@ -101,5 +101,3 @@ class Fraudreportmodel extends HiveObject implements SyncableReport {
 
   );
 }
-
-//

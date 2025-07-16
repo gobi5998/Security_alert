@@ -8,9 +8,11 @@ class CustomTextField extends StatelessWidget {
   final bool obscureText;
   final TextInputType keyboardType;
   final void Function(String)? onChanged;
+  final String? Function(String?)? validator;
 
   const CustomTextField({
     required this.label,
+     this.validator,
     Key? key,
     required this.hintText,
     this.controller,
@@ -20,8 +22,7 @@ class CustomTextField extends StatelessWidget {
 
   }) : super(key: key);
 
-  get validater =>  (val) =>
-  val == null || val.isEmpty ? 'Required' : null;
+
 
 
 
@@ -36,7 +37,7 @@ class CustomTextField extends StatelessWidget {
         Text(label, style: const TextStyle(fontWeight: FontWeight.w500)),
         const SizedBox(height: 6),
         TextFormField(
-          validator: (val) => val == null || val.isEmpty ? 'Required' : null,
+          // validator: (val) => val == null || val.isEmpty ? 'Required' : null,
           controller: controller,
           obscureText: obscureText,
           keyboardType: keyboardType,
@@ -47,6 +48,7 @@ class CustomTextField extends StatelessWidget {
               fontFamily: 'Nunito',
               color: Colors.grey,
             ),
+
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8.0),
             ),
@@ -56,6 +58,7 @@ class CustomTextField extends StatelessWidget {
               // borderSide: BorderSide(color: Color(0xFF064FAD)),
             ),
           ),
+          validator: validator,
         ),
       ],
     );

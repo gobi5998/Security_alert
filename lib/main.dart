@@ -4,6 +4,7 @@ import 'package:security_alert/provider/scam_report_provider.dart';
 import 'package:security_alert/screens/menu/feedbackPage.dart';
 import 'package:security_alert/screens/menu/profile_page.dart';
 import 'package:security_alert/screens/menu/ratepage.dart';
+import 'package:security_alert/screens/scam/scam_remote_service.dart';
 import 'package:security_alert/screens/scam/scam_report_service.dart';
 import 'package:security_alert/screens/menu/shareApp.dart';
 import 'package:security_alert/screens/subscriptionPage/subscription_plans_page.dart';
@@ -70,7 +71,7 @@ class MyApp extends StatelessWidget {
       // home: const SplashScreen(),
       initialRoute: '/',
       routes: {
-        '/': (context) => const SplashScreen(),
+        '/': (context) => const DashboardPage(),
         '/profile': (context) =>  ProfilePage(),
         '/thread': (context) =>  ThreadDatabaseFilterPage(),
         '/subscription': (context) =>  SubscriptionPlansPage(),
@@ -106,7 +107,7 @@ class _SplashToAuthState extends State<SplashToAuth> {
 
   @override
   Widget build(BuildContext context) {
-    return _showAuthWrapper ? const AuthWrapper() : const SplashScreen();
+    return _showAuthWrapper ? const AuthWrapper() : const DashboardPage();
   }
 }
 
@@ -176,13 +177,13 @@ class _AuthWrapperState extends State<AuthWrapper> {
     return Consumer<AuthProvider>(
       builder: (context, authProvider, child) {
         if (!_authChecked || authProvider.isLoading) {
-          return const SplashScreen();
+          return const DashboardPage();
         }
 
         if (authProvider.isLoggedIn) {
           if (!_biometricChecked) {
             _checkBiometrics(authProvider);
-            return const SplashScreen();
+            return const DashboardPage();
           }
 
           return _biometricPassed ? const DashboardPage() : const LoginPage();
@@ -192,4 +193,18 @@ class _AuthWrapperState extends State<AuthWrapper> {
       },
     );
   }
+}
+
+Future<List<ScamReportModel>> loadReportsOnStart() async {
+  final box = Hive.box<ScamReportModel>('scam_reports');
+  final connectivity = await Connectivity().checkConnectivity();
+  if (connectivity != ConnectivityResult.none) {
+    // Online: fetch from API, merge, and update Hive
+    final remoteReports = await ScamRemoteService().fetchReports();
+    for (var report in remoteReports) {
+      await box.put(report.id, ScamReportModel.fromJson(report.toJson()));
+    }
+  }
+  // Return all local reports (works offline)
+  return box.values.toList();
 }

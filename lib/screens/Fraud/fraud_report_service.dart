@@ -3,15 +3,14 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:connectivity_plus/connectivity_plus.dart';
 
+import '../../models/fraud_report_model.dart';
 import '../../models/scam_report_model.dart';
 import '../../config/api_config.dart';
-import '../../services/api_service.dart';
 
-class ScamReportService {
-  static final _box = Hive.box<ScamReportModel>('scam_reports');
-  static final ApiService _apiService = ApiService();
+class FraudReportService {
+  static final _box = Hive.box<FraudReportModel>('fraud_reports');
 
-  static Future<void> saveReport(ScamReportModel report) async {
+  static Future<void> saveReport(FraudReportModel report) async {
     final connectivity = await Connectivity().checkConnectivity();
     if (connectivity != ConnectivityResult.none) {
       // Try to send to backend
@@ -24,31 +23,29 @@ class ScamReportService {
     await _box.add(report);
   }
 
-  static Future<void> saveReportOffline(ScamReportModel report) async {
-    await _box.add(report);
-  }
-
   static Future<void> syncReports() async {
-    final box = Hive.box<ScamReportModel>('scam_reports');
+    final box = Hive.box<FraudReportModel>('fraud_reports');
     final reports = box.values.toList();
     for (int i = 0; i < reports.length; i++) {
       final report = reports[i];
-      if (report.isSynced != true) {
+      if (!report.isSynced) {
         try {
           final response = await http.post(
-            Uri.parse('${ApiConfig.baseUrl}/reports'),
+            Uri.parse('${ApiConfig.baseUrl}fraud-reports'),
             headers: {
               'Content-Type': 'application/json',
               'Accept': 'application/json',
             },
             body: jsonEncode({
-              'description': report.description,
+              'title': report.title,
+              'name': report.name,
+              'type': report.type,
               'email': report.email,
-              'phoneNumer': report.phoneNumber,
+              'phone': report.phone,
               'website': report.website, // Fixed: was report.type
-              'severity': report.alertLevels,
-              'createdAt': report.createdAt,
+              'severity': report.severity,
 
+              'date': report.date.toIso8601String(),
               'id': report.id,
             }),
           );
@@ -59,26 +56,22 @@ class ScamReportService {
           if (response.statusCode == 200 || response.statusCode == 201) {
             // Update as synced
             final key = box.keyAt(i);
-            final syncedReport = ScamReportModel(
+            final syncedReport = FraudReportModel(
               id: report.id,
-
-              description: report.description,
-
-              alertLevels: report.alertLevels,
-
+              title: report.title,
+              name: report.name,
+              type: report.type,
+              severity: report.severity,
+              date: report.date,
               email: report.email,
-              phoneNumber: report.phoneNumber,
+              phone: report.phone,
               website: report.website,
               isSynced: true,
-              reportCategoryId: report.reportCategoryId,
-              reportTypeId: report.reportTypeId,
             );
             await box.put(key, syncedReport);
             print('Successfully synced report: ${report.id}');
           } else {
-            print(
-              'Failed to sync report. Status: ${response.statusCode}, Body: ${response.body}',
-            );
+            print('Failed to sync report. Status: ${response.statusCode}, Body: ${response.body}');
           }
         } catch (e) {
           print('Error syncing report: $e');
@@ -87,24 +80,24 @@ class ScamReportService {
     }
   }
 
-  static Future<bool> sendToBackend(ScamReportModel report) async {
+  static Future<bool> sendToBackend(FraudReportModel report) async {
     try {
       final response = await http.post(
-        Uri.parse('${ApiConfig.baseUrl}/reports'),
+        Uri.parse('${ApiConfig.baseUrl}fraud-reports'),
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
         },
         body: jsonEncode({
-          'reportCategoryId': report.reportCategoryId,
-          'reportTypeId': report.reportTypeId,
-          'alertLevels': report.alertLevels,
-          'phoneNumber': report.phoneNumber,
+          'title': report.title,
+          'name': report.name,
+          'type': report.type,
           'email': report.email,
+          'phone': report.phone,
           'website': report.website,
-          'description': report.description,
-          'createdAt': report.createdAt?.toIso8601String(),
-          'updatedAt': report.updatedAt?.toIso8601String(),
+          'severity': report.severity,
+          'date': report.date.toIso8601String(),
+          'id': report.id,
         }),
       );
 
@@ -118,28 +111,7 @@ class ScamReportService {
     }
   }
 
-  static Future<void> updateReport(ScamReportModel report) async {
-    final box = Hive.box<ScamReportModel>('scam_reports');
-    await box.put(report.id, report);
-  }
-
-  static List<ScamReportModel> getLocalReports() {
+  static List<FraudReportModel> getLocalReports() {
     return _box.values.toList();
-  }
-
-  static Future<List<Map<String, dynamic>>> fetchReportTypes() async {
-    return await _apiService.fetchReportTypes();
-  }
-
-  static Future<List<Map<String, dynamic>>> fetchReportTypesByCategory(
-    String categoryId,
-  ) async {
-    return await _apiService.fetchReportTypesByCategory(categoryId);
-  }
-
-  static Future<List<Map<String, dynamic>>> fetchReportCategories() async {
-    final categories = await _apiService.fetchReportCategories();
-    print('API returned: $categories'); // Debug print
-    return categories;
   }
 }

@@ -2,35 +2,40 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:io';
 import '../../config/api_config.dart';
+import '../../models/fraud_report_model.dart';
 import '../../models/scam_report_model.dart';
 
-class ScamRemoteService {
+class FraudRemoteService {
   Future<bool> sendReport(
-      ScamReportModel report, {
+      FraudReportModel report, {
         List<File>? screenshots,
         List<File>? documents,
       }) async {
     try {
-      final url = Uri.parse('${ApiConfig.baseUrl}/reports');
+      final url = Uri.parse('${ApiConfig.baseUrl}fraud_reports');
       print('🔗 Attempting to send report to: $url');
 
       // Create multipart request for file uploads
       var request = http.MultipartRequest('POST', url);
 
       // Add basic report data
-      request.fields['reportId'] = report.id ?? ''; // Send Flutter-generated ID
-      
-      request.fields['title'] = report.reportCategoryId ?? '';
-      request.fields['description'] = report.description ?? '';
-      request.fields['type'] = report.reportTypeId ?? '';
-      request.fields['severity'] = report.alertLevels ?? '';
-      request.fields['date'] = report.createdAt?.toIso8601String() ?? '';
-      request.fields['phoneNumber'] = report.phoneNumber ?? '';
+      request.fields['reportId'] = report.id; // Send Flutter-generated ID
+      request.fields['title'] = report.title;
+      request.fields['name'] = report.name;
+      request.fields['type'] = report.type;
+      request.fields['severity'] = report.severity;
+      request.fields['date'] = report.date.toIso8601String();
+      request.fields['phone'] = report.phone ?? '';
       request.fields['email'] = report.email ?? '';
       request.fields['website'] = report.website ?? '';
 
       // Add file paths as JSON
-    
+      if (report.screenshotPaths.isNotEmpty) {
+        request.fields['screenshotPaths'] = jsonEncode(report.screenshotPaths);
+      }
+      if (report.documentPaths.isNotEmpty) {
+        request.fields['documentPaths'] = jsonEncode(report.documentPaths);
+      }
 
       // Add screenshots
       if (screenshots != null && screenshots.isNotEmpty) {
@@ -88,25 +93,25 @@ class ScamRemoteService {
     }
   }
 
-  Future<List<ScamReportModel>> fetchReports() async {
+  Future<List<FraudReportModel>> fetchReports() async {
     try {
-      final url = Uri.parse('${ApiConfig.baseUrl}scam_reports');
+      final url = Uri.parse('${ApiConfig.baseUrl}fraud_reports');
       final response = await http.get(url);
       if (response.statusCode == 200) {
         List data = jsonDecode(response.body);
         return data
             .map(
-              (e) => ScamReportModel(
+              (e) => FraudReportModel(
             id:
             e['_id'] ??
                 e['id'] ??
                 DateTime.now().millisecondsSinceEpoch.toString(),
-           
-            description: e['description'] ?? '',
-           
-                alertLevels: e['severity'] ?? 'Medium',
-            createdAt: DateTime.tryParse(e['date'] ?? '') ?? DateTime.now(),
-            isSynced: true, reportCategoryId: '', reportTypeId: '',
+            title: e['title'] ?? '',
+                name: e['name'] ?? '',
+            type: e['type'] ?? '',
+            severity: e['severity'] ?? 'Medium',
+            date: DateTime.tryParse(e['date'] ?? '') ?? DateTime.now(),
+            isSynced: true,
           ),
         )
             .toList();
@@ -118,10 +123,5 @@ class ScamRemoteService {
       print('Error fetching reports: $e');
       return [];
     }
-  }
-
-  static Future<void> submitScamReport(Map<String, dynamic> reportJson) async {
-    // Implement your API call here, e.g.:
-    // await http.post(Uri.parse('YOUR_API_URL'), body: jsonEncode(reportJson), headers: {...});
   }
 }

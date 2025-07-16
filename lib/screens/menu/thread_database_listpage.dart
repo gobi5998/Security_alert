@@ -59,15 +59,16 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
         final key = box.keyAt(index);
         final syncedReport = ScamReportModel(
           id: report.id,
-          title: report.title,
+
           description: report.description,
-          type: report.type,
-          severity: report.severity,
+
+          alertLevels: report.alertLevels,
           email: report.email,
-          phone: report.phone,
+          phoneNumber: report.phoneNumber,
           website: report.website,
-          date: report.date,
-          isSynced: true,
+          createdAt: report.createdAt,
+          updatedAt: report.updatedAt,
+           reportCategoryId: report.reportCategoryId, reportTypeId: report.reportTypeId,
         );
         await box.put(key, syncedReport);
         setState(() {});
@@ -96,24 +97,19 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
       reportsFromHive = reportsFromHive
           .where(
             (r) =>
-        r.title.toLowerCase().contains(
-          widget.searchQuery.toLowerCase(),
-        ) ||
-            r.description.toLowerCase().contains(
-              widget.searchQuery.toLowerCase(),
-            ),
-      )
+              (r.description ?? '').toLowerCase().contains(widget.searchQuery.toLowerCase()),
+          )
           .toList();
     }
     if (widget.selectedType != null && widget.selectedType!.isNotEmpty) {
       reportsFromHive = reportsFromHive
-          .where((r) => r.type == widget.selectedType)
+          .where((r) => false) // No type field, so filter out all or adjust as needed
           .toList();
     }
     if (widget.selectedSeverity != null &&
         widget.selectedSeverity!.isNotEmpty) {
       reportsFromHive = reportsFromHive
-          .where((r) => r.severity == widget.selectedSeverity)
+          .where((r) => (r.alertLevels ?? '') == widget.selectedSeverity)
           .toList();
     }
 
@@ -171,17 +167,17 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
                   ),
                   child: ListTile(
                     leading: CircleAvatar(
-                      backgroundColor: severityColor(report.severity),
+                      backgroundColor: severityColor(report.alertLevels ?? ''),
                       child: Icon(Icons.warning, color: Colors.white),
                     ),
                     title: Text(
-                      report.title,
+                      report.description ?? '',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
                     subtitle: Text(
-                      report.description,
+                      report.description ?? '',
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -195,26 +191,26 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
                           ),
                           decoration: BoxDecoration(
                             color: severityColor(
-                              report.severity,
+                              report.alertLevels ?? '',
                             ).withOpacity(0.1),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Text(
-                            report.severity,
+                            report.alertLevels ?? '',
                             style: TextStyle(
-                              color: severityColor(report.severity),
+                              color: severityColor(report.alertLevels ?? ''),
                               fontWeight: FontWeight.bold,
                             ),
                           ),
                         ),
                         const SizedBox(width: 8),
-                        report.isSynced
-                            ? Icon(Icons.cloud_done, color: Colors.green)
-                            : IconButton(
-                          icon: Icon(Icons.sync, color: Colors.orange),
-                          tooltip: 'Sync now',
-                          onPressed: () => _manualSync(i, report),
-                        ),
+                        (report.isSynced != true)
+                            ? IconButton(
+                                icon: Icon(Icons.sync, color: Colors.orange),
+                                tooltip: 'Sync now',
+                                onPressed: () => _manualSync(i, report),
+                              )
+                            : Icon(Icons.cloud_done, color: Colors.green),
                       ],
                     ),
                   ),

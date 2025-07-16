@@ -18,8 +18,8 @@ class ScamReportProvider with ChangeNotifier {
     List<ScamReportModel> remote = await _remoteService.fetchReports();
     // Merge: keep all unsynced local, and all remote (by id)
     Map<String, ScamReportModel> merged = {
-      for (var r in remote) r.id: r,
-      for (var r in local.where((e) => !e.isSynced)) r.id: r,
+      for (var r in remote) (r.id ?? ''): r,
+      for (var r in local.where((e) => e.isSynced != true)) (r.id ?? ''): r,
     };
     _reports = merged.values.toList();
     notifyListeners();

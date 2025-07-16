@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:security_alert/custom/Image/image.dart';
+import 'package:security_alert/screens/Fraud/ReportFraudStep1.dart';
 import 'package:security_alert/screens/scam/report_scam_1.dart';
+import 'package:security_alert/screens/scam/scam_report_service.dart';
 import '../custom/PeriodDropdown.dart';
 import '../custom/bottomnavigation.dart';
 import '../custom/customButton.dart';
@@ -17,6 +19,7 @@ import 'malware/report_malware_1.dart';
 import 'server_reports_page.dart';
 import 'menu/profile_page.dart';
 
+
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
 
@@ -26,6 +29,10 @@ class DashboardPage extends StatefulWidget {
 
 class _DashboardPageState extends State<DashboardPage> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  List<Map<String, dynamic>> reportTypes = [];
+  bool isLoadingTypes = true;
+  List<Map<String, dynamic>> reportCategories = [];
+  bool isLoadingCategories = true;
 
   @override
   void initState() {
@@ -36,6 +43,24 @@ class _DashboardPageState extends State<DashboardPage> {
         context,
         listen: false,
       ).loadDashboardData();
+    });
+    _loadReportTypes();
+    _loadReportCategories();
+  }
+
+  Future<void> _loadReportTypes() async {
+    reportTypes = await ScamReportService.fetchReportTypes();
+    print('report$reportTypes');
+    setState(() {
+      isLoadingTypes = false;
+    });
+  }
+
+  Future<void> _loadReportCategories() async {
+    reportCategories = await ScamReportService.fetchReportCategories();
+    print('Loaded categories: $reportCategories'); // Debug print
+    setState(() {
+      isLoadingCategories = false;
     });
   }
 
@@ -116,17 +141,22 @@ class _DashboardPageState extends State<DashboardPage> {
                       child: CustomButton(
                         text: 'Report Scam',
                         onPressed: () async {
+                          if (isLoadingTypes) return;
+                          Map<String, dynamic>? scamCategory;
+                          try {
+                            scamCategory = reportCategories.firstWhere((e) => e['name'] == 'Report Scam');
+                          } catch (_) {
+                            scamCategory = null;
+                          }
+                          if (scamCategory == null) return;
+
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => const ReportScam1(),
+                              builder: (context) => ReportScam1(categoryId: scamCategory!['_id']),
                             ),
                           );
-                          return;
-                        },
-                        fontSize: 14,
-                        borderCircular: 12,
-                        fontWeight: FontWeight.bold,
+                        }, fontWeight: FontWeight.normal,
                       ),
                     ),
                   ),
@@ -139,7 +169,7 @@ class _DashboardPageState extends State<DashboardPage> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => const MalwareReportPage1(),
+                              builder: (context) =>  MalwareReportPage1(),
                             ),
                           );
                           return;
@@ -159,7 +189,7 @@ class _DashboardPageState extends State<DashboardPage> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => const MalwareReportPage1(),
+                              builder: (context) =>  MalwareReportPage1(),
                             ),
                           );
                           return;

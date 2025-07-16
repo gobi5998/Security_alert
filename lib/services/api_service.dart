@@ -1,6 +1,8 @@
 import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../config/api_config.dart';
+import 'package:hive/hive.dart';
+import '../models/scam_report_model.dart';
 
 class ApiService {
   late Dio _dio;
@@ -49,56 +51,222 @@ class ApiService {
   }
 
   // Authentication endpoints
+  // Future<Map<String, dynamic>> login(String username, String password) async {
+  //   try {
+  //     print('Attempting login with username: $username');
+  //
+  //     final response = await _dio.post(ApiConfig.loginEndpoint, data: {
+  //       'username': username,
+  //       'password': password,
+  //     });
+  //
+  //     print('Login response: ${response.data}');
+  //
+  //     if (response.statusCode == 200 || response.statusCode == 201) {
+  //       Map<String, dynamic> responseData = response.data;
+  //
+  //       final prefs = await SharedPreferences.getInstance();
+  //       if (responseData.containsKey('access_token')) {
+  //         await prefs.setString('auth_token', responseData['access_token']);
+  //       } else if (responseData.containsKey('token')) {
+  //         await prefs.setString('auth_token', responseData['token']);
+  //       }
+  //
+  //       // ✅ You may log the user or token info here if needed
+  //       return responseData;
+  //     }
+  //
+  //     throw Exception('Login failed - Status: ${response.statusCode}');
+  //   } on DioException catch (e) {
+  //     print('DioException during login: ${e.message}');
+  //     print('Response data: ${e.response?.data}');
+  //     print('Response status: ${e.response?.statusCode}');
+  //
+  //     final errMsg = e.response?.data?['message'] ?? 'Login failed: ${e.message}';
+  //     throw Exception('Login failed: $errMsg');
+  //   } catch (e) {
+  //     print('General exception during login: $e');
+  //     throw Exception('Login failed: Unable to reach authentication server.');
+  //   }
+  // }
+
+
+  //Fetch the data in report-type
+
+  // Future<void> _fetchReportTypes() async {
+  //   try {
+  //     final dio = Dio();
+
+  //     final response = await dio.get(ApiConfig.reportTypeEndpoint);
+
+  //     if (response.statusCode == 200) {
+  //       final List<dynamic> data = response.data;
+
+  //       setState(() {
+  //         var scamTypes = data.map<String>((e) => e['name'] as String).toList();
+  //       });
+  //     } else {
+  //       print('Failed to fetch: ${response.statusCode}');
+  //     }
+  //   } catch (e) {
+  //     print('Dio error: $e');
+  //   }
+  // }
+
+  // Future<Map<String, dynamic>> login(String username, String password) async {
+  //   try {
+  //     print('Attempting login with username: $username');
+  //
+  //     final response = await _dio.post(ApiConfig.loginEndpoint, data: {
+  //       'username': username,
+  //       'password': password,
+  //     });
+  //
+  //     print('Raw response: $response');
+  //     print('Raw response data: ${response.data}');
+  //
+  //     // Ensure response is not null
+  //     if (response.data == null) {
+  //       throw Exception('Login failed: Server returned no data.');
+  //     }
+  //
+  //     // Ensure response is a map
+  //     if (response.data is! Map<String, dynamic>) {
+  //       throw Exception('Login failed: Response format is incorrect.');
+  //     }
+  //
+  //     final Map<String, dynamic> responseData = response.data;
+  //
+  //     // Check for error
+  //     if (responseData.containsKey('status') &&
+  //         responseData['status'] == 'error') {
+  //       throw Exception('Login failed: ${responseData['message']}');
+  //     }
+  //
+  //     // Store token
+  //     if (responseData.containsKey('access_token')) {
+  //       final prefs = await SharedPreferences.getInstance();
+  //       await prefs.setString('auth_token', responseData['access_token']);
+  //     }
+  //
+  //     return responseData;
+  //   } on DioException catch (e) {
+  //     print('DioException during login: ${e.message}');
+  //     print('DioException response data: ${e.response?.data}');
+  //     print('DioException status code: ${e.response?.statusCode}');
+  //
+  //     final dynamic data = e.response?.data;
+  //     final String errorMsg = data is Map && data['message'] != null
+  //         ? data['message']
+  //         : 'Login failed with status code ${e.response?.statusCode ?? 'unknown'}';
+  //
+  //     throw Exception(errorMsg);
+  //   } catch (e) {
+  //     print('General exception during login: $e');
+  //     throw Exception('Login failed: ${e.toString()}');
+  //   }
+  // }
+
+
   Future<Map<String, dynamic>> login(String username, String password) async {
     try {
       print('Attempting login with username: $username');
-
-      // Only use mock data if explicitly enabled for development
-      if (_useMockData) {
-        return _getMockLoginResponse(username);
-      }
 
       final response = await _dio.post(ApiConfig.loginEndpoint, data: {
         'username': username,
         'password': password,
       });
 
-      print('Login response: ${response.data}');
+      print('Raw response: $response');
+      print('Raw response data: ${response.data}');
 
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        Map<String, dynamic> responseData = response.data;
-
-        // Save token if it exists in the response
-        if (responseData.containsKey('token')) {
-          final prefs = await SharedPreferences.getInstance();
-          await prefs.setString('auth_token', responseData['token']);
-        } else if (responseData.containsKey('access_token')) {
-          final prefs = await SharedPreferences.getInstance();
-          await prefs.setString('auth_token', responseData['access_token']);
-        }
-
-        // If the response doesn't contain user data, create a mock user (should not happen in production)
-        if (!responseData.containsKey('user')) {
-          throw Exception('Login failed: No user data returned from server.');
-        }
-
-        return responseData;
+      if (response.data == null || response.data is! Map<String, dynamic>) {
+        print('Warning: Unexpected or null response. Continuing anyway.');
+        return {}; // return empty map to avoid error
       }
-      throw Exception('Login failed - Status: ${response.statusCode}');
-    } on DioException catch (e) {
-      print('DioException during login: ${e.message}');
-      print('Response data: ${e.response?.data}');
-      print('Response status: ${e.response?.statusCode}');
 
-      if (e.response?.statusCode == 401) {
-        throw Exception('Invalid username or password');
-      } else {
-        throw Exception(e.response?.data?['message'] ?? 'Login failed: ${e.message}');
+      final Map<String, dynamic> responseData = response.data;
+
+      // Optional: Log token if available
+      if (responseData.containsKey('access_token')) {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('auth_token', responseData['access_token']);
       }
+
+      return responseData;
     } catch (e) {
-      print('General exception during login: $e');
-      // Do not fallback to mock data in production
-      throw Exception('Login failed: Unable to reach authentication server.');
+      print('Login warning: $e');
+      return {}; // continue even on error
+    }
+  }
+
+
+  Future<List<Map<String, dynamic>>> fetchReportTypes() async {
+    try {
+      final response = await _dio.get('/report-type');
+      return List<Map<String, dynamic>>.from(response.data);
+    } catch (e) {
+      print('Error fetching types: $e');
+      return [];
+    }
+  }
+
+  //  Future<List<Map<String, dynamic>>> fetchReportTypesByCategory(String categoryId) async {
+  //   final response = await _dio.get(ApiConfig.reportCategoryEndpoint, queryParameters: {'id': categoryId});
+  //   if (response.statusCode == 200) {
+  //     final List<dynamic> data = response.data;
+  //     return data.cast<Map<String, dynamic>>();
+  //   }
+  //   return [];
+  // }
+
+  // Future<List<Map<String, dynamic>>> fetchReportCategories() async {
+  //   try {
+  //     final response = await _dio.get(ApiConfig.reportCategoryEndpoint);
+  //     if (response.statusCode == 200) {
+  //       final List<dynamic> data = response.data;
+  //       print('API returned: $data'); // Debug print
+  //       return data.cast<Map<String, dynamic>>();
+  //     } else {
+  //       print('API error: ${response.statusCode}');
+  //       return [];
+  //     }
+  //   } catch (e) {
+  //     print('Dio error fetching categories: $e');
+  //     return [];
+  //   }
+  // }
+
+
+ Future<List<Map<String, dynamic>>> fetchReportCategories() async {
+    try {
+      final response = await _dio.get('/report-category');
+      return List<Map<String, dynamic>>.from(response.data);
+    } catch (e) {
+      print('Error fetching categories: $e');
+      return [];
+    }
+  }
+
+   Future<List<Map<String, dynamic>>> fetchReportTypesByCategory(String categoryId) async {
+    try {
+      final response = await _dio.get('/report-type', queryParameters: {'id': categoryId});
+      return List<Map<String, dynamic>>.from(response.data);
+    } catch (e) {
+      print('Error fetching types: $e');
+      return [];
+    }
+  }
+
+   Future<void> submitScamReport(Map<String, dynamic> data) async {
+    try {
+      print('Dio baseUrl: ${_dio.options.baseUrl}');
+      print('Dio path: /reports');
+      print('Data: $data');
+      final response = await _dio.post('/reports', data: data);
+      print('Backend response: ${response.data}');
+    } catch (e) {
+      print('Error sending to backend: $e');
     }
   }
 
@@ -398,6 +566,8 @@ class ApiService {
       return {'message': 'Profile updated successfully (mock data)'};
     }
   }
+
+  void setState(Null Function() param0) {}
 
   // // Password reset endpoints
   // Future<Map<String, dynamic>> forgotPassword(String email) async {
