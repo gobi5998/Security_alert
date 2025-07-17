@@ -1,6 +1,7 @@
 class ApiConfig {
   // Base URL for the API
-  static const String baseUrl = 'https://5fbcf7527c7b.ngrok-free.app'; // NO trailing slash
+  static const String baseUrl =
+      'https://c98aecbcc5a8.ngrok-free.app'; // NO trailing slash
 
   // Replace with your actual API base URL
 
@@ -9,7 +10,6 @@ class ApiConfig {
 
   static const String registerEndpoint = '/auth/create-user';
 
-
   static const String logoutEndpoint = '/auth/logout';
   static const String userProfileEndpoint = '/auth/profile';
   static const String updateProfileEndpoint = '/auth/profile';
@@ -17,7 +17,7 @@ class ApiConfig {
   static const String resetPasswordEndpoint = '/auth/reset-password';
 
   // Security endpoints
-  static const String reportTypeEndpoint ='/report-type';
+  static const String reportTypeEndpoint = '/report-type';
   static const String reportCategoryEndpoint = '/report-category';
   static const String securityAlertsEndpoint = '/alerts';
   static const String dashboardStatsEndpoint = '/dashboard/stats';

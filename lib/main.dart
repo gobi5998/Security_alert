@@ -19,26 +19,23 @@ import 'package:security_alert/services/biometric_service.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'models/scam_report_model.dart'; // ✅ Make sure this file contains: part 'scam_report_model.g.dart';
+import 'package:security_alert/screens/menu/thread_database_listpage.dart';
+import 'models/malware_report_model.dart';
+import 'models/fraud_report_model.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Hive.initFlutter();
-
   Hive.registerAdapter(ScamReportModelAdapter());
 
-  // Try to open the box, if it fails due to unknown type IDs, clear and recreate
+  // Clear existing boxes to fix type casting issues
   try {
-    await Hive.openBox<ScamReportModel>('scam_reports');
+    await Hive.deleteBoxFromDisk('scam_reports');
   } catch (e) {
-    if (e.toString().contains('unknown typeId')) {
-      print('Clearing Hive database due to unknown type IDs');
-      await Hive.deleteBoxFromDisk('scam_reports');
-      await Hive.openBox<ScamReportModel>('scam_reports');
-    } else {
-      rethrow;
-    }
+    print('Error clearing Hive boxes: $e');
   }
-  
-  // await Hive.deleteBoxFromDisk('scam_reports');
+
+  await Hive.openBox<ScamReportModel>('scam_reports');
 
   Connectivity().onConnectivityChanged.listen((result) {
     if (result != ConnectivityResult.none) {
@@ -48,7 +45,6 @@ void main() async {
   });
 
   runApp(
-
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
@@ -56,7 +52,6 @@ void main() async {
         ChangeNotifierProvider(create: (_) => ScamReportProvider()),
       ],
       child: const MyApp(),
-
     ),
   );
 }
@@ -72,15 +67,14 @@ class MyApp extends StatelessWidget {
       initialRoute: '/',
       routes: {
         '/': (context) => const DashboardPage(),
-        '/profile': (context) =>  ProfilePage(),
-        '/thread': (context) =>  ThreadDatabaseFilterPage(),
-        '/subscription': (context) =>  SubscriptionPlansPage(),
-        '/rate': (context) =>  Ratepage(),
-        '/share': (context) =>  Shareapp(),
-        '/feedback': (context) =>  Feedbackpage(),
-         '/splashScreen':(context)=> SplashScreen()
+        '/profile': (context) => ProfilePage(),
+        '/thread': (context) => ThreadDatabaseFilterPage(),
+        '/subscription': (context) => SubscriptionPlansPage(),
+        '/rate': (context) => Ratepage(),
+        '/share': (context) => Shareapp(),
+        '/feedback': (context) => Feedbackpage(),
+        '/splashScreen': (context) => SplashScreen(),
       },
-
     );
   }
 }

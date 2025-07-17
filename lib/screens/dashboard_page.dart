@@ -19,7 +19,6 @@ import 'malware/report_malware_1.dart';
 import 'server_reports_page.dart';
 import 'menu/profile_page.dart';
 
-
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
 
@@ -144,7 +143,9 @@ class _DashboardPageState extends State<DashboardPage> {
                           if (isLoadingTypes) return;
                           Map<String, dynamic>? scamCategory;
                           try {
-                            scamCategory = reportCategories.firstWhere((e) => e['name'] == 'Report Scam');
+                            scamCategory = reportCategories.firstWhere(
+                              (e) => e['name'] == 'Report Scam',
+                            );
                           } catch (_) {
                             scamCategory = null;
                           }
@@ -153,10 +154,12 @@ class _DashboardPageState extends State<DashboardPage> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => ReportScam1(categoryId: scamCategory!['_id']),
+                              builder: (context) =>
+                                  ReportScam1(categoryId: scamCategory!['_id']),
                             ),
                           );
-                        }, fontWeight: FontWeight.normal,
+                        },
+                        fontWeight: FontWeight.normal,
                       ),
                     ),
                   ),
@@ -169,10 +172,9 @@ class _DashboardPageState extends State<DashboardPage> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) =>  MalwareReportPage1(),
+                              builder: (context) => MalwareReportPage1(),
                             ),
                           );
-                          return;
                         },
                         fontSize: 14,
                         borderCircular: 12,
@@ -189,10 +191,9 @@ class _DashboardPageState extends State<DashboardPage> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) =>  MalwareReportPage1(),
+                              builder: (context) => MalwareReportPage1(),
                             ),
                           );
-                          return;
                         },
                         fontSize: 14,
                         borderCircular: 12,
@@ -210,13 +211,9 @@ class _DashboardPageState extends State<DashboardPage> {
               selectedItemColor: Colors.black,
 
               items: [
-                customBottomNavItem(
-                    BottomNav: BottomNav.home,
-                    label: 'Home'),
+                customBottomNavItem(BottomNav: BottomNav.home, label: 'Home'),
 
-                customBottomNavItem(
-                    BottomNav: BottomNav.alert,
-                    label: 'Alert'),
+                customBottomNavItem(BottomNav: BottomNav.alert, label: 'Alert'),
                 customBottomNavItem(
                   BottomNav: BottomNav.profile,
                   label: 'Profile',
@@ -226,16 +223,12 @@ class _DashboardPageState extends State<DashboardPage> {
                 if (index == 1) {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(
-                      builder: (context) => AlertPage(),
-                    ),
+                    MaterialPageRoute(builder: (context) => AlertPage()),
                   );
                 } else if (index == 2) {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(
-                      builder: (context) => ProfilePage(),
-                    ),
+                    MaterialPageRoute(builder: (context) => ProfilePage()),
                   );
                 }
                 // Do nothing for Home (index 0)
@@ -411,21 +404,41 @@ class _DashboardPageState extends State<DashboardPage> {
                                       MainAxisAlignment.spaceBetween,
                                   children: [
                                     _StatCard(
-                                      label: '50K+',
-                                      desc: 'Scams Reported',
-                                      highlight: true,
+                                      title: "Total Alerts",
+                                      value: "100",
+                                      icon: Icons.warning,
+                                      color: Colors.orange,
                                     ),
                                     _StatCard(
-                                      label: '10K+',
-                                      desc: 'Malware Samples',
-                                      highlight: true,
+                                      title: "Resolved",
+                                      value: "100",
+                                      icon: Icons.check_circle,
+                                      color: Colors.green,
                                     ),
                                     _StatCard(
-                                      label: '24/7',
-                                      desc: 'Threat Monitoring',
-                                      highlight: true,
+                                      title: "Pending",
+                                      value: "100",
+                                      icon: Icons.schedule,
+                                      color: Colors.red,
                                     ),
                                   ],
+                                ),
+                                const SizedBox(height: 20),
+                                // Graph
+                                Container(
+                                  height: 200,
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: const Center(
+                                      child: Text(
+                                        'Graph Widget Placeholder',
+                                        style: TextStyle(color: Colors.white),
+                                      ),
+                                    ),
+                                  ),
                                 ),
                               ],
                             ),
@@ -433,25 +446,100 @@ class _DashboardPageState extends State<DashboardPage> {
 
                           const SizedBox(height: 16),
 
-                          ThreadAnalysisCard(),
-
-                          const SizedBox(height: 12),
+                          // Recent alerts
+                          Container(
+                            margin: const EdgeInsets.symmetric(vertical: 8),
+                            padding: const EdgeInsets.all(20),
+                            decoration: BoxDecoration(
+                              color: Colors.black.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  "Recent Alerts",
+                                  style: TextStyle(
+                                    color: Colors.black87,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 18,
+                                  ),
+                                ),
+                                const SizedBox(height: 16),
+                                ...[].map((alert) {
+                                  return Container(
+                                    margin: const EdgeInsets.only(bottom: 12),
+                                    padding: const EdgeInsets.all(12),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withOpacity(0.9),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        Icon(
+                                          Icons.warning,
+                                          color: _getSeverityColor(
+                                            alert['severity'],
+                                          ),
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                alert['title'],
+                                                style: const TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                              Text(
+                                                alert['description'],
+                                                style: TextStyle(
+                                                  color: Colors.grey[600],
+                                                  fontSize: 12,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 8,
+                                            vertical: 4,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: _getSeverityColor(
+                                              alert['severity'],
+                                            ).withOpacity(0.2),
+                                            borderRadius: BorderRadius.circular(
+                                              12,
+                                            ),
+                                          ),
+                                          child: Text(
+                                            alert['severity'],
+                                            style: TextStyle(
+                                              color: _getSeverityColor(
+                                                alert['severity'],
+                                              ),
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                }).toList(),
+                              ],
+                            ),
+                          ),
                         ],
                       ),
                     ),
                   ),
                 ),
-
-                // Loading overlay
-                if (provider.isLoading)
-                  Container(
-                    color: Colors.black.withOpacity(0.3),
-                    child: const Center(
-                      child: CircularProgressIndicator(
-                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                      ),
-                    ),
-                  ),
               ],
             );
           },
@@ -459,122 +547,65 @@ class _DashboardPageState extends State<DashboardPage> {
       ),
     );
   }
-}
 
-class _StatCard extends StatelessWidget {
-  final String label, desc;
-  final bool highlight;
-
-  const _StatCard({
-    required this.label,
-    required this.desc,
-    this.highlight = false,
-    Key? key,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        return SizedBox(
-          width: 100,
-          height: 100,
-          child: Container(
-            margin: const EdgeInsets.symmetric(horizontal: 1),
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 24),
-            decoration: BoxDecoration(
-              color: highlight
-                  ? const Color(0xFF042E6F)
-                  : const Color(0xFF064FAD),
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.03),
-                  blurRadius: 4,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                FittedBox(
-                  child: Text(
-                    label,
-                    style: const TextStyle(
-                      fontSize: 19,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-                // const SizedBox(height: 4),
-                Expanded(
-                  child: Center(
-                    child: Text(
-                      desc,
-                      textAlign: TextAlign.center,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: Colors.white70,
-                        fontSize: 9,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
+  Color _getSeverityColor(String severity) {
+    switch (severity.toLowerCase()) {
+      case 'low':
+        return Colors.green;
+      case 'medium':
+        return Colors.orange;
+      case 'high':
+        return Colors.red;
+      case 'critical':
+        return Colors.purple;
+      default:
+        return Colors.grey;
+    }
   }
 }
 
-// class _ReportButton extends StatelessWidget {
-//   final String label;
-//   final IconData icon;
-//
-//   const _ReportButton({required this.label, required this.icon});
-//
-//   @override
-//   Widget build(BuildContext context) {
-//     return Column(
-//       children: [
-//         CircleAvatar(
-//           radius: 26,
-//           backgroundColor: Colors.white,
-//           child: Icon(icon, color: Color(0xFF1E3A8A)),
-//         ),
-//         const SizedBox(height: 6),
-//         Text(
-//           label,
-//           style: const TextStyle(color: Colors.white, fontSize: 12),
-//         ),
-//       ],
-//     );
-//   }
-// }
-//
-// class _BottomReportButton extends StatelessWidget {
-//   final String label;
-//   const _BottomReportButton({required this.label});
-//
-//   @override
-//   Widget build(BuildContext context) {
-//     return Container(
-//       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-//       decoration: BoxDecoration(
-//         color: Colors.white,
-//         borderRadius: BorderRadius.circular(20),
-//       ),
-//       child: Text(
-//         label,
-//         style: const TextStyle(color: Color(0xFF064FAD), fontWeight: FontWeight.bold),
-//       ),
-//     );
-//   }
-// }
+class _StatCard extends StatelessWidget {
+  final String title;
+  final String value;
+  final IconData icon;
+  final Color color;
+
+  const _StatCard({
+    required this.title,
+    required this.value,
+    required this.icon,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.9),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          children: [
+            Icon(icon, color: color, size: 24),
+            const SizedBox(height: 8),
+            Text(
+              value,
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: color,
+              ),
+            ),
+            Text(
+              title,
+              style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
