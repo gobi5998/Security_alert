@@ -30,59 +30,20 @@ class ScamReportService {
 
   static Future<void> syncReports() async {
     final box = Hive.box<ScamReportModel>('scam_reports');
-    final reports = box.values.toList();
-    for (int i = 0; i < reports.length; i++) {
-      final report = reports[i];
-      if (report.isSynced != true) {
-        try {
-          final response = await http.post(
-            Uri.parse('${ApiConfig.baseUrl}/reports'),
-            headers: {
-              'Content-Type': 'application/json',
-              'Accept': 'application/json',
-            },
-            body: jsonEncode({
-              'description': report.description,
-              'email': report.email,
-              'phoneNumer': report.phoneNumber,
-              'website': report.website, // Fixed: was report.type
-              'severity': report.alertLevels,
-              'createdAt': report.createdAt,
+    final unsyncedReports = box.values.where((r) => r.isSynced != true).toList();
 
-              'id': report.id,
-            }),
-          );
-
-          print('Sync response status: ${response.statusCode}');
-          print('Sync response body: ${response.body}');
-
-          if (response.statusCode == 200 || response.statusCode == 201) {
-            // Update as synced
-            final key = box.keyAt(i);
-            final syncedReport = ScamReportModel(
-              id: report.id,
-
-              description: report.description,
-
-              alertLevels: report.alertLevels,
-
-              email: report.email,
-              phoneNumber: report.phoneNumber,
-              website: report.website,
-              isSynced: true,
-              reportCategoryId: report.reportCategoryId,
-              reportTypeId: report.reportTypeId,
-            );
-            await box.put(key, syncedReport);
-            print('Successfully synced report: ${report.id}');
-          } else {
-            print(
-              'Failed to sync report. Status: ${response.statusCode}, Body: ${response.body}',
-            );
-          }
-        } catch (e) {
-          print('Error syncing report: $e');
+    for (var report in unsyncedReports) {
+      try {
+        // Send to backend with upsert logic
+        final success = await ScamReportService.sendToBackend(report);
+        if (success) {
+          // Mark as synced
+          final key = box.keyAt(box.values.toList().indexOf(report));
+          final updated = report.copyWith(isSynced: true);
+          await box.put(key, updated);
         }
+      } catch (e) {
+        print('Failed to sync report: $e');
       }
     }
   }
@@ -90,7 +51,7 @@ class ScamReportService {
   static Future<bool> sendToBackend(ScamReportModel report) async {
     try {
       final response = await http.post(
-        Uri.parse('${ApiConfig.baseUrl}/reports'),
+        Uri.parse('${ApiConfig.baseUrl2}/reports'),
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',

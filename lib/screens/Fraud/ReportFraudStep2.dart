@@ -15,17 +15,20 @@ import 'fraud_remote_service.dart';
 
 class ReportFraudStep2 extends StatefulWidget {
 
-  final String? fraudType,name,phone, email, website;
+  final String? fraudType,name,phoneNumber, email, website,alertlevels;
 
 
   const ReportFraudStep2({
     Key? key,
     required this.fraudType,
-    this.phone,
+    this.phoneNumber,
     this.email,
     this.website,
     this. name,
+    this.alertlevels, required FraudReportModel report
   }) : super(key: key);
+
+
 
   @override
   State<ReportFraudStep2> createState() => _ReportFraudStep2State();
@@ -218,12 +221,12 @@ class _ReportFraudStep2State extends State<ReportFraudStep2> {
     // Create the report
     final Fraud = FraudReportModel(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
-      title: widget.fraudType?? '',
+      alertLevels: widget.alertlevels?? '',
       name:widget.name?? '',
-      type: widget.fraudType?? '',
-      severity: severity ?? 'Medium',
-      date: DateTime.now(),
-      phone: widget.phone?? '',
+
+
+
+      phoneNumber: widget.phoneNumber?? '',
       email: widget.email?? '',
       website: widget.website?? '',
       isSynced: false, // Always start as not synced

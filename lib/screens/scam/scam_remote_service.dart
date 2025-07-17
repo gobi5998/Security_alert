@@ -6,12 +6,12 @@ import '../../models/scam_report_model.dart';
 
 class ScamRemoteService {
   Future<bool> sendReport(
-      ScamReportModel report, {
-        List<File>? screenshots,
-        List<File>? documents,
-      }) async {
+    ScamReportModel report, {
+    List<File>? screenshots,
+    List<File>? documents,
+  }) async {
     try {
-      final url = Uri.parse('${ApiConfig.baseUrl}/reports');
+      final url = Uri.parse('${ApiConfig.baseUrl1}/reports');
       print('🔗 Attempting to send report to: $url');
 
       // Create multipart request for file uploads
@@ -19,7 +19,7 @@ class ScamRemoteService {
 
       // Add basic report data
       request.fields['reportId'] = report.id ?? ''; // Send Flutter-generated ID
-      
+
       request.fields['title'] = report.reportCategoryId ?? '';
       request.fields['description'] = report.description ?? '';
       request.fields['type'] = report.reportTypeId ?? '';
@@ -30,7 +30,6 @@ class ScamRemoteService {
       request.fields['website'] = report.website ?? '';
 
       // Add file paths as JSON
-    
 
       // Add screenshots
       if (screenshots != null && screenshots.isNotEmpty) {
@@ -90,25 +89,26 @@ class ScamRemoteService {
 
   Future<List<ScamReportModel>> fetchReports() async {
     try {
-      final url = Uri.parse('${ApiConfig.baseUrl}scam_reports');
+      final url = Uri.parse('${ApiConfig.baseUrl1}scam_reports');
       final response = await http.get(url);
       if (response.statusCode == 200) {
         List data = jsonDecode(response.body);
         return data
             .map(
               (e) => ScamReportModel(
-            id:
-            e['_id'] ??
-                e['id'] ??
-                DateTime.now().millisecondsSinceEpoch.toString(),
-           
-            description: e['description'] ?? '',
-           
+                id:
+                    e['_id'] ??
+                    e['id'] ??
+                    DateTime.now().millisecondsSinceEpoch.toString(),
+
+                description: e['description'] ?? '',
                 alertLevels: e['severity'] ?? 'Medium',
-            createdAt: DateTime.tryParse(e['date'] ?? '') ?? DateTime.now(),
-            isSynced: true, reportCategoryId: '', reportTypeId: '',
-          ),
-        )
+                createdAt: DateTime.tryParse(e['date'] ?? '') ?? DateTime.now(),
+                isSynced: true,
+                reportCategoryId: '',
+                reportTypeId: '',
+              ),
+            )
             .toList();
       } else {
         print('Failed to fetch reports. Status: ${response.statusCode}');

@@ -198,7 +198,7 @@ class DashboardProvider with ChangeNotifier {
         try {
           // Load dashboard stats
           final statsData = await _apiService.getDashboardStats();
-          _stats = DashboardStats.fromJson(statsData);
+          _stats = DashboardStats.fromJson(statsData!);
 
           // Cache the stats data
           await prefs.setString('dashboard_stats', jsonEncode(statsData));

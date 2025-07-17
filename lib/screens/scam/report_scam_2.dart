@@ -143,6 +143,110 @@ class _ReportScam2State extends State<ReportScam2> {
           key: _formKey,
           child: ListView(
             children: [
+              Column(
+                children: [
+
+                  ListTile(
+                    leading:  Image.asset('assets/image/document.png'),
+                    title: const Text('Add Screenshots'),
+                    subtitle: Text('Selected: /5'),
+                    // onTap: _pickScreenshots,
+                  ),
+                ],
+              ),
+
+              // Display selected screenshots
+              // if (selectedScreenshots.isNotEmpty) ...[
+              //   const SizedBox(height: 8),
+              //   Container(
+              //     height: 100,
+              //     child: ListView.builder(
+              //       scrollDirection: Axis.horizontal,
+              //       // itemCount: selectedScreenshots.length,
+              //       itemBuilder: (context, index) {
+              //         return Padding(
+              //           padding: const EdgeInsets.only(right: 8),
+              //           child: Stack(
+              //             children: [
+              //               Container(
+              //                 width: 100,
+              //                 height: 100,
+              //                 decoration: BoxDecoration(
+              //                   borderRadius: BorderRadius.circular(8),
+              //                   border: Border.all(color: Colors.grey),
+              //                 ),
+              //                 child: ClipRRect(
+              //                   borderRadius: BorderRadius.circular(8),
+              //                   child: Image.file(
+              //                     selectedScreenshots[index],
+              //                     fit: BoxFit.cover,
+              //                   ),
+              //                 ),
+              //               ),
+              //               Positioned(
+              //                 top: 4,
+              //                 right: 4,
+              //                 child: GestureDetector(
+              //                   onTap: () => _removeScreenshot(index),
+              //                   child: Container(
+              //                     padding: const EdgeInsets.all(2),
+              //                     decoration: const BoxDecoration(
+              //                       color: Colors.red,
+              //                       shape: BoxShape.circle,
+              //                     ),
+              //                     child: const Icon(
+              //                       Icons.close,
+              //                       color: Colors.white,
+              //                       size: 16,
+              //                     ),
+              //                   ),
+              //                 ),
+              //               ),
+              //             ],
+              //           ),
+              //         );
+              //       },
+              //     ),
+              //   ),
+              // ],
+
+              const SizedBox(height: 16),
+
+              // Documents Section
+              Column(
+                children: [
+                  ListTile(
+                    leading:  Image.asset('assets/image/document.png'),
+                    title: const Text('Add Documents'),
+                    subtitle: Text('Selected:  files'),
+                    // onTap: _pickDocuments,
+                  ),
+                ],
+              ),
+
+              // Display selected documents
+              // if (selectedDocuments.isNotEmpty) ...[
+              //   const SizedBox(height: 8),
+              //   ...selectedDocuments.asMap().entries.map((entry) {
+              //     int index = entry.key;
+              //     File file = entry.value;
+              //     return Card(
+              //       child: ListTile(
+              //         leading: const Icon(Icons.description),
+              //         title: Text(file.path.split('/').last),
+              //         subtitle: Text(
+              //           '${(file.lengthSync() / 1024).toStringAsFixed(1)} KB',
+              //         ),
+              //         trailing: IconButton(
+              //           icon: const Icon(Icons.close, color: Colors.red),
+              //           onPressed: () => _removeDocument(index),
+              //         ),
+              //       ),
+              //     );
+              //   }).toList(),
+              // ],
+
+
               CustomDropdown(
                 label: 'Alert Severity',
                 hint: 'Select severity',
@@ -151,24 +255,24 @@ class _ReportScam2State extends State<ReportScam2> {
                 onChanged: (val) => setState(() => alertLevel = val),
               ),
               const SizedBox(height: 20),
-              ListTile(
-                leading: const Icon(Icons.image),
-                title: const Text('Add Screenshots'),
-                subtitle: Text('${screenshots.length} selected'),
-                onTap: () => _pickFiles('screenshot'),
-              ),
-              ListTile(
-                leading: const Icon(Icons.insert_drive_file),
-                title: const Text('Add Documents'),
-                subtitle: Text('${documents.length} selected'),
-                onTap: () => _pickFiles('document'),
-              ),
-              ListTile(
-                leading: const Icon(Icons.mic),
-                title: const Text('Add Voice Notes'),
-                subtitle: Text('${voices.length} selected'),
-                onTap: () => _pickFiles('voice'),
-              ),
+              // ListTile(
+              //   leading: const Icon(Icons.image),
+              //   title: const Text('Add Screenshots'),
+              //   subtitle: Text('${screenshots.length} selected'),
+              //   onTap: () => _pickFiles('screenshot'),
+              // ),
+              // ListTile(
+              //   leading: const Icon(Icons.insert_drive_file),
+              //   title: const Text('Add Documents'),
+              //   subtitle: Text('${documents.length} selected'),
+              //   onTap: () => _pickFiles('document'),
+              // ),
+              // ListTile(
+              //   leading: const Icon(Icons.mic),
+              //   title: const Text('Add Voice Notes'),
+              //   subtitle: Text('${voices.length} selected'),
+              //   onTap: () => _pickFiles('voice'),
+              // ),
               const SizedBox(height: 40),
               CustomButton(
                 text: 'Submit',

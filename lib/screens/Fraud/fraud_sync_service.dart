@@ -67,11 +67,11 @@ class FraudSyncService {
           syncedCount++;
         } else {
           failedCount++;
-          failedReports.add(report.title);
+          failedReports.add(report.reportCategoryId ?? report.id ?? 'Unknown');
         }
       } catch (e) {
         failedCount++;
-        failedReports.add('${report.title} (Error: $e)');
+        failedReports.add('${report.id} (Error: $e)');
       }
     }
 

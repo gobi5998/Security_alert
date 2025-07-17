@@ -93,4 +93,34 @@ class ScamReportModel extends HiveObject {
     screenshotPaths: (json['screenshotPaths'] as List?)?.map((e) => e as String).toList() ?? [],
     documentPaths: (json['documentPaths'] as List?)?.map((e) => e as String).toList() ?? [],
   );
+
+  ScamReportModel copyWith({
+    String? id,
+    String? reportCategoryId,
+    String? reportTypeId,
+    String? alertLevels,
+    String? phoneNumber,
+    String? email,
+    String? website,
+    String? description,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    bool? isSynced,
+    // add other fields as needed
+  }) {
+    return ScamReportModel(
+      id: id ?? this.id,
+      reportCategoryId: reportCategoryId ?? this.reportCategoryId,
+      reportTypeId: reportTypeId ?? this.reportTypeId,
+      alertLevels: alertLevels ?? this.alertLevels,
+      phoneNumber: phoneNumber ?? this.phoneNumber,
+      email: email ?? this.email,
+      website: website ?? this.website,
+      description: description ?? this.description,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      isSynced: isSynced ?? this.isSynced,
+      // add other fields as needed
+    );
+  }
 }

@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:hive/hive.dart';
 import '../services/sync_service.dart';
 part 'fraud_report_model.g.dart';
@@ -5,99 +7,150 @@ part 'fraud_report_model.g.dart';
 @HiveType(typeId: 1)
 class FraudReportModel extends HiveObject implements SyncableReport {
   @HiveField(0)
-  String id;
+  String? id; // maps to _id
 
   @HiveField(1)
-  String title;
+  String? reportCategoryId;
 
   @HiveField(2)
-  String name;
+  String? reportTypeId;
 
   @HiveField(3)
-  String type;
+  String? alertLevels;
 
   @HiveField(4)
-  String severity;
+  String? phoneNumber; // store as String for flexibility
 
   @HiveField(5)
-  DateTime date;
-
-  @HiveField(6)
-  bool isSynced;
-
-  @HiveField(7)
-  List<String> screenshotPaths;
-
-  @HiveField(8)
-  List<String> documentPaths;
-
-  @HiveField(9)
-  String? phone;
-
-  @HiveField(10)
   String? email;
 
-  @HiveField(11)
+  @HiveField(6)
   String? website;
 
+  @HiveField(7)
+  String? description;
+
+  @HiveField(8)
+  DateTime? createdAt;
+
+  @HiveField(9)
+  DateTime? updatedAt;
+
+  @HiveField(10)
+  bool isSynced;
+
+  @HiveField(11)
+  List<String> screenshotPaths;
+
   @HiveField(12)
-  List<String> voicePaths;
+  List<String> documentPaths;
+
+  @HiveField(13)
+  String? name;
 
   FraudReportModel({
-    required this.id,
-    required this.title,
-    required this.name,
-    required this.type,
-    required this.severity,
-    required this.date,
+    this.id,
+    this.reportCategoryId,
+    this.reportTypeId,
+    this.alertLevels,
+    this.phoneNumber,
+    this.email,
+    this.website,
+    this.description,
+    this.createdAt,
+    this.updatedAt,
     this.isSynced = false,
     this.screenshotPaths = const [],
     this.documentPaths = const [],
-    this.voicePaths = const [],
-    this.phone,
-    this.email,
-    this.website,
+    this.name,
   });
 
   @override
   Map<String, dynamic> toSyncJson() => {
-    'title': title,
-    'name': name,
-    'type': type,
-    'severity': severity,
-    'date': date.toIso8601String(),
-    'screenshotPaths':screenshotPaths,
-    'documentPaths':documentPaths,
-    'voicePaths':voicePaths,
+    '_id': id,
+    'reportCategoryId': reportCategoryId,
+    'reportTypeId': reportTypeId,
+    'alertLevels': alertLevels,
+    // If backend expects int, convert here:
+    'phoneNumber': int.tryParse(phoneNumber ?? '') ?? 0,
+    'email': email,
+    'website': website,
+    'description': description,
+    'createdAt': createdAt?.toIso8601String(),
+    'updatedAt': updatedAt?.toIso8601String(),
+    'isSynced': isSynced,
+    'screenshotPaths': screenshotPaths,
+    'documentPaths': documentPaths,
+    'name':name
   };
 
   @override
   String get endpoint => '/reports';
 
+
   Map<String, dynamic> toJson() => {
-    'id': id,
-    'title': title,
-    'name': name,
-    'type': type,
-    'severity': severity,
-    'date': date.toIso8601String(),
-    'screenshotPaths':screenshotPaths,
-    'documentPaths':documentPaths,
-    'voicePaths':voicePaths,
+    '_id': id,
+    'reportCategoryId': reportCategoryId,
+    'reportTypeId': reportTypeId,
+    'alertLevels': alertLevels,
+    'name':name,
+    // If backend expects int, convert here:
+    'phoneNumber': int.tryParse(phoneNumber ?? '') ?? 0,
+    'email': email,
+    'website': website,
+    'description': description,
+    'createdAt': createdAt?.toIso8601String(),
+    'updatedAt': updatedAt?.toIso8601String(),
     'isSynced': isSynced,
+    'screenshotPaths': screenshotPaths,
+    'documentPaths': documentPaths,
   };
 
-  static FraudReportModel fromJson(Map<String, dynamic> json) => FraudReportModel(
-    id: json['id'] as String,
-    title: json['title'] as String,
-    name: json['name'] as String,
-    type: json['type'] as String,
-    severity: json['severity'] as String,
-    date: DateTime.parse(json['date'] as String),
-    screenshotPaths: json['screenshotPaths'] ,
-    documentPaths: json['documentPaths'] ,
-    voicePaths: json['voicePaths'],
-    isSynced: json['isSynced'] as bool? ?? false,
-
+  factory FraudReportModel.fromJson(Map<String, dynamic> json) => FraudReportModel(
+    id: json['id'] ?? json['_id'],
+    reportCategoryId: json['reportCategoryId'],
+    reportTypeId: json['reportTypeId'],
+    name: json['name'],
+    alertLevels: json['alertLevels'],
+    phoneNumber: json['phoneNumber'],
+    email: json['email'],
+    website: json['website'],
+    description: json['description'],
+    createdAt: json['createdAt'] != null ? DateTime.tryParse(json['createdAt']) : null,
+    updatedAt: json['updatedAt'] != null ? DateTime.tryParse(json['updatedAt']) : null,
+    isSynced: json['isSynced'],
+    screenshotPaths: (json['screenshotPaths'] as List?)?.map((e) => e as String).toList() ?? [],
+    documentPaths: (json['documentPaths'] as List?)?.map((e) => e as String).toList() ?? [],
   );
+
+  FraudReportModel copyWith({
+    String? id,
+    String? reportCategoryId,
+    String? reportTypeId,
+    String? alertLevels,
+    String? name,
+    String? phoneNumber,
+    String? email,
+    String? website,
+    String? description,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    bool? isSynced,
+    // add other fields as needed
+  }) {
+    return FraudReportModel(
+      id: id ?? this.id,
+      reportCategoryId: reportCategoryId ?? this.reportCategoryId,
+      reportTypeId: reportTypeId ?? this.reportTypeId,
+      alertLevels: alertLevels ?? this.alertLevels,
+      name: name?? this.name,
+      phoneNumber: phoneNumber ?? this.phoneNumber,
+      email: email ?? this.email,
+      website: website ?? this.website,
+      description: description ?? this.description,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      isSynced: isSynced ?? this.isSynced,
+      // add other fields as needed
+    );}
 }

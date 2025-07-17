@@ -12,20 +12,21 @@ class FraudRemoteService {
         List<File>? documents,
       }) async {
     try {
-      final url = Uri.parse('${ApiConfig.baseUrl}fraud_reports');
+      final url = Uri.parse('${ApiConfig.baseUrl2}fraud_reports');
       print('🔗 Attempting to send report to: $url');
 
       // Create multipart request for file uploads
       var request = http.MultipartRequest('POST', url);
 
       // Add basic report data
-      request.fields['reportId'] = report.id; // Send Flutter-generated ID
-      request.fields['title'] = report.title;
-      request.fields['name'] = report.name;
-      request.fields['type'] = report.type;
-      request.fields['severity'] = report.severity;
-      request.fields['date'] = report.date.toIso8601String();
-      request.fields['phone'] = report.phone ?? '';
+      request.fields['reportId'] = report.id ?? ''; // Send Flutter-generated ID
+      request.fields['title'] = report.reportCategoryId ?? '';
+      request.fields['name'] = report.name ?? '';
+      request.fields['description'] = report.description ?? '';
+      request.fields['type'] = report.reportTypeId ?? '';
+      request.fields['alertLevels'] = report.alertLevels ?? '';
+      request.fields['date'] = report.createdAt?.toIso8601String() ?? '';
+      request.fields['phoneNumber'] = report.phoneNumber ?? '';
       request.fields['email'] = report.email ?? '';
       request.fields['website'] = report.website ?? '';
 
@@ -95,7 +96,7 @@ class FraudRemoteService {
 
   Future<List<FraudReportModel>> fetchReports() async {
     try {
-      final url = Uri.parse('${ApiConfig.baseUrl}fraud_reports');
+      final url = Uri.parse('${ApiConfig.baseUrl2}fraud_reports');
       final response = await http.get(url);
       if (response.statusCode == 200) {
         List data = jsonDecode(response.body);
@@ -106,12 +107,14 @@ class FraudRemoteService {
             e['_id'] ??
                 e['id'] ??
                 DateTime.now().millisecondsSinceEpoch.toString(),
-            title: e['title'] ?? '',
-                name: e['name'] ?? '',
-            type: e['type'] ?? '',
-            severity: e['severity'] ?? 'Medium',
-            date: DateTime.tryParse(e['date'] ?? '') ?? DateTime.now(),
-            isSynced: true,
+
+                description: e['description'] ?? '',
+                alertLevels: e['alertLevels'] ?? 'Medium',
+                createdAt: DateTime.tryParse(e['date'] ?? '') ?? DateTime.now(),
+                isSynced: true,
+                reportCategoryId: '',
+                reportTypeId: '',
+
           ),
         )
             .toList();

@@ -27,7 +27,7 @@ class SyncService {
       final report = reports[i];
       if (!report.isSynced) {
         final response = await http.post(
-          Uri.parse('${ApiConfig.baseUrl}${report.endpoint}'),
+          Uri.parse('${ApiConfig.baseUrl1}${report.endpoint}'),
           headers: {'Content-Type': 'application/json'},
           body: jsonEncode(report.toSyncJson()),
         );

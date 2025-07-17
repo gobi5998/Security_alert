@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:security_alert/custom/Image/image.dart';
-import 'package:security_alert/screens/Fraud/ReportFraudStep1.dart';
 import 'package:security_alert/screens/scam/report_scam_1.dart';
 import 'package:security_alert/screens/scam/scam_report_service.dart';
 import '../custom/PeriodDropdown.dart';

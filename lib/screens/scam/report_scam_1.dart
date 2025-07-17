@@ -448,8 +448,33 @@ class _ReportScam1State extends State<ReportScam1> {
   }
 
   Future<void> _loadScamTypes() async {
-    scamTypes = await ScamReportService.fetchReportTypesByCategory(widget.categoryId);
-    setState(() {});
+    final box = await Hive.openBox('scam_types');
+    // Try to load from Hive first
+    final raw = box.get(widget.categoryId);
+    List<Map<String, dynamic>>? cachedTypes;
+    if (raw != null) {
+      cachedTypes = (raw as List)
+          .map((e) => Map<String, dynamic>.from(e as Map))
+          .toList();
+    }
+
+    if (cachedTypes != null && cachedTypes.isNotEmpty) {
+      scamTypes = cachedTypes;
+      setState(() {});
+    }
+
+    // Always try to fetch latest from backend in background
+    try {
+      final latestTypes = await ScamReportService.fetchReportTypesByCategory(widget.categoryId);
+      if (latestTypes != null && latestTypes.isNotEmpty) {
+        scamTypes = latestTypes;
+        await box.put(widget.categoryId, latestTypes);
+        setState(() {});
+      }
+    } catch (e) {
+      // If offline or error, just use cached
+      print('Failed to fetch latest scam types: $e');
+    }
   }
 
   Future<void> _submitForm() async {
@@ -488,18 +513,7 @@ class _ReportScam1State extends State<ReportScam1> {
         child: ListView(
           padding: EdgeInsets.all(20),
           children: [
-            // DropdownButtonFormField<String>(
-            //   value: scamTypeId,
-            //   hint: Text('Select Scam Type'),
-            //   items: scamTypes.map((e) {
-            //     return DropdownMenuItem<String>(
-            //       value: e['_id'],
-            //       child: Text(e['name']),
-            //     );
-            //   }).toList(),
-            //   onChanged: (val) => setState(() => scamTypeId = val),
-            //   validator: (val) => val == null ? 'Please select scam type' : null,
-            // ),
+
 
             CustomDropdown(
               label: 'Scam Type',
