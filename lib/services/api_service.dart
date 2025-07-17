@@ -868,13 +868,9 @@ class ApiService {
     int limit = 20,
   }) async {
     try {
-      if (_useMockData) {
-        print('Using mock data for reports');
-        return _getMockReportsData();
-      }
-
       print('Fetching reports from backend...');
       print('Base URL: ${_dio.options.baseUrl}');
+      print('Full URL: ${_dio.options.baseUrl}${ApiConfig.reportsEndpoint}');
       print(
         'Query params: ${{'page': page.toString(), 'limit': limit.toString()}}',
       );
@@ -890,15 +886,32 @@ class ApiService {
         queryParams['severity'] = severity;
       }
 
-      final response = await _dio.get('/reports', queryParameters: queryParams);
+      print(
+        'Making API call to: ${_dio.options.baseUrl}${ApiConfig.reportsEndpoint}',
+      );
+      print('With query parameters: $queryParams');
+
+      final response = await _dio.get(
+        ApiConfig.reportsEndpoint,
+        queryParameters: queryParams,
+      );
       print('Response status: ${response.statusCode}');
       print('Response data type: ${response.data.runtimeType}');
       print('Response data: ${response.data}');
 
       if (response.statusCode == 200) {
-        if (response.data is List) {
-          final data = List<Map<String, dynamic>>.from(response.data);
-          print('Fetched ${data.length} reports from backend');
+        // Handle the real backend response structure
+        if (response.data is Map && response.data.containsKey('data')) {
+          final data = List<Map<String, dynamic>>.from(response.data['data']);
+          print('✅ Success! Fetched ${data.length} reports from backend');
+
+          // Log pagination info
+          if (response.data.containsKey('totalPages')) {
+            print('Total pages: ${response.data['totalPages']}');
+            print('Current page: ${response.data['pageNumber']}');
+            print('Total records: ${response.data['total']}');
+          }
+
           if (data.isNotEmpty) {
             print('First report structure: ${data.first}');
             print('First report description: ${data.first['description']}');
@@ -906,9 +919,9 @@ class ApiService {
             print('First report alertLevels: ${data.first['alertLevels']}');
           }
           return data;
-        } else if (response.data is Map && response.data.containsKey('data')) {
-          final data = List<Map<String, dynamic>>.from(response.data['data']);
-          print('Fetched ${data.length} reports from backend');
+        } else if (response.data is List) {
+          final data = List<Map<String, dynamic>>.from(response.data);
+          print('✅ Success! Fetched ${data.length} reports from backend');
           if (data.isNotEmpty) {
             print('First report structure: ${data.first}');
             print('First report description: ${data.first['description']}');
@@ -927,6 +940,7 @@ class ApiService {
       print('Error fetching reports from backend: ${e.message}');
       print('Error type: ${e.type}');
       print('Error response: ${e.response?.data}');
+      print('Error status code: ${e.response?.statusCode}');
 
       // If it's a connection error or 404, switch to mock data
       if (e.type == DioExceptionType.connectionError ||
@@ -943,91 +957,198 @@ class ApiService {
     }
   }
 
-  // Mock data for reports
+  // Mock data for reports - Updated to match UI expectations
   List<Map<String, dynamic>> _getMockReportsData() {
     return [
       {
         'id': '1',
-        'title': 'Scam Report',
         'description': 'Reported phishing email claiming to be from X.com',
-        'type': 'Phishing',
-        'severity': 'High',
-        'status': 'Active',
-        'reportedBy': 'John Doe',
+        'email': 'user@example.com',
+        'phoneNumber': '+1234567890',
+        'website': 'https://fake-x.com',
+        'alertLevels': 'High',
         'createdAt': DateTime.now()
             .subtract(Duration(days: 2))
             .toIso8601String(),
         'updatedAt': DateTime.now()
             .subtract(Duration(days: 1))
             .toIso8601String(),
-        'reports': 15,
-        'resolved': false,
+        'reportCategoryId': 1,
+        'reportTypeId': 1,
       },
       {
         'id': '2',
-        'title': 'Malware Report',
         'description': 'Uploaded suspicious file with potential malware',
-        'type': 'Malware',
-        'severity': 'Medium',
-        'status': 'Resolved',
-        'reportedBy': 'System User',
+        'email': 'system@security.com',
+        'phoneNumber': '',
+        'website': '',
+        'alertLevels': 'Medium',
         'createdAt': DateTime.now()
             .subtract(Duration(days: 5))
             .toIso8601String(),
         'updatedAt': DateTime.now()
             .subtract(Duration(days: 3))
             .toIso8601String(),
-        'reports': 8,
-        'resolved': true,
+        'reportCategoryId': 2,
+        'reportTypeId': 2,
       },
       {
         'id': '3',
-        'title': 'New Phishing Campaign',
         'description': 'Video link containing suspicious content',
-        'type': 'Phishing',
-        'severity': 'Critical',
-        'status': 'Active',
-        'reportedBy': 'System User',
+        'email': 'system@security.com',
+        'phoneNumber': '',
+        'website': 'https://suspicious-video.com',
+        'alertLevels': 'Critical',
         'createdAt': DateTime.now()
             .subtract(Duration(days: 1))
             .toIso8601String(),
         'updatedAt': DateTime.now().toIso8601String(),
-        'reports': 25,
-        'resolved': false,
+        'reportCategoryId': 1,
+        'reportTypeId': 1,
       },
       {
         'id': '4',
-        'title': 'Investment Fraud',
         'description': 'Fake investment opportunity with unrealistic returns',
-        'type': 'Fraud',
-        'severity': 'High',
-        'status': 'Active',
-        'reportedBy': 'Jane Smith',
+        'email': 'jane.smith@example.com',
+        'phoneNumber': '+1987654321',
+        'website': 'https://fake-investment.com',
+        'alertLevels': 'High',
         'createdAt': DateTime.now()
             .subtract(Duration(days: 3))
             .toIso8601String(),
         'updatedAt': DateTime.now()
             .subtract(Duration(days: 2))
             .toIso8601String(),
-        'reports': 12,
-        'resolved': false,
+        'reportCategoryId': 3,
+        'reportTypeId': 3,
       },
       {
         'id': '5',
-        'title': 'Lottery Scam',
         'description': 'Fake lottery notification asking for payment',
-        'type': 'Scam',
-        'severity': 'Medium',
-        'status': 'Resolved',
-        'reportedBy': 'System User',
+        'email': 'system@security.com',
+        'phoneNumber': '+1555123456',
+        'website': '',
+        'alertLevels': 'Medium',
         'createdAt': DateTime.now()
             .subtract(Duration(days: 7))
             .toIso8601String(),
         'updatedAt': DateTime.now()
             .subtract(Duration(days: 5))
             .toIso8601String(),
-        'reports': 6,
-        'resolved': true,
+        'reportCategoryId': 4,
+        'reportTypeId': 4,
+      },
+      {
+        'id': '6',
+        'description': 'Suspicious cryptocurrency investment scheme',
+        'email': 'crypto@example.com',
+        'phoneNumber': '+1122334455',
+        'website': 'https://fake-crypto-invest.com',
+        'alertLevels': 'High',
+        'createdAt': DateTime.now()
+            .subtract(Duration(days: 4))
+            .toIso8601String(),
+        'updatedAt': DateTime.now()
+            .subtract(Duration(days: 3))
+            .toIso8601String(),
+        'reportCategoryId': 3,
+        'reportTypeId': 3,
+      },
+      {
+        'id': '7',
+        'description': 'Fake tech support call from Microsoft',
+        'email': 'support@microsoft-fake.com',
+        'phoneNumber': '+18005551234',
+        'website': 'https://microsoft-support-fake.com',
+        'alertLevels': 'Critical',
+        'createdAt': DateTime.now()
+            .subtract(Duration(days: 6))
+            .toIso8601String(),
+        'updatedAt': DateTime.now()
+            .subtract(Duration(days: 4))
+            .toIso8601String(),
+        'reportCategoryId': 1,
+        'reportTypeId': 1,
+      },
+      {
+        'id': '8',
+        'description': 'Suspicious job offer with upfront payment',
+        'email': 'jobs@fake-company.com',
+        'phoneNumber': '+1444333222',
+        'website': 'https://fake-job-portal.com',
+        'alertLevels': 'Medium',
+        'createdAt': DateTime.now()
+            .subtract(Duration(days: 8))
+            .toIso8601String(),
+        'updatedAt': DateTime.now()
+            .subtract(Duration(days: 6))
+            .toIso8601String(),
+        'reportCategoryId': 4,
+        'reportTypeId': 4,
+      },
+      {
+        'id': '9',
+        'description': 'Fake IRS tax refund notification',
+        'email': 'irs@fake-gov.com',
+        'phoneNumber': '+18008291000',
+        'website': 'https://fake-irs-portal.com',
+        'alertLevels': 'High',
+        'createdAt': DateTime.now()
+            .subtract(Duration(days: 9))
+            .toIso8601String(),
+        'updatedAt': DateTime.now()
+            .subtract(Duration(days: 7))
+            .toIso8601String(),
+        'reportCategoryId': 1,
+        'reportTypeId': 1,
+      },
+      {
+        'id': '10',
+        'description': 'Suspicious dating app profile with financial requests',
+        'email': 'dating@fake-app.com',
+        'phoneNumber': '+1555987654',
+        'website': 'https://fake-dating-app.com',
+        'alertLevels': 'Medium',
+        'createdAt': DateTime.now()
+            .subtract(Duration(days: 10))
+            .toIso8601String(),
+        'updatedAt': DateTime.now()
+            .subtract(Duration(days: 8))
+            .toIso8601String(),
+        'reportCategoryId': 4,
+        'reportTypeId': 4,
+      },
+      {
+        'id': '11',
+        'description': 'Fake Amazon order confirmation scam',
+        'email': 'amazon@fake-order.com',
+        'phoneNumber': '+18002732226',
+        'website': 'https://fake-amazon-order.com',
+        'alertLevels': 'High',
+        'createdAt': DateTime.now()
+            .subtract(Duration(days: 11))
+            .toIso8601String(),
+        'updatedAt': DateTime.now()
+            .subtract(Duration(days: 9))
+            .toIso8601String(),
+        'reportCategoryId': 1,
+        'reportTypeId': 1,
+      },
+      {
+        'id': '12',
+        'description': 'Suspicious bank account verification request',
+        'email': 'bank@fake-bank.com',
+        'phoneNumber': '+18005551234',
+        'website': 'https://fake-bank-verify.com',
+        'alertLevels': 'Critical',
+        'createdAt': DateTime.now()
+            .subtract(Duration(days: 12))
+            .toIso8601String(),
+        'updatedAt': DateTime.now()
+            .subtract(Duration(days: 10))
+            .toIso8601String(),
+        'reportCategoryId': 1,
+        'reportTypeId': 1,
       },
     ];
   }

@@ -1,7 +1,7 @@
 class ApiConfig {
   // Base URL for the API
   static const String baseUrl =
-      'https://c98aecbcc5a8.ngrok-free.app'; // NO trailing slash
+      'https://0af86cf17619.ngrok-free.app'; // NO trailing slash
 
   // Replace with your actual API base URL
 
@@ -23,6 +23,7 @@ class ApiConfig {
   static const String dashboardStatsEndpoint = '/dashboard/stats';
   static const String reportSecurityIssueEndpoint = '/reports';
   static const String threatHistoryEndpoint = '/alerts/history';
+  static const String reportsEndpoint = '/reports'; // Add this line
 
   // API Headers
   static const Map<String, String> defaultHeaders = {

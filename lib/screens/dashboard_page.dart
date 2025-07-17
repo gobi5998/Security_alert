@@ -463,8 +463,8 @@ class _DashboardPageState extends State<DashboardPage> {
                                     color: Colors.black87,
                                     fontWeight: FontWeight.bold,
                                     fontSize: 18,
-                                  ),
-                                ),
+                      ),
+                    ),
                                 const SizedBox(height: 16),
                                 ...[].map((alert) {
                                   return Container(
@@ -537,9 +537,9 @@ class _DashboardPageState extends State<DashboardPage> {
                           ),
                         ],
                       ),
+                      ),
                     ),
                   ),
-                ),
               ],
             );
           },
@@ -580,32 +580,32 @@ class _StatCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Expanded(
-      child: Container(
+          child: Container(
         padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
+            decoration: BoxDecoration(
           color: Colors.white.withOpacity(0.9),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Column(
-          children: [
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Column(
+              children: [
             Icon(icon, color: color, size: 24),
             const SizedBox(height: 8),
             Text(
               value,
               style: TextStyle(
                 fontSize: 20,
-                fontWeight: FontWeight.bold,
+                      fontWeight: FontWeight.bold,
                 color: color,
-              ),
-            ),
+                    ),
+                  ),
             Text(
               title,
               style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-              textAlign: TextAlign.center,
+                      textAlign: TextAlign.center,
+                ),
+              ],
             ),
-          ],
-        ),
-      ),
-    );
+          ),
+        );
   }
-}
+  }

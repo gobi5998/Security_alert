@@ -57,13 +57,19 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
     }
 
     try {
+      print('Loading backend threads... Page: $currentPage');
       final reports = await _apiService.getReportsFromBackend(
         search: widget.searchQuery,
         type: widget.selectedType,
         severity: widget.selectedSeverity,
         page: currentPage,
-        limit: 50, // Increased limit
+        limit: 10, // Match your backend's default limit
       );
+
+      print('Received ${reports.length} reports from backend');
+      if (reports.isNotEmpty) {
+        print('First report: ${reports.first}');
+      }
 
       setState(() {
         if (loadMore) {
@@ -74,8 +80,8 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
           isLoadingBackend = false;
         }
 
-        // Check if we have more data
-        hasMoreData = reports.length >= 50;
+        // Check if we have more data - we'll update this based on the response
+        hasMoreData = reports.length >= 10; // Default assumption
       });
     } catch (e) {
       print('Error loading backend reports: $e');
@@ -86,6 +92,16 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
           isLoadingBackend = false;
         }
       });
+
+      // Show error message to user
+      if (!loadMore) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to load reports: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
