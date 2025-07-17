@@ -168,37 +168,88 @@ class ApiService {
   // }
 
 
-  Future<Map<String, dynamic>> login(String username, String password) async {
-    try {
-      print('Attempting login with username: $username');
+  // Future<Map<String, dynamic>> login(String username, String password) async {
+  //   try {
+  //     print('Attempting login with username: $username');
+  //
+  //     final response = await _dio.post(ApiConfig.loginEndpoint, data: {
+  //       'username': username,
+  //       'password': password,
+  //     });
+  //
+  //     print('Raw response: $response');
+  //     print('Raw response data: ${response.data}');
+  //
+  //     if (response.data == null || response.data is! Map<String, dynamic>) {
+  //       print('Warning: Unexpected or null response. Continuing anyway.');
+  //       return {}; // return empty map to avoid error
+  //     }
+  //
+  //     final Map<String, dynamic> responseData = response.data;
+  //
+  //     // Optional: Log token if available
+  //     if (responseData.containsKey('access_token')) {
+  //       final prefs = await SharedPreferences.getInstance();
+  //       await prefs.setString('auth_token', responseData['access_token']);
+  //     }
+  //
+  //     return responseData;
+  //   } catch (e) {
+  //     print('Login warning: $e');
+  //     return {}; // continue even on error
+  //   }
+  // }
 
-      final response = await _dio.post(ApiConfig.loginEndpoint, data: {
-        'username': username,
-        'password': password,
-      });
 
-      print('Raw response: $response');
-      print('Raw response data: ${response.data}');
-
-      if (response.data == null || response.data is! Map<String, dynamic>) {
-        print('Warning: Unexpected or null response. Continuing anyway.');
-        return {}; // return empty map to avoid error
-      }
-
-      final Map<String, dynamic> responseData = response.data;
-
-      // Optional: Log token if available
-      if (responseData.containsKey('access_token')) {
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('auth_token', responseData['access_token']);
-      }
-
-      return responseData;
-    } catch (e) {
-      print('Login warning: $e');
-      return {}; // continue even on error
-    }
-  }
+  // Future<Map<String, dynamic>> login(String username, String password) async {
+  //   try {
+  //     print('Attempting login with username: $username');
+  //
+  //     final response = await _dio.post(ApiConfig.loginEndpoint, data: {
+  //       'username': username,
+  //       'password': password,
+  //     });
+  //
+  //     print('Raw response: ${response}');
+  //     print('Raw response data: ${response.data}');
+  //
+  //     if (response.data == null || response.data is! Map<String, dynamic>) {
+  //       throw Exception('Invalid response from server');
+  //     }
+  //
+  //     final Map<String, dynamic> responseData = response.data;
+  //
+  //     // Save token if available
+  //     if (responseData.containsKey('access_token')) {
+  //       final prefs = await SharedPreferences.getInstance();
+  //       await prefs.setString('auth_token', responseData['access_token']);
+  //     }
+  //
+  //     // Optional fallback if user data not available
+  //     if (!responseData.containsKey('user')) {
+  //       responseData['user'] = {
+  //         'username': username, // fallback to input
+  //         'email': '',
+  //         'name': '',
+  //       };
+  //     }
+  //
+  //     return responseData;
+  //   } on DioException catch (e) {
+  //     print('DioException during login: ${e.message}');
+  //     print('DioException response data: ${e.response?.data}');
+  //     print('DioException status code: ${e.response?.statusCode}');
+  //
+  //     final errMsg = e.response?.data is Map<String, dynamic>
+  //         ? e.response?.data['message'] ?? 'Unknown error'
+  //         : e.message;
+  //
+  //     throw Exception('Login failed: $errMsg');
+  //   } catch (e) {
+  //     print('General exception during login: $e');
+  //     throw Exception('Login failed: Invalid response from server');
+  //   }
+  // }
 
 
   Future<List<Map<String, dynamic>>> fetchReportTypes() async {
@@ -270,115 +321,115 @@ class ApiService {
     }
   }
 
-  Map<String, dynamic> _getMockLoginResponse(String username) {
-    return {
-      'user': {
-        'id': '1',
-        'username': username,
-        'email': '$username@example.com',
-        'created_at': DateTime.now().toIso8601String(),
-        'updated_at': DateTime.now().toIso8601String(),
-      },
-      'token': 'mock_token_${DateTime.now().millisecondsSinceEpoch}',
-      'message': 'Login successful (mock data)',
-    };
-  }
-
-  Future<Map<String, dynamic>> register(String firstname, String lastname, String username, String password) async {
-    try {
-      // Print the payload for debugging
-      final payload = {
-        'firstName': firstname,
-        'lastName': lastname,
-        'username': username,
-        'password': password,
-      };
-      print('Registration payload: $payload');
-
-      final response = await _dio.post(ApiConfig.registerEndpoint, data: payload);
-
-      print('Registration response: ${response.data}');
-      print('Type of response.data: ${response.data.runtimeType}');
-
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        if (response.data is Map<String, dynamic> && response.data['user'] is Map<String, dynamic>) {
-          Map<String, dynamic> responseData = response.data;
-          // Save token if it exists in the response
-          if (responseData.containsKey('token')) {
-            final prefs = await SharedPreferences.getInstance();
-            await prefs.setString('auth_token', responseData['token']);
-          } else if (responseData.containsKey('access_token')) {
-            final prefs = await SharedPreferences.getInstance();
-            await prefs.setString('auth_token', responseData['access_token']);
-          }
-          return responseData;
-        } else {
-          print('Unexpected response format: ${response.data}');
-          throw Exception('Invalid registration response format');
-        }
-      } else {
-        // Print backend error message if available
-        if (response.data is Map<String, dynamic> && response.data['message'] != null) {
-          throw Exception(response.data['message']);
-        }
-        throw Exception('Registration failed - Status: ${response.statusCode}');
-      }
-    } on DioException catch (e) {
-      print('DioException during registration: ${e.message}');
-      print('Response data: ${e.response?.data}');
-      // If API is not available, use mock data
-      if (e.type == DioExceptionType.connectionError ||
-          e.type == DioExceptionType.connectionTimeout ||
-          e.response?.statusCode == 404) {
-        print('Using mock data for registration');
-        return _getMockRegisterResponse(firstname, lastname, username);
-      }
-      if (e.response?.statusCode == 409) {
-        throw Exception('Username or email already exists');
-      } else if (e.response?.statusCode == 400) {
-        // Print backend error message if available
-        if (e.response?.data is Map<String, dynamic> && e.response?.data['message'] != null) {
-          throw Exception(e.response?.data['message']);
-        }
-        throw Exception('Invalid registration data');
-      } else {
-        throw Exception(e.response?.data?['message'] ?? 'Registration failed: ${e.message}');
-      }
-    } catch (e) {
-      print('General exception during registration: $e');
-      // Fallback to mock data
-      return _getMockRegisterResponse(firstname, lastname, username);
-    }
-  }
-
-  Map<String, dynamic> _getMockRegisterResponse(String firstname, String lastname, String username) {
-    return {
-      'user': {
-        'id': '1',
-        'firstname':firstname,
-        'lastname':lastname,
-        'username': username,
-      },
-      'token': 'mock_token_${DateTime.now().millisecondsSinceEpoch}',
-      'message': 'Registration successful (mock data)',
-    };
-  }
-
-  Future<void> logout() async {
-    try {
-      if (!_useMockData) {
-        await _dio.post(ApiConfig.logoutEndpoint);
-      }
-      // Clear token from shared preferences
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.remove('auth_token');
-    } on DioException catch (e) {
-      print('Logout error: ${e.message}');
-      // Even if logout fails, clear the token locally
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.remove('auth_token');
-    }
-  }
+  // Map<String, dynamic> _getMockLoginResponse(String username) {
+  //   return {
+  //     'user': {
+  //       'id': '1',
+  //       'username': username,
+  //       'email': '$username@example.com',
+  //       'created_at': DateTime.now().toIso8601String(),
+  //       'updated_at': DateTime.now().toIso8601String(),
+  //     },
+  //     'token': 'mock_token_${DateTime.now().millisecondsSinceEpoch}',
+  //     'message': 'Login successful (mock data)',
+  //   };
+  // }
+  //
+  // Future<Map<String, dynamic>> register(String firstname, String lastname, String username, String password) async {
+  //   try {
+  //     // Print the payload for debugging
+  //     final payload = {
+  //       'firstName': firstname,
+  //       'lastName': lastname,
+  //       'username': username,
+  //       'password': password,
+  //     };
+  //     print('Registration payload: $payload');
+  //
+  //     final response = await _dio.post(ApiConfig.registerEndpoint, data: payload);
+  //
+  //     print('Registration response: ${response.data}');
+  //     print('Type of response.data: ${response.data.runtimeType}');
+  //
+  //     if (response.statusCode == 200 || response.statusCode == 201) {
+  //       if (response.data is Map<String, dynamic> && response.data['user'] is Map<String, dynamic>) {
+  //         Map<String, dynamic> responseData = response.data;
+  //         // Save token if it exists in the response
+  //         if (responseData.containsKey('token')) {
+  //           final prefs = await SharedPreferences.getInstance();
+  //           await prefs.setString('auth_token', responseData['token']);
+  //         } else if (responseData.containsKey('access_token')) {
+  //           final prefs = await SharedPreferences.getInstance();
+  //           await prefs.setString('auth_token', responseData['access_token']);
+  //         }
+  //         return responseData;
+  //       } else {
+  //         print('Unexpected response format: ${response.data}');
+  //         throw Exception('Invalid registration response format');
+  //       }
+  //     } else {
+  //       // Print backend error message if available
+  //       if (response.data is Map<String, dynamic> && response.data['message'] != null) {
+  //         throw Exception(response.data['message']);
+  //       }
+  //       throw Exception('Registration failed - Status: ${response.statusCode}');
+  //     }
+  //   } on DioException catch (e) {
+  //     print('DioException during registration: ${e.message}');
+  //     print('Response data: ${e.response?.data}');
+  //     // If API is not available, use mock data
+  //     if (e.type == DioExceptionType.connectionError ||
+  //         e.type == DioExceptionType.connectionTimeout ||
+  //         e.response?.statusCode == 404) {
+  //       print('Using mock data for registration');
+  //       return _getMockRegisterResponse(firstname, lastname, username);
+  //     }
+  //     if (e.response?.statusCode == 409) {
+  //       throw Exception('Username or email already exists');
+  //     } else if (e.response?.statusCode == 400) {
+  //       // Print backend error message if available
+  //       if (e.response?.data is Map<String, dynamic> && e.response?.data['message'] != null) {
+  //         throw Exception(e.response?.data['message']);
+  //       }
+  //       throw Exception('Invalid registration data');
+  //     } else {
+  //       throw Exception(e.response?.data?['message'] ?? 'Registration failed: ${e.message}');
+  //     }
+  //   } catch (e) {
+  //     print('General exception during registration: $e');
+  //     // Fallback to mock data
+  //     return _getMockRegisterResponse(firstname, lastname, username);
+  //   }
+  // }
+  //
+  // Map<String, dynamic> _getMockRegisterResponse(String firstname, String lastname, String username) {
+  //   return {
+  //     'user': {
+  //       'id': '1',
+  //       'firstname':firstname,
+  //       'lastname':lastname,
+  //       'username': username,
+  //     },
+  //     'token': 'mock_token_${DateTime.now().millisecondsSinceEpoch}',
+  //     'message': 'Registration successful (mock data)',
+  //   };
+  // }
+  //
+  // Future<void> logout() async {
+  //   try {
+  //     if (!_useMockData) {
+  //       await _dio.post(ApiConfig.logoutEndpoint);
+  //     }
+  //     // Clear token from shared preferences
+  //     final prefs = await SharedPreferences.getInstance();
+  //     await prefs.remove('auth_token');
+  //   } on DioException catch (e) {
+  //     print('Logout error: ${e.message}');
+  //     // Even if logout fails, clear the token locally
+  //     final prefs = await SharedPreferences.getInstance();
+  //     await prefs.remove('auth_token');
+  //   }
+  // }
 
   // Security alerts endpoints
   Future<List<Map<String, dynamic>>> getSecurityAlerts() async {
@@ -523,51 +574,53 @@ class ApiService {
   }
 
   // User profile endpoints
-  Future<Map<String, dynamic>> getUserProfile() async {
-    try {
-      if (_useMockData) {
-        return _getMockUserProfile();
-      }
-
-      final response = await _dio.get(ApiConfig.userProfileEndpoint);
-      if (response.statusCode == 200) {
-        return response.data;
-      }
-      throw Exception('Failed to fetch user profile');
-    } on DioException catch (e) {
-      print('Error fetching user profile: ${e.message}');
-      // Return mock user data
-      return _getMockUserProfile();
-    }
-  }
-
-  Map<String, dynamic> _getMockUserProfile() {
-    return {
-      'id': '1',
-      'username': 'demo_user',
-      'email': 'demo@example.com',
-
-    };
-  }
-
-  Future<Map<String, dynamic>> updateUserProfile(Map<String, dynamic> profileData) async {
-    try {
-      if (_useMockData) {
-        return {'message': 'Profile updated successfully (mock data)'};
-      }
-
-      final response = await _dio.put(ApiConfig.updateProfileEndpoint, data: profileData);
-      if (response.statusCode == 200) {
-        return response.data;
-      }
-      throw Exception('Failed to update user profile');
-    } on DioException catch (e) {
-      print('Error updating user profile: ${e.message}');
-      return {'message': 'Profile updated successfully (mock data)'};
-    }
-  }
+  // Future<Map<String, dynamic>> getUserProfile() async {
+  //   try {
+  //     if (_useMockData) {
+  //       return _getMockUserProfile();
+  //     }
+  //
+  //     final response = await _dio.get(ApiConfig.userProfileEndpoint);
+  //     if (response.statusCode == 200) {
+  //       return response.data;
+  //     }
+  //     throw Exception('Failed to fetch user profile');
+  //   } on DioException catch (e) {
+  //     print('Error fetching user profile: ${e.message}');
+  //     // Return mock user data
+  //     return _getMockUserProfile();
+  //   }
+  // }
+  //
+  // Map<String, dynamic> _getMockUserProfile() {
+  //   return {
+  //     'id': '1',
+  //     'username': 'demo_user',
+  //     'email': 'demo@example.com',
+  //
+  //   };
+  // }
+  //
+  // Future<Map<String, dynamic>> updateUserProfile(Map<String, dynamic> profileData) async {
+  //   try {
+  //     if (_useMockData) {
+  //       return {'message': 'Profile updated successfully (mock data)'};
+  //     }
+  //
+  //     final response = await _dio.put(ApiConfig.updateProfileEndpoint, data: profileData);
+  //     if (response.statusCode == 200) {
+  //       return response.data;
+  //     }
+  //     throw Exception('Failed to update user profile');
+  //   } on DioException catch (e) {
+  //     print('Error updating user profile: ${e.message}');
+  //     return {'message': 'Profile updated successfully (mock data)'};
+  //   }
+  // }
 
   void setState(Null Function() param0) {}
+
+
 
   // // Password reset endpoints
   // Future<Map<String, dynamic>> forgotPassword(String email) async {
@@ -691,4 +744,164 @@ class ApiService {
   //       return 'An unexpected error occurred.';
   //   }
   // }
+}
+
+class AuthService{
+  bool _useMockData = false;
+  late Dio _dio;
+  static final Dio reportDio = Dio(
+    BaseOptions(
+      baseUrl: 'https://5fbcf7527c7b.ngrok-free.app', // REPORT BASE URL
+      connectTimeout: Duration(seconds: 30),
+      receiveTimeout: Duration(seconds: 30),
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+    ),
+  );
+
+  /// LOGIN
+  Future<Map<String, dynamic>> login(String username, String password) async {
+    try {
+      print('Attempting login with username: $username');
+
+      final response = await _dio.post('/auth/login-user', data: {
+        'username': username,
+        'password': password,
+      });
+
+      print('Raw response: ${response}');
+      print('Raw response data: ${response.data}');
+
+      if (response.data == null || response.data is! Map<String, dynamic>) {
+        throw Exception('Invalid response from server');
+      }
+
+      final Map<String, dynamic> responseData = response.data;
+
+      // Save token if available
+      if (responseData.containsKey('access_token')) {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('auth_token', responseData['access_token']);
+      }
+
+      // Optional fallback if user data not available
+      if (!responseData.containsKey('user')) {
+        responseData['user'] = {
+          'username': username,
+          'email': '',
+          'name': '',
+        };
+      }
+
+      return responseData;
+    } on DioException catch (e) {
+      print('DioException during login: ${e.message}');
+      print('DioException response data: ${e.response?.data}');
+      print('DioException status code: ${e.response?.statusCode}');
+
+      final errMsg = e.response?.data is Map<String, dynamic>
+          ? e.response?.data['message'] ?? 'Unknown error'
+          : e.message;
+
+      throw Exception('Login failed: $errMsg');
+    } catch (e) {
+      print('General exception during login: $e');
+      throw Exception('Login failed: Invalid response from server');
+    }
+  }
+
+  /// REGISTER
+  Future<Map<String, dynamic>> register(String firstname, String lastname, String username, String password) async {
+    try {
+      final payload = {
+        'firstName': firstname,
+        'lastName': lastname,
+        'username': username,
+        'password': password,
+      };
+
+      print('Registration payload: $payload');
+
+      final response = await _dio.post('/auth/register', data: payload);
+
+      print('Registration response: ${response.data}');
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        if (response.data is Map<String, dynamic> && response.data['user'] is Map<String, dynamic>) {
+          final prefs = await SharedPreferences.getInstance();
+
+          if (response.data.containsKey('token')) {
+            await prefs.setString('auth_token', response.data['token']);
+          } else if (response.data.containsKey('access_token')) {
+            await prefs.setString('auth_token', response.data['access_token']);
+          }
+
+          return response.data;
+        } else {
+          throw Exception('Invalid registration response format');
+        }
+      } else {
+        throw Exception(response.data['message'] ?? 'Registration failed');
+      }
+    } on DioException catch (e) {
+      print('DioException during registration: ${e.message}');
+      if (e.response?.statusCode == 409) {
+        throw Exception('Username already exists');
+      }
+      throw Exception(e.response?.data?['message'] ?? 'Registration failed: ${e.message}');
+    } catch (e) {
+      print('Registration error: $e');
+      return _getMockRegisterResponse(firstname, lastname, username);
+    }
+  }
+
+  Map<String, dynamic> _getMockRegisterResponse(String firstname, String lastname, String username) {
+    return {
+      'user': {
+        'id': '1',
+        'firstname': firstname,
+        'lastname': lastname,
+        'username': username,
+      },
+      'token': 'mock_token_${DateTime.now().millisecondsSinceEpoch}',
+      'message': 'Registration successful (mock data)',
+    };
+  }
+
+  /// GET USER PROFILE
+  Future<Map<String, dynamic>> getUserProfile() async {
+    try {
+      final response = await _dio.get('/auth/profile');
+
+      if (response.statusCode == 200 && response.data is Map<String, dynamic>) {
+        return response.data;
+      }
+      throw Exception('Failed to fetch user profile');
+    } on DioException catch (e) {
+      print('Error fetching profile: ${e.message}');
+      return _getMockUserProfile();
+    }
+  }
+
+  Map<String, dynamic> _getMockUserProfile() {
+    return {
+      'id': '1',
+      'username': 'demo_user',
+      'email': 'demo@example.com',
+    };
+  }
+
+  /// LOGOUT
+  Future<void> logout() async {
+    try {
+      await _dio.post('/auth/logout');
+    } catch (e) {
+      print('Logout error: $e');
+    } finally {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('auth_token');
+    }
+  }
 }

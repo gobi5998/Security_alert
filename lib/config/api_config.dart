@@ -1,6 +1,6 @@
 class ApiConfig {
   // Base URL for the API
-  static const String baseUrl = 'https://5fbcf7527c7b.ngrok-free.app'; // NO trailing slash
+  static const String baseUrl = 'https://8f44c62598f1.ngrok-free.app'; // NO trailing slash
 
   // Replace with your actual API base URL
 

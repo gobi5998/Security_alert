@@ -16,6 +16,7 @@ import 'ReportedFeatureCard.dart';
 import 'ReportedFeatureItem.dart';
 import 'alert.dart';
 import 'malware/report_malware_1.dart';
+import 'menu/theard_database.dart';
 import 'server_reports_page.dart';
 import 'menu/profile_page.dart';
 
@@ -166,6 +167,14 @@ class _DashboardPageState extends State<DashboardPage> {
                       child: CustomButton(
                         text: 'Report Malware',
                         onPressed: () async {
+                          if (isLoadingTypes) return;
+                          Map<String, dynamic>? MalwareCategory;
+                          try {
+                            MalwareCategory = reportCategories.firstWhere((e) => e['name'] == 'Report Malware');
+                          } catch (_) {
+                            MalwareCategory = null;
+                          }
+                          if (MalwareCategory == null) return;
                           Navigator.push(
                             context,
                             MaterialPageRoute(
@@ -227,7 +236,7 @@ class _DashboardPageState extends State<DashboardPage> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => AlertPage(),
+                      builder: (context) => ThreadDatabaseFilterPage(),
                     ),
                   );
                 } else if (index == 2) {

@@ -11,12 +11,13 @@ class ThreadDatabaseListPage extends StatefulWidget {
   final String searchQuery;
   final String? selectedType;
   final String? selectedSeverity;
+  final String scamTypeId;
 
   const ThreadDatabaseListPage({
     Key? key,
     required this.searchQuery,
     this.selectedType,
-    this.selectedSeverity,
+    this.selectedSeverity,  required this.scamTypeId,
   }) : super(key: key);
 
   @override
@@ -24,6 +25,8 @@ class ThreadDatabaseListPage extends StatefulWidget {
 }
 
 class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
+  final List<Map<String, dynamic>> scamTypes = [];
+
   Color severityColor(String severity) {
     switch (severity) {
       case 'Low':
@@ -52,7 +55,7 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
     try {
       // Use the centralized service to sync the report
       bool success = await ScamReportService.sendToBackend(report);
-      
+
       if (success) {
         // Update the report as synced in the local database
         final box = Hive.box<ScamReportModel>('scam_reports');
@@ -170,15 +173,11 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
                       backgroundColor: severityColor(report.alertLevels ?? ''),
                       child: Icon(Icons.warning, color: Colors.white),
                     ),
-                    title: Text(
-                      report.description ?? '',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
+                    title:Text(report.description ?? '',),
                     subtitle: Text(
                       report.description ?? '',
                       maxLines: 2,
+                      style: TextStyle(fontSize:10),
                       overflow: TextOverflow.ellipsis,
                     ),
                     trailing: Row(

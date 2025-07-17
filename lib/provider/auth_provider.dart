@@ -197,7 +197,7 @@ import '../models/user_model.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthProvider with ChangeNotifier {
-  final ApiService _apiService = ApiService();
+  final AuthService _apiService = AuthService();
 
   bool _isLoggedIn = false;
   bool _isLoading = false;
@@ -256,6 +256,7 @@ class AuthProvider with ChangeNotifier {
       notifyListeners();
 
       final response = await _apiService.login(username, password);
+      print('Login API response: $response');
       if (response == null || response['user'] == null) {
         throw Exception('Invalid response from server');
       }
@@ -366,21 +367,21 @@ class AuthProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<bool> updateProfile(Map<String, dynamic> profileData) async {
-    try {
-      _isLoading = true;
-      _errorMessage = '';
-      notifyListeners();
-
-      final response = await _apiService.updateUserProfile(profileData);
-      _currentUser = User.fromJson(response);
-      return true;
-    } catch (e) {
-      _errorMessage = e.toString().replaceAll('Exception: ', '');
-      return false;
-    } finally {
-      _isLoading = false;
-      notifyListeners();
-    }
-  }
+  // Future<bool> updateProfile(Map<String, dynamic> profileData) async {
+  //   try {
+  //     _isLoading = true;
+  //     _errorMessage = '';
+  //     notifyListeners();
+  //
+  //     final response = await _apiService.updateUserProfile(profileData);
+  //     _currentUser = User.fromJson(response);
+  //     return true;
+  //   } catch (e) {
+  //     _errorMessage = e.toString().replaceAll('Exception: ', '');
+  //     return false;
+  //   } finally {
+  //     _isLoading = false;
+  //     notifyListeners();
+  //   }
+  // }
 }

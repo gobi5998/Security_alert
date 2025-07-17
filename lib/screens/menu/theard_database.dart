@@ -90,7 +90,7 @@ class _ThreadDatabaseFilterPageState extends State<ThreadDatabaseFilterPage> {
                     builder: (context) => ThreadDatabaseListPage(
                       searchQuery: '',
                       selectedType: null,
-                      selectedSeverity: null,
+                      selectedSeverity: null, scamTypeId: '',
                     ),
                   ),
                 );
@@ -123,7 +123,7 @@ class _ThreadDatabaseFilterPageState extends State<ThreadDatabaseFilterPage> {
                       builder: (context) => ThreadDatabaseListPage(
                         searchQuery: searchQuery,
                         selectedType: selectedType,
-                        selectedSeverity: selectedSeverity,
+                        selectedSeverity: selectedSeverity, scamTypeId: '',
                       ),
                     ),
                   );
