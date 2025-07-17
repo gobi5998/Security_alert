@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import '../config/api_config.dart';
 
 class ServerReportsPage extends StatelessWidget {
   const ServerReportsPage({Key? key}) : super(key: key);
 
   Future<List<Map<String, dynamic>>> fetchServerReports() async {
     final response = await http.get(
-      Uri.parse('${ApiConfig.baseUrl}scam-reports'),
+      Uri.parse('https://your-backend-url/api/reports'),
     );
     if (response.statusCode == 200) {
       final List<dynamic> data = jsonDecode(response.body);

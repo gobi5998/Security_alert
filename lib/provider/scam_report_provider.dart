@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import '../models/scam_report_model.dart';
-import '../scam/scam_local_service.dart';
-import '../scam/scam_remote_service.dart';
-import '../scam/scam_sync_service.dart';
+import '../screens/scam/scam_local_service.dart';
+import '../screens/scam/scam_remote_service.dart';
+import '../screens/scam/scam_sync_service.dart';
 
 class ScamReportProvider with ChangeNotifier {
   List<ScamReportModel> _reports = [];
@@ -18,8 +18,8 @@ class ScamReportProvider with ChangeNotifier {
     List<ScamReportModel> remote = await _remoteService.fetchReports();
     // Merge: keep all unsynced local, and all remote (by id)
     Map<String, ScamReportModel> merged = {
-      for (var r in remote) r.id: r,
-      for (var r in local.where((e) => !e.isSynced)) r.id: r,
+      for (var r in remote) (r.id ?? ''): r,
+      for (var r in local.where((e) => e.isSynced != true)) (r.id ?? ''): r,
     };
     _reports = merged.values.toList();
     notifyListeners();
