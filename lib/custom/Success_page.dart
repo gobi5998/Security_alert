@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../screens/dashboard_page.dart';
+import '../screens/menu/thread_database_listpage.dart';
 
 class ReportSuccess extends StatefulWidget {
   final String label;
@@ -55,7 +56,7 @@ class _ReportSuccessState extends State<ReportSuccess> {
                         onPressed: () {
                           Navigator.pushAndRemoveUntil(
                             context,
-                            MaterialPageRoute(builder: (_) => const DashboardPage()),
+                            MaterialPageRoute(builder: (_) =>  ThreadDatabaseListPage(searchQuery: '', scamTypeId: '', )),
                             (route) => false,
                           );
                         },
@@ -67,7 +68,7 @@ class _ReportSuccessState extends State<ReportSuccess> {
                           padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
                         ),
                         child: const Text(
-                          'Go to Dashboard',
+                          'Go to ThreadDatabaseListPage',
                           style: TextStyle(fontSize: 16, color: Colors.white, fontWeight: FontWeight.bold),
                         ),
                       ),

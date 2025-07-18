@@ -231,7 +231,9 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'dart:async';
 import 'models/scam_report_model.dart'; // ✅ Make sure this file contains: part 'scam_report_model.g.dart';
 import 'models/fraud_report_model.dart'; // at the top, if not already present
+import 'models/malware_report_model.dart';
 import 'screens/Fraud/fraud_report_service.dart';
+import 'screens/malware/malware_report_service.dart';
 import 'services/report_update_service.dart';
 
 void main() async {
@@ -239,7 +241,8 @@ void main() async {
   await Hive.initFlutter();
 
   Hive.registerAdapter(ScamReportModelAdapter());
-  Hive.registerAdapter(FraudReportModelAdapter()); // <-- ADD THIS LINE
+  Hive.registerAdapter(FraudReportModelAdapter());
+  Hive.registerAdapter(MalwareReportModelAdapter());
 
   // Try to open the box, if it fails due to unknown type IDs, clear and recreate
   try {
@@ -266,6 +269,18 @@ void main() async {
     }
   }
 
+  try {
+    await Hive.openBox<MalwareReportModel>('malware_reports');
+  } catch (e) {
+    if (e.toString().contains('unknown typeId')) {
+      print('Clearing Hive database due to unknown type IDs');
+      await Hive.deleteBoxFromDisk('malware_reports');
+      await Hive.openBox<MalwareReportModel>('malware_reports');
+    } else {
+      rethrow;
+    }
+  }
+
   // await Hive.deleteBoxFromDisk('scam_reports');
 
   // Update existing reports with keycloakUserId
@@ -274,6 +289,7 @@ void main() async {
   // Remove duplicate reports
   await ScamReportService.removeDuplicateReports();
   await FraudReportService.removeDuplicateReports();
+  await MalwareReportService.removeDuplicateReports();
 
   // Initial sync if online
   final initialConnectivity = await Connectivity().checkConnectivity();
@@ -292,6 +308,13 @@ void main() async {
       print('Initial sync: Fraud reports synced');
     } catch (e) {
       print('Initial sync: Error syncing fraud reports: $e');
+    }
+
+    try {
+      await MalwareReportService.syncReports();
+      print('Initial sync: Malware reports synced');
+    } catch (e) {
+      print('Initial sync: Error syncing malware reports: $e');
     }
   }
 
@@ -314,6 +337,13 @@ void main() async {
       } catch (e) {
         print('Periodic sync: Error syncing fraud reports: $e');
       }
+
+      try {
+        await MalwareReportService.syncReports();
+        print('Periodic sync: Malware reports synced');
+      } catch (e) {
+        print('Periodic sync: Error syncing malware reports: $e');
+      }
     }
   });
 
@@ -334,6 +364,13 @@ void main() async {
         print('Fraud reports synced successfully');
       } catch (e) {
         print('Error syncing fraud reports: $e');
+      }
+
+      try {
+        await MalwareReportService.syncReports();
+        print('Malware reports synced successfully');
+      } catch (e) {
+        print('Error syncing malware reports: $e');
       }
     }
   });

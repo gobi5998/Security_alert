@@ -170,20 +170,23 @@ class _DashboardPageState extends State<DashboardPage> {
                       child: CustomButton(
                         text: 'Report Malware',
                         onPressed: () async {
-                          if (isLoadingTypes) return;
-                          Map<String, dynamic>? MalwareCategory;
+                          if (isLoadingCategories) return;
+                          Map<String, dynamic>? malwareCategory;
                           try {
-                            MalwareCategory = reportCategories.firstWhere(
+                            malwareCategory = reportCategories.firstWhere(
                               (e) => e['name'] == 'Report Malware',
                             );
                           } catch (_) {
-                            MalwareCategory = null;
+                            malwareCategory = null;
                           }
-                          if (MalwareCategory == null) return;
+                          if (malwareCategory == null) return;
+
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => MalwareReportPage1(),
+                              builder: (context) => MalwareReportPage1(
+                                categoryId: malwareCategory!['_id'],
+                              ),
                             ),
                           );
                           return;

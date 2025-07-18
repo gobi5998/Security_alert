@@ -149,6 +149,9 @@ class _LoginPageState extends State<LoginPage> {
 
                         final success = await authProvider.login(username, password);
                         if (success) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text("Login successful")),
+                          );
                           Navigator.pushReplacement(
                             context,
                             MaterialPageRoute(builder: (_) => const DashboardPage()),

@@ -227,9 +227,11 @@ import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import '../../models/scam_report_model.dart';
 import '../../models/fraud_report_model.dart';
+import '../../models/malware_report_model.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import '../scam/scam_report_service.dart';
 import '../Fraud/fraud_report_service.dart';
+import '../malware/malware_report_service.dart';
 
 class ThreadDatabaseListPage extends StatefulWidget {
   final String searchQuery;
@@ -381,14 +383,60 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
     }
   }
 
+  Future<void> _manualSyncMalware(int index, MalwareReportModel report) async {
+    final connectivityResult = await Connectivity().checkConnectivity();
+    final isOnline = connectivityResult != ConnectivityResult.none;
+
+    if (!isOnline) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('No internet connection.')));
+      return;
+    }
+
+    setState(() {
+      syncingIndexes.add(index);
+    });
+
+    try {
+      bool success = await MalwareReportService.sendToBackend(report);
+
+      if (success) {
+        final box = Hive.box<MalwareReportModel>('malware_reports');
+        final key = box.keyAt(index);
+
+        final syncedReport = report.copyWith(isSynced: true);
+        await box.put(key, syncedReport);
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Malware report synced successfully!')),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to sync with server.')),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error syncing report: $e')));
+    } finally {
+      setState(() {
+        syncingIndexes.remove(index);
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    // Get both scam and fraud reports
+    // Get scam, fraud, and malware reports
     final scamBox = Hive.box<ScamReportModel>('scam_reports');
     final fraudBox = Hive.box<FraudReportModel>('fraud_reports');
+    final malwareBox = Hive.box<MalwareReportModel>('malware_reports');
 
     List<ScamReportModel> scamReports = scamBox.values.toList();
     List<FraudReportModel> fraudReports = fraudBox.values.toList();
+    List<MalwareReportModel> malwareReports = malwareBox.values.toList();
 
     // Combine reports into a unified list
     List<Map<String, dynamic>> allReports = [];
@@ -403,10 +451,33 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
       allReports.add({'type': 'fraud', 'index': i, 'report': fraudReports[i]});
     }
 
+    // Add malware reports with type indicator
+    for (int i = 0; i < malwareReports.length; i++) {
+      allReports.add({
+        'type': 'malware',
+        'index': i,
+        'report': malwareReports[i],
+      });
+    }
+
     // Sort by creation date (newest first) and remove duplicates
     allReports.sort((a, b) {
-      final aDate = a['report'].createdAt ?? DateTime.now();
-      final bDate = b['report'].createdAt ?? DateTime.now();
+      DateTime aDate;
+      DateTime bDate;
+
+      // Handle different date field names for different report types
+      if (a['report'] is MalwareReportModel) {
+        aDate = (a['report'] as MalwareReportModel).date;
+      } else {
+        aDate = a['report'].createdAt ?? DateTime.now();
+      }
+
+      if (b['report'] is MalwareReportModel) {
+        bDate = (b['report'] as MalwareReportModel).date;
+      } else {
+        bDate = b['report'].createdAt ?? DateTime.now();
+      }
+
       return bDate.compareTo(aDate); // Newest first
     });
 
@@ -415,7 +486,14 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
     allReports = allReports.where((item) {
       final report = item['report'];
       final reportType = item['type'];
-      final uniqueId = '${report.id}_$reportType';
+      String uniqueId;
+
+      // Handle different date field names for different report types
+      if (report is MalwareReportModel) {
+        uniqueId = '${report.id}_${report.name}_${report.date}';
+      } else {
+        uniqueId = '${report.id}_$reportType';
+      }
 
       if (seenIds.contains(uniqueId)) {
         return false;
@@ -428,9 +506,17 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
     if (widget.searchQuery.isNotEmpty) {
       allReports = allReports.where((item) {
         final report = item['report'];
-        return (report.description ?? '').toLowerCase().contains(
-          widget.searchQuery.toLowerCase(),
-        );
+
+        // Handle different field names for different report types
+        if (report is MalwareReportModel) {
+          return (report.name ?? '').toLowerCase().contains(
+            widget.searchQuery.toLowerCase(),
+          );
+        } else {
+          return (report.description ?? '').toLowerCase().contains(
+            widget.searchQuery.toLowerCase(),
+          );
+        }
       }).toList();
     }
 
@@ -438,7 +524,13 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
         widget.selectedSeverity!.isNotEmpty) {
       allReports = allReports.where((item) {
         final report = item['report'];
-        return (report.alertLevels ?? '') == widget.selectedSeverity;
+
+        // Handle different severity field names for different report types
+        if (report is MalwareReportModel) {
+          return (report.alertSeverityLevel ?? '') == widget.selectedSeverity;
+        } else {
+          return (report.alertLevels ?? '') == widget.selectedSeverity;
+        }
       }).toList();
     }
 
@@ -498,9 +590,19 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
                   ),
                   child: ListTile(
                     leading: CircleAvatar(
-                      backgroundColor: severityColor(report.alertLevels ?? ''),
+                      backgroundColor: severityColor(
+                        report is MalwareReportModel
+                            ? (report as MalwareReportModel)
+                                      .alertSeverityLevel ??
+                                  ''
+                            : report.alertLevels ?? '',
+                      ),
                       child: Icon(
-                        reportType == 'fraud' ? Icons.warning : Icons.warning,
+                        reportType == 'fraud'
+                            ? Icons.warning
+                            : reportType == 'malware'
+                            ? Icons.security
+                            : Icons.warning,
                         color: Colors.white,
                       ),
                     ),
@@ -508,16 +610,10 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
                     subtitle: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Text(
-                        //   'Type: ${reportType.toUpperCase()}',
-                        //   style: const TextStyle(
-                        //     fontSize: 14,
-                        //     color: Colors.blue,
-                        //     fontWeight: FontWeight.bold,
-                        //   ),
-                        // ),
                         Text(
-                          report.description ?? '',
+                          report is MalwareReportModel
+                              ? (report as MalwareReportModel).name ?? ''
+                              : report.description ?? '',
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(fontSize: 14),
@@ -570,8 +666,10 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
                             onPressed: () {
                               if (reportType == 'scam') {
                                 _manualSyncScam(reportIndex, report);
-                              } else {
+                              } else if (reportType == 'fraud') {
                                 _manualSyncFraud(reportIndex, report);
+                              } else if (reportType == 'malware') {
+                                _manualSyncMalware(reportIndex, report);
                               }
                             },
                           ),

@@ -533,8 +533,8 @@ class _ReportScam1State extends State<ReportScam1> {
 
             const SizedBox(height: 12),
             CustomTextField(
-              label: 'email',
-              hintText: 'email',
+              label: 'Email',
+              hintText: 'Email',
               onChanged: (val) => email = val,
               validator: validateEmail,
             ),
