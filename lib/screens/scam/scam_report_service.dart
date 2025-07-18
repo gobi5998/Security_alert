@@ -6,12 +6,19 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import '../../models/scam_report_model.dart';
 import '../../config/api_config.dart';
 import '../../services/api_service.dart';
+import '../../services/jwt_service.dart';
 
 class ScamReportService {
   static final _box = Hive.box<ScamReportModel>('scam_reports');
   static final ApiService _apiService = ApiService();
 
   static Future<void> saveReport(ScamReportModel report) async {
+    // Get current user ID from JWT token
+    final keycloakUserId = await JwtService.getCurrentUserId();
+    if (keycloakUserId != null) {
+      report = report.copyWith(keycloakUserId: keycloakUserId);
+    }
+
     final connectivity = await Connectivity().checkConnectivity();
     if (connectivity != ConnectivityResult.none) {
       // Try to send to backend
@@ -25,12 +32,21 @@ class ScamReportService {
   }
 
   static Future<void> saveReportOffline(ScamReportModel report) async {
+    // Get current user ID from JWT token
+    final keycloakUserId = await JwtService.getCurrentUserId();
+    if (keycloakUserId != null) {
+      report = report.copyWith(keycloakUserId: keycloakUserId);
+    }
+    print('Saving scam report to local storage: ${report.toJson()}');
     await _box.add(report);
+    print('Scam report saved successfully. Box length: ${_box.length}');
   }
 
   static Future<void> syncReports() async {
     final box = Hive.box<ScamReportModel>('scam_reports');
-    final unsyncedReports = box.values.where((r) => r.isSynced != true).toList();
+    final unsyncedReports = box.values
+        .where((r) => r.isSynced != true)
+        .toList();
 
     for (var report in unsyncedReports) {
       try {
@@ -66,6 +82,7 @@ class ScamReportService {
           'description': report.description,
           'createdAt': report.createdAt?.toIso8601String(),
           'updatedAt': report.updatedAt?.toIso8601String(),
+          'keycloackUserId': report.keycloakUserId,
         }),
       );
 
@@ -85,7 +102,53 @@ class ScamReportService {
   }
 
   static List<ScamReportModel> getLocalReports() {
-    return _box.values.toList();
+    print('Getting local scam reports. Box length: ${_box.length}');
+    final reports = _box.values.toList();
+    print('Retrieved ${reports.length} scam reports from local storage');
+    return reports;
+  }
+
+  static Future<void> updateExistingReportsWithKeycloakUserId() async {
+    final box = Hive.box<ScamReportModel>('scam_reports');
+    final reports = box.values.toList();
+
+    for (int i = 0; i < reports.length; i++) {
+      final report = reports[i];
+      if (report.keycloakUserId == null) {
+        final keycloakUserId = await JwtService.getCurrentUserId();
+        if (keycloakUserId != null) {
+          final updatedReport = report.copyWith(keycloakUserId: keycloakUserId);
+          final key = box.keyAt(i);
+          await box.put(key, updatedReport);
+        }
+      }
+    }
+  }
+
+  static Future<void> removeDuplicateReports() async {
+    final box = Hive.box<ScamReportModel>('scam_reports');
+    final reports = box.values.toList();
+    final seenIds = <String>{};
+    final toDelete = <int>[];
+
+    for (int i = 0; i < reports.length; i++) {
+      final report = reports[i];
+      final uniqueId = '${report.id}_${report.description}_${report.createdAt}';
+
+      if (seenIds.contains(uniqueId)) {
+        toDelete.add(i);
+      } else {
+        seenIds.add(uniqueId);
+      }
+    }
+
+    // Delete duplicates in reverse order to maintain indices
+    for (int i = toDelete.length - 1; i >= 0; i--) {
+      final key = box.keyAt(toDelete[i]);
+      await box.delete(key);
+    }
+
+    print('Removed ${toDelete.length} duplicate scam reports');
   }
 
   static Future<List<Map<String, dynamic>>> fetchReportTypes() async {

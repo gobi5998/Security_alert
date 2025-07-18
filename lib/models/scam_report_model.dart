@@ -43,6 +43,12 @@ class ScamReportModel extends HiveObject {
   @HiveField(12)
   List<String> documentPaths;
 
+  @HiveField(13)
+  String? name;
+
+  @HiveField(14)
+  String? keycloakUserId; // Keycloak user ID from JWT token sub field
+
   // Add other fields as needed
 
   ScamReportModel({
@@ -59,6 +65,8 @@ class ScamReportModel extends HiveObject {
     this.isSynced = false,
     this.screenshotPaths = const [],
     this.documentPaths = const [],
+    this.name,
+    this.keycloakUserId,
   });
 
   Map<String, dynamic> toJson() => {
@@ -66,6 +74,7 @@ class ScamReportModel extends HiveObject {
     'reportCategoryId': reportCategoryId,
     'reportTypeId': reportTypeId,
     'alertLevels': alertLevels,
+    'name': name,
     // If backend expects int, convert here:
     'phoneNumber': int.tryParse(phoneNumber ?? '') ?? 0,
     'email': email,
@@ -76,22 +85,35 @@ class ScamReportModel extends HiveObject {
     'isSynced': isSynced,
     'screenshotPaths': screenshotPaths,
     'documentPaths': documentPaths,
+    'keycloackUserId': keycloakUserId,
   };
 
-  factory ScamReportModel.fromJson(Map<String, dynamic> json) => ScamReportModel(
+  factory ScamReportModel.fromJson(
+    Map<String, dynamic> json,
+  ) => ScamReportModel(
     id: json['id'] ?? json['_id'],
     reportCategoryId: json['reportCategoryId'],
     reportTypeId: json['reportTypeId'],
     alertLevels: json['alertLevels'],
+    name: json['name'],
     phoneNumber: json['phoneNumber'],
     email: json['email'],
     website: json['website'],
     description: json['description'],
-    createdAt: json['createdAt'] != null ? DateTime.tryParse(json['createdAt']) : null,
-    updatedAt: json['updatedAt'] != null ? DateTime.tryParse(json['updatedAt']) : null,
+    createdAt: json['createdAt'] != null
+        ? DateTime.tryParse(json['createdAt'])
+        : null,
+    updatedAt: json['updatedAt'] != null
+        ? DateTime.tryParse(json['updatedAt'])
+        : null,
     isSynced: json['isSynced'],
-    screenshotPaths: (json['screenshotPaths'] as List?)?.map((e) => e as String).toList() ?? [],
-    documentPaths: (json['documentPaths'] as List?)?.map((e) => e as String).toList() ?? [],
+    screenshotPaths:
+        (json['screenshotPaths'] as List?)?.map((e) => e as String).toList() ??
+        [],
+    documentPaths:
+        (json['documentPaths'] as List?)?.map((e) => e as String).toList() ??
+        [],
+    keycloakUserId: json['keycloackUserId'],
   );
 
   ScamReportModel copyWith({
@@ -99,6 +121,7 @@ class ScamReportModel extends HiveObject {
     String? reportCategoryId,
     String? reportTypeId,
     String? alertLevels,
+    String? name,
     String? phoneNumber,
     String? email,
     String? website,
@@ -106,13 +129,16 @@ class ScamReportModel extends HiveObject {
     DateTime? createdAt,
     DateTime? updatedAt,
     bool? isSynced,
-    // add other fields as needed
+    List<String>? screenshotPaths,
+    List<String>? documentPaths,
+    String? keycloakUserId,
   }) {
     return ScamReportModel(
       id: id ?? this.id,
       reportCategoryId: reportCategoryId ?? this.reportCategoryId,
       reportTypeId: reportTypeId ?? this.reportTypeId,
       alertLevels: alertLevels ?? this.alertLevels,
+      name: name ?? this.name,
       phoneNumber: phoneNumber ?? this.phoneNumber,
       email: email ?? this.email,
       website: website ?? this.website,
@@ -120,7 +146,9 @@ class ScamReportModel extends HiveObject {
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       isSynced: isSynced ?? this.isSynced,
-      // add other fields as needed
+      screenshotPaths: screenshotPaths ?? this.screenshotPaths,
+      documentPaths: documentPaths ?? this.documentPaths,
+      keycloakUserId: keycloakUserId ?? this.keycloakUserId,
     );
   }
 }

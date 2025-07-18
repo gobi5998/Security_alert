@@ -209,9 +209,6 @@
 //   return box.values.toList();
 // }
 
-
-
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:security_alert/provider/scam_report_provider.dart';
@@ -231,15 +228,18 @@ import 'package:security_alert/screens/login.dart';
 import 'package:security_alert/services/biometric_service.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'dart:async';
 import 'models/scam_report_model.dart'; // ✅ Make sure this file contains: part 'scam_report_model.g.dart';
-
-
+import 'models/fraud_report_model.dart'; // at the top, if not already present
+import 'screens/Fraud/fraud_report_service.dart';
+import 'services/report_update_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Hive.initFlutter();
 
   Hive.registerAdapter(ScamReportModelAdapter());
+  Hive.registerAdapter(FraudReportModelAdapter()); // <-- ADD THIS LINE
 
   // Try to open the box, if it fails due to unknown type IDs, clear and recreate
   try {
@@ -254,17 +254,91 @@ void main() async {
     }
   }
 
+  try {
+    await Hive.openBox<FraudReportModel>('fraud_reports');
+  } catch (e) {
+    if (e.toString().contains('unknown typeId')) {
+      print('Clearing Hive database due to unknown type IDs');
+      await Hive.deleteBoxFromDisk('fraud_reports');
+      await Hive.openBox<FraudReportModel>('fraud_reports');
+    } else {
+      rethrow;
+    }
+  }
+
   // await Hive.deleteBoxFromDisk('scam_reports');
 
-  Connectivity().onConnectivityChanged.listen((result) {
+  // Update existing reports with keycloakUserId
+  await ReportUpdateService.updateAllExistingReports();
+
+  // Remove duplicate reports
+  await ScamReportService.removeDuplicateReports();
+  await FraudReportService.removeDuplicateReports();
+
+  // Initial sync if online
+  final initialConnectivity = await Connectivity().checkConnectivity();
+  if (initialConnectivity != ConnectivityResult.none) {
+    print('Initial sync: Syncing reports on app start...');
+
+    try {
+      await ScamReportService.syncReports();
+      print('Initial sync: Scam reports synced');
+    } catch (e) {
+      print('Initial sync: Error syncing scam reports: $e');
+    }
+
+    try {
+      await FraudReportService.syncReports();
+      print('Initial sync: Fraud reports synced');
+    } catch (e) {
+      print('Initial sync: Error syncing fraud reports: $e');
+    }
+  }
+
+  // Set up periodic sync (every 5 minutes when online)
+  Timer.periodic(const Duration(minutes: 5), (timer) async {
+    final connectivity = await Connectivity().checkConnectivity();
+    if (connectivity != ConnectivityResult.none) {
+      print('Periodic sync: Syncing reports...');
+
+      try {
+        await ScamReportService.syncReports();
+        print('Periodic sync: Scam reports synced');
+      } catch (e) {
+        print('Periodic sync: Error syncing scam reports: $e');
+      }
+
+      try {
+        await FraudReportService.syncReports();
+        print('Periodic sync: Fraud reports synced');
+      } catch (e) {
+        print('Periodic sync: Error syncing fraud reports: $e');
+      }
+    }
+  });
+
+  Connectivity().onConnectivityChanged.listen((result) async {
     if (result != ConnectivityResult.none) {
       print('Internet connection restored, syncing reports...');
-      ScamReportService.syncReports();
+
+      // Sync both scam and fraud reports automatically
+      try {
+        await ScamReportService.syncReports();
+        print('Scam reports synced successfully');
+      } catch (e) {
+        print('Error syncing scam reports: $e');
+      }
+
+      try {
+        await FraudReportService.syncReports();
+        print('Fraud reports synced successfully');
+      } catch (e) {
+        print('Error syncing fraud reports: $e');
+      }
     }
   });
 
   runApp(
-
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
@@ -272,7 +346,6 @@ void main() async {
         ChangeNotifierProvider(create: (_) => ScamReportProvider()),
       ],
       child: const MyApp(),
-
     ),
   );
 }
@@ -288,15 +361,14 @@ class MyApp extends StatelessWidget {
       initialRoute: '/',
       routes: {
         '/': (context) => const SplashScreen(),
-        '/profile': (context) =>  ProfilePage(),
-        '/thread': (context) =>  ThreadDatabaseFilterPage(),
-        '/subscription': (context) =>  SubscriptionPlansPage(),
-        '/rate': (context) =>  Ratepage(),
-        '/share': (context) =>  Shareapp(),
-        '/feedback': (context) =>  Feedbackpage(),
-        '/splashScreen':(context)=> SplashScreen()
+        '/profile': (context) => ProfilePage(),
+        '/thread': (context) => ThreadDatabaseFilterPage(),
+        '/subscription': (context) => SubscriptionPlansPage(),
+        '/rate': (context) => Ratepage(),
+        '/share': (context) => Shareapp(),
+        '/feedback': (context) => Feedbackpage(),
+        '/splashScreen': (context) => SplashScreen(),
       },
-
     );
   }
 }

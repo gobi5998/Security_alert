@@ -61,8 +61,6 @@ import 'package:http/http.dart' as http;
 //     });
 //   }
 
-
-
 //   @override
 //   Widget build(BuildContext context) {
 //     return Scaffold(
@@ -94,11 +92,11 @@ import 'package:http/http.dart' as http;
 //                 },
 //               ),
 
-              // const SizedBox(height: 16),
-              // const Text(
-              //   'Scammer details',
-              //   style: TextStyle(fontWeight: FontWeight.bold),
-              // ),
+// const SizedBox(height: 16),
+// const Text(
+//   'Scammer details',
+//   style: TextStyle(fontWeight: FontWeight.bold),
+// ),
 //               const SizedBox(height: 8),
 //               CustomTextField(label: 'Phone*',hintText: '+91-979864483',
 //                 onChanged:(val) => phone = val,
@@ -154,8 +152,6 @@ import 'package:http/http.dart' as http;
 //               //   return;
 //               // },
 //               //     fontWeight: FontWeight.normal),
-
-
 
 //             ],
 //           ),
@@ -417,8 +413,6 @@ import 'package:http/http.dart' as http;
 //   }
 // }
 
-
-
 class ReportScam1 extends StatefulWidget {
   final String categoryId;
   const ReportScam1({required this.categoryId});
@@ -465,7 +459,9 @@ class _ReportScam1State extends State<ReportScam1> {
 
     // Always try to fetch latest from backend in background
     try {
-      final latestTypes = await ScamReportService.fetchReportTypesByCategory(widget.categoryId);
+      final latestTypes = await ScamReportService.fetchReportTypesByCategory(
+        widget.categoryId,
+      );
       if (latestTypes != null && latestTypes.isNotEmpty) {
         scamTypes = latestTypes;
         await box.put(widget.categoryId, latestTypes);
@@ -478,7 +474,6 @@ class _ReportScam1State extends State<ReportScam1> {
   }
 
   Future<void> _submitForm() async {
-
     if (_formKey.currentState!.validate()) {
       final id = DateTime.now().millisecondsSinceEpoch.toString();
       final report = ScamReportModel(
@@ -490,16 +485,13 @@ class _ReportScam1State extends State<ReportScam1> {
         email: email!,
         website: website ?? '',
         description: description!,
-       
       );
 
       await ScamReportService.saveReport(report);
 
       Navigator.push(
         context,
-        MaterialPageRoute(
-          builder: (_) => ReportScam2(report: report),
-        ),
+        MaterialPageRoute(builder: (_) => ReportScam2(report: report)),
       );
     }
   }
@@ -513,43 +505,60 @@ class _ReportScam1State extends State<ReportScam1> {
         child: ListView(
           padding: EdgeInsets.all(20),
           children: [
-
-
             CustomDropdown(
               label: 'Scam Type',
               hint: 'Select a Scam Type',
               items: scamTypes.map((e) => e['name'] as String).toList(),
               value: scamTypes.firstWhere(
-                    (e) => e['_id'] == scamTypeId,
+                (e) => e['_id'] == scamTypeId,
                 orElse: () => {},
               )['name'],
               onChanged: (val) {
                 setState(() {
                   scamTypeId = val;
-                  scamTypeId = scamTypes.firstWhere((e) => e['name'] == val)['_id'];
+                  scamTypeId = scamTypes.firstWhere(
+                    (e) => e['name'] == val,
+                  )['_id'];
                 });
               },
             ),
 
             const SizedBox(height: 12),
-            CustomTextField(label: 'Phone', hintText: 'Phone',
-              onChanged: (val) => phoneNumber = val,validator: validatePhone,),
-
+            CustomTextField(
+              label: 'Phone',
+              hintText: 'Phone',
+              onChanged: (val) => phoneNumber = val,
+              validator: validatePhone,
+            ),
 
             const SizedBox(height: 12),
-            CustomTextField(label: 'email', hintText: 'email',
-              onChanged: (val) => email = val,validator: validateEmail,),
+            CustomTextField(
+              label: 'email',
+              hintText: 'email',
+              onChanged: (val) => email = val,
+              validator: validateEmail,
+            ),
             const SizedBox(height: 12),
-            CustomTextField(label: 'Website', hintText: 'Website',
-              onChanged: (val) => website = val,validator: validateWebsite,),
+            CustomTextField(
+              label: 'Website',
+              hintText: 'Website',
+              onChanged: (val) => website = val,
+              validator: validateWebsite,
+            ),
             const SizedBox(height: 12),
-            CustomTextField(label: 'Description', hintText: 'Description',
-              onChanged: (val) => description = val,validator: validateDescription,),
-
+            CustomTextField(
+              label: 'Description',
+              hintText: 'Description',
+              onChanged: (val) => description = val,
+              validator: validateDescription,
+            ),
 
             SizedBox(height: 24),
-            CustomButton(text: 'Next', onPressed: _submitForm, fontWeight: FontWeight.normal),
-
+            CustomButton(
+              text: 'Next',
+              onPressed: _submitForm,
+              fontWeight: FontWeight.normal,
+            ),
           ],
         ),
       ),

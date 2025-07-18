@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:security_alert/custom/Image/image.dart';
+import 'package:security_alert/screens/Fraud/ReportFraudStep1.dart';
 import 'package:security_alert/screens/scam/report_scam_1.dart';
 import 'package:security_alert/screens/scam/scam_report_service.dart';
 import '../custom/PeriodDropdown.dart';
@@ -18,7 +19,6 @@ import 'malware/report_malware_1.dart';
 import 'menu/theard_database.dart';
 import 'server_reports_page.dart';
 import 'menu/profile_page.dart';
-
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -144,7 +144,9 @@ class _DashboardPageState extends State<DashboardPage> {
                           if (isLoadingTypes) return;
                           Map<String, dynamic>? scamCategory;
                           try {
-                            scamCategory = reportCategories.firstWhere((e) => e['name'] == 'Report Scam');
+                            scamCategory = reportCategories.firstWhere(
+                              (e) => e['name'] == 'Report Scam',
+                            );
                           } catch (_) {
                             scamCategory = null;
                           }
@@ -153,10 +155,12 @@ class _DashboardPageState extends State<DashboardPage> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => ReportScam1(categoryId: scamCategory!['_id']),
+                              builder: (context) =>
+                                  ReportScam1(categoryId: scamCategory!['_id']),
                             ),
                           );
-                        }, fontWeight: FontWeight.normal,
+                        },
+                        fontWeight: FontWeight.normal,
                       ),
                     ),
                   ),
@@ -169,7 +173,9 @@ class _DashboardPageState extends State<DashboardPage> {
                           if (isLoadingTypes) return;
                           Map<String, dynamic>? MalwareCategory;
                           try {
-                            MalwareCategory = reportCategories.firstWhere((e) => e['name'] == 'Report Malware');
+                            MalwareCategory = reportCategories.firstWhere(
+                              (e) => e['name'] == 'Report Malware',
+                            );
                           } catch (_) {
                             MalwareCategory = null;
                           }
@@ -177,7 +183,7 @@ class _DashboardPageState extends State<DashboardPage> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) =>  MalwareReportPage1(),
+                              builder: (context) => MalwareReportPage1(),
                             ),
                           );
                           return;
@@ -194,10 +200,23 @@ class _DashboardPageState extends State<DashboardPage> {
                       child: CustomButton(
                         text: 'Report Fraud',
                         onPressed: () async {
+                          if (isLoadingCategories) return;
+                          Map<String, dynamic>? fraudCategory;
+                          try {
+                            fraudCategory = reportCategories.firstWhere(
+                              (e) => e['name'] == 'Report Fraud',
+                            );
+                          } catch (_) {
+                            fraudCategory = null;
+                          }
+                          if (fraudCategory == null) return;
+
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) =>  MalwareReportPage1(),
+                              builder: (context) => ReportFraudStep1(
+                                categoryId: fraudCategory!['_id'],
+                              ),
                             ),
                           );
                           return;
@@ -218,13 +237,9 @@ class _DashboardPageState extends State<DashboardPage> {
               selectedItemColor: Colors.black,
 
               items: [
-                customBottomNavItem(
-                    BottomNav: BottomNav.home,
-                    label: 'Home'),
+                customBottomNavItem(BottomNav: BottomNav.home, label: 'Home'),
 
-                customBottomNavItem(
-                    BottomNav: BottomNav.alert,
-                    label: 'Alert'),
+                customBottomNavItem(BottomNav: BottomNav.alert, label: 'Alert'),
                 customBottomNavItem(
                   BottomNav: BottomNav.profile,
                   label: 'Profile',
@@ -241,9 +256,7 @@ class _DashboardPageState extends State<DashboardPage> {
                 } else if (index == 2) {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(
-                      builder: (context) => ProfilePage(),
-                    ),
+                    MaterialPageRoute(builder: (context) => ProfilePage()),
                   );
                 }
                 // Do nothing for Home (index 0)

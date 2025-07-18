@@ -31,13 +31,14 @@ class FraudReportModelAdapter extends TypeAdapter<FraudReportModel> {
       screenshotPaths: (fields[11] as List).cast<String>(),
       documentPaths: (fields[12] as List).cast<String>(),
       name: fields[13] as String?,
+      keycloakUserId: fields[14] as String?,
     );
   }
 
   @override
   void write(BinaryWriter writer, FraudReportModel obj) {
     writer
-      ..writeByte(14)
+      ..writeByte(15)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -65,7 +66,9 @@ class FraudReportModelAdapter extends TypeAdapter<FraudReportModel> {
       ..writeByte(12)
       ..write(obj.documentPaths)
       ..writeByte(13)
-      ..write(obj.name);
+      ..write(obj.name)
+      ..writeByte(14)
+      ..write(obj.keycloakUserId);
   }
 
   @override

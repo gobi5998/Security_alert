@@ -28,8 +28,6 @@ class _ReportScam2State extends State<ReportScam2> {
   final List<String> alertLevels = ['Low', 'Medium', 'High', 'Critical'];
   final ImagePicker picker = ImagePicker();
 
-
-
   Future<void> _pickFiles(String type) async {
     List<String> extensions = [];
     switch (type) {
@@ -67,7 +65,9 @@ class _ReportScam2State extends State<ReportScam2> {
     if (mounted) {
       Navigator.pushAndRemoveUntil(
         context,
-        MaterialPageRoute(builder: (_) => const ReportSuccess(label: 'Scam Report')),
+        MaterialPageRoute(
+          builder: (_) => const ReportSuccess(label: 'Scam Report'),
+        ),
         (route) => false,
       );
     }
@@ -75,18 +75,10 @@ class _ReportScam2State extends State<ReportScam2> {
       final connectivity = await Connectivity().checkConnectivity();
       final isOnline = connectivity != ConnectivityResult.none;
 
-      final updatedReport = widget.report
-        ..alertLevels = alertLevel ?? 'Low';
+      final updatedReport = widget.report..alertLevels = alertLevel ?? '';
 
       // 1. Save locally (Always)
-      final box = Hive.box<ScamReportModel>('scam_reports');
-      if (updatedReport.isInBox) {
-        // If already in box, update by key
-        await ScamReportService.updateReport(updatedReport);
-      } else {
-        // If not in box, add as new
-        await ScamReportService.saveReportOffline(updatedReport);
-      }
+      await ScamReportService.saveReportOffline(updatedReport);
 
       // 2. If online, send to backend and update local status
       if (isOnline) {
@@ -94,24 +86,9 @@ class _ReportScam2State extends State<ReportScam2> {
           print('Sending to backend: ${updatedReport.toJson()}');
           await ApiService().submitScamReport(updatedReport.toJson());
           print('Backend response: submitted');
+          // Update the synced status without creating a new object
           updatedReport.isSynced = true;
-          // Clone the object before updating to avoid HiveError
-          final clonedReport = ScamReportModel(
-            id: updatedReport.id,
-            reportCategoryId: updatedReport.reportCategoryId,
-            reportTypeId: updatedReport.reportTypeId,
-            alertLevels: updatedReport.alertLevels,
-            phoneNumber: updatedReport.phoneNumber,
-            email: updatedReport.email,
-            website: updatedReport.website,
-            description: updatedReport.description,
-            createdAt: updatedReport.createdAt,
-            updatedAt: DateTime.now(),
-            isSynced: true,
-            screenshotPaths: updatedReport.screenshotPaths,
-            documentPaths: updatedReport.documentPaths,
-          );
-          await ScamReportService.updateReport(clonedReport); // mark synced
+          await ScamReportService.updateReport(updatedReport);
         } catch (e) {
           debugPrint('❌ Failed to sync now, will retry later: $e');
         }
@@ -122,8 +99,10 @@ class _ReportScam2State extends State<ReportScam2> {
       if (mounted) {
         Navigator.pushAndRemoveUntil(
           context,
-          MaterialPageRoute(builder: (_) => const ReportSuccess(label: 'Scam Report')),
-              (route) => false,
+          MaterialPageRoute(
+            builder: (_) => const ReportSuccess(label: 'Scam Report'),
+          ),
+          (route) => false,
         );
       }
     } catch (e, stack) {
@@ -131,7 +110,6 @@ class _ReportScam2State extends State<ReportScam2> {
       // Optionally show a snackbar or dialog
     }
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -145,9 +123,8 @@ class _ReportScam2State extends State<ReportScam2> {
             children: [
               Column(
                 children: [
-
                   ListTile(
-                    leading:  Image.asset('assets/image/document.png'),
+                    leading: Image.asset('assets/image/document.png'),
                     title: const Text('Add Screenshots'),
                     subtitle: Text('Selected: /5'),
                     // onTap: _pickScreenshots,
@@ -209,14 +186,13 @@ class _ReportScam2State extends State<ReportScam2> {
               //     ),
               //   ),
               // ],
-
               const SizedBox(height: 16),
 
               // Documents Section
               Column(
                 children: [
                   ListTile(
-                    leading:  Image.asset('assets/image/document.png'),
+                    leading: Image.asset('assets/image/document.png'),
                     title: const Text('Add Documents'),
                     subtitle: Text('Selected:  files'),
                     // onTap: _pickDocuments,
@@ -245,8 +221,6 @@ class _ReportScam2State extends State<ReportScam2> {
               //     );
               //   }).toList(),
               // ],
-
-
               CustomDropdown(
                 label: 'Alert Severity',
                 hint: 'Select severity',

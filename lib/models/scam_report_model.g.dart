@@ -30,13 +30,15 @@ class ScamReportModelAdapter extends TypeAdapter<ScamReportModel> {
       isSynced: fields[10] as bool?,
       screenshotPaths: (fields[11] as List).cast<String>(),
       documentPaths: (fields[12] as List).cast<String>(),
+      name: fields[13] as String?,
+      keycloakUserId: fields[14] as String?,
     );
   }
 
   @override
   void write(BinaryWriter writer, ScamReportModel obj) {
     writer
-      ..writeByte(13)
+      ..writeByte(15)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -62,7 +64,11 @@ class ScamReportModelAdapter extends TypeAdapter<ScamReportModel> {
       ..writeByte(11)
       ..write(obj.screenshotPaths)
       ..writeByte(12)
-      ..write(obj.documentPaths);
+      ..write(obj.documentPaths)
+      ..writeByte(13)
+      ..write(obj.name)
+      ..writeByte(14)
+      ..write(obj.keycloakUserId);
   }
 
   @override
