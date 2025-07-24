@@ -572,6 +572,129 @@ class ApiService {
       return [];
     }
   }
+  Future<List<Map<String, dynamic>>> fetchAllReports() async {
+    try {
+      print('=== FETCHING ALL REPORTS ===');
+      print('Using base URL: ${_dioMain.options.baseUrl}');
+      print('Making GET request to: /reports');
+      
+      final response = await _dioMain.get('/reports');
+      
+      print('Response status code: ${response.statusCode}');
+      print('Response headers: ${response.headers}');
+      print('Response data type: ${response.data.runtimeType}');
+      print('Response data: ${response.data}');
+
+      // Check if response.data is a List before converting
+      if (response.data is List) {
+        final reports = List<Map<String, dynamic>>.from(response.data);
+        print('Successfully converted response to List with ${reports.length} reports');
+        return reports;
+      } else if (response.data is Map) {
+        // Handle paginated response structure
+        final responseMap = response.data as Map<String, dynamic>;
+        print('Backend returned Map with keys: ${responseMap.keys}');
+        
+        // Check if the response has a 'data' field (pagination structure)
+        if (responseMap.containsKey('data')) {
+          final dataField = responseMap['data'];
+          print('Found data field: $dataField (type: ${dataField.runtimeType})');
+          
+          if (dataField is List) {
+            final reports = List<Map<String, dynamic>>.from(dataField);
+            print('Successfully extracted ${reports.length} reports from data field');
+            
+            // Debug: Print first report if available
+            if (reports.isNotEmpty) {
+              print('First report structure:');
+              reports.first.forEach((key, value) {
+                print('  $key: $value (${value.runtimeType})');
+              });
+            }
+            
+            return reports;
+          } else if (dataField is Map) {
+            print('Data field is a Map, not a List: $dataField');
+            return [];
+          } else {
+            print('Data field is neither List nor Map: ${dataField.runtimeType}');
+            return [];
+          }
+        } else {
+          // If it's a Map but doesn't have 'data' field, return empty list
+          print('Map response without data field: ${response.data}');
+          return [];
+        }
+      } else {
+        print('Unexpected response data type: ${response.data.runtimeType}');
+        print('Response data value: ${response.data}');
+        return [];
+      }
+    } catch (e) {
+      print('Error fetching all reports: $e');
+      if (e is DioException) {
+        print('DioException details:');
+        print('- Type: ${e.type}');
+        print('- Message: ${e.message}');
+        print('- Response status: ${e.response?.statusCode}');
+        print('- Response data: ${e.response?.data}');
+      }
+      return [];
+    }
+  }
+
+  // Test method to check different endpoints
+  Future<void> testBackendEndpoints() async {
+    try {
+      print('=== TESTING BACKEND ENDPOINTS ===');
+      
+      // Test the main reports endpoint
+      print('Testing /reports endpoint...');
+      final reportsResponse = await _dioMain.get('/reports');
+      print('Reports response: ${reportsResponse.data}');
+      
+      // Test if there are any other endpoints
+      print('Testing /report-type endpoint...');
+      try {
+        final typesResponse = await _dioMain.get('/report-type');
+        print('Types response: ${typesResponse.data}');
+      } catch (e) {
+        print('Types endpoint error: $e');
+      }
+      
+      print('Testing /report-category endpoint...');
+      try {
+        final categoriesResponse = await _dioMain.get('/report-category');
+        print('Categories response: ${categoriesResponse.data}');
+      } catch (e) {
+        print('Categories endpoint error: $e');
+      }
+      
+    } catch (e) {
+      print('Backend endpoint test failed: $e');
+    }
+  }
+
+
+  Future<Map<String, dynamic>?> fetchCategoryById(String categoryId) async {
+    try {
+      final response = await _dioMain.get('/report-category/$categoryId');
+      return response.data;
+    } catch (e) {
+      print('Error fetching category by ID: $e');
+      return null;
+    }
+  }
+
+  Future<Map<String, dynamic>?> fetchTypeById(String typeId) async {
+    try {
+      final response = await _dioMain.get('/report-type/$typeId');
+      return response.data;
+    } catch (e) {
+      print('Error fetching type by ID: $e');
+      return null;
+    }
+  }
 
 //Fetch the data in report-type
 }
@@ -1213,8 +1336,8 @@ class ApiService {
 //       return responseData;
 //     } on DioException catch (e) {
 //       print('DioException during login: ${e.message}');
-//       print('DioException response data: ${e.response?.data}');
-//       print('DioException status code: ${e.response?.statusCode}');
+//       print('Response data: ${e.response?.data}');
+//       print('Response status: ${e.response?.statusCode}');
 
 //       final errMsg = e.response?.data is Map<String, dynamic>
 //           ? e.response?.data['message'] ?? 'Unknown error'
@@ -1223,7 +1346,8 @@ class ApiService {
 //       throw Exception('Login failed: $errMsg');
 //     } catch (e) {
 //       print('General exception during login: $e');
-//       throw Exception('Login failed: Invalid response from server');
+//       // Fallback to mock data
+//       return _getMockLoginResponse(username);
 //     }
 //   }
 

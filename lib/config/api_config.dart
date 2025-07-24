@@ -3,7 +3,7 @@ class ApiConfig {
   static const String baseUrl1 =
       'http://4795a8bab1f1.ngrok-free.app'; // auth server
   static const String baseUrl2 =
-      'https://147722a57180.ngrok-free.app'; // Main Server
+      'https://c61c0359421d.ngrok-free.app'; // Main Server
   // Replace with your actual API base URL
 
   // API Endpoints

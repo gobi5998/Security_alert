@@ -12,6 +12,7 @@ import '../../custom/customButton.dart';
 import '../../custom/customDropdown.dart';
 import '../../custom/Success_page.dart';
 import '../../services/api_service.dart';
+import '../../custom/fileUpload.dart';
 
 class ReportFraudStep2 extends StatefulWidget {
   final FraudReportModel report;
@@ -27,6 +28,11 @@ class _ReportFraudStep2State extends State<ReportFraudStep2> {
   List<File> screenshots = [], documents = [], voices = [];
   final List<String> alertLevels = ['Low', 'Medium', 'High', 'Critical'];
   final ImagePicker picker = ImagePicker();
+  bool isUploading = false;
+  String? uploadStatus = '';
+
+  final GlobalKey<FileUploadWidgetState> _fileUploadKey =
+  GlobalKey<FileUploadWidgetState>();
 
   Future<void> _pickFiles(String type) async {
     List<String> extensions = [];
@@ -117,7 +123,7 @@ class _ReportFraudStep2State extends State<ReportFraudStep2> {
           MaterialPageRoute(
             builder: (_) => const ReportSuccess(label: 'Scam Report'),
           ),
-          (route) => false,
+              (route) => false,
         );
       }
     } catch (e, stack) {
@@ -137,28 +143,38 @@ class _ReportFraudStep2State extends State<ReportFraudStep2> {
           child: ListView(
             children: [
               Column(
-                children: [
-                  ListTile(
-                    leading: Image.asset('assets/image/document.png'),
-                    title: const Text('Add Screenshots'),
-                    subtitle: Text('Selected: /5'),
-                    // onTap: _pickScreenshots,
-                  ),
-                ],
+                // children: [
+                //   ListTile(
+                //     leading: Image.asset('assets/image/document.png'),
+                //     title: const Text('Add Screenshots'),
+                //     subtitle: Text('Selected: /5'),
+                //     // onTap: _pickScreenshots,
+                //   ),
+                // ],
               ),
               const SizedBox(height: 16),
 
               // Documents Section
-              Column(
-                children: [
-                  ListTile(
-                    leading: Image.asset('assets/image/document.png'),
-                    title: const Text('Add Documents'),
-                    subtitle: Text('Selected:  files'),
-                    // onTap: _pickDocuments,
-                  ),
-                ],
+              // Column(
+              //   children: [
+              //     ListTile(
+              //       leading: Image.asset('assets/image/document.png'),
+              //       title: const Text('Add Documents'),
+              //       subtitle: Text('Selected:  files'),
+              //       // onTap: _pickDocuments,
+              //     ),
+              //   ],
+              // ),
+              FileUploadWidget(
+                key: _fileUploadKey,
+                reportId: widget.report.id ?? '123',
+                autoUpload: true,
+                onFilesUploaded: (List<Map<String, dynamic>> uploadedFiles) {
+                  // Handle uploaded files
+                  print('Files uploaded: ${uploadedFiles.length}');
+                }, fileType: 'fraud',
               ),
+              
               CustomDropdown(
                 label: 'Alert Severity',
                 hint: 'Select severity',

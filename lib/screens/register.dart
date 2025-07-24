@@ -224,7 +224,7 @@ class _RegisterPageState extends State<RegisterPage> {
                         return;
                       }
                       {
-                        final success = await authProvider.register(firstname, lastname, username, password);
+                        final success = await authProvider.register(firstname, lastname, username, password,);
                         if (success) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(content: Text("Registered Successfully")),
