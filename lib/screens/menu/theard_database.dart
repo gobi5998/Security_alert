@@ -262,6 +262,63 @@ class _ThreadDatabaseFilterPageState extends State<ThreadDatabaseFilterPage> {
     }
   }
 
+  // New method to test the dynamic API call
+  Future<void> _testDynamicApiCall() async {
+    try {
+      print('=== TESTING DYNAMIC API CALL ===');
+      
+      // Create a filter with the exact parameters from your URL
+      final filter = ReportsFilter(
+        page: 1,
+        limit: 100,
+        reportCategoryId: 'https://c61c0359421d.ngrok-free.app',
+        reportTypeId: '68752de7a40625496c08b42a',
+        deviceTypeId: '687616edc688f12536d1d2d5',
+        detectTypeId: '68761767c688f12536d1d2dd',
+        operatingSystemName: '6875f41f652eaccf5ecbe6b2',
+        search: 'scam',
+      );
+      
+      print('Testing filter: $filter');
+      print('Built URL: ${filter.buildUrl()}');
+      
+      final reports = await _apiService.fetchReportsWithFilter(filter);
+      print('Received ${reports.length} reports');
+      
+      if (reports.isNotEmpty) {
+        print('First report: ${reports.first}');
+      }
+      
+    } catch (e) {
+      print('Error testing dynamic API call: $e');
+    }
+  }
+
+  // New method to use the complex filter
+  Future<void> _useComplexFilter() async {
+    try {
+      print('=== USING COMPLEX FILTER ===');
+      
+      final reports = await _apiService.getReportsWithComplexFilter(
+        searchQuery: searchQuery,
+        categoryIds: selectedCategoryIds.isNotEmpty ? selectedCategoryIds : null,
+        typeIds: selectedTypeIds.isNotEmpty ? selectedTypeIds : null,
+        severityLevels: selectedSeverities.isNotEmpty ? selectedSeverities : null,
+        page: 1,
+        limit: 100,
+      );
+      
+      print('Received ${reports.length} reports from complex filter');
+      
+      if (reports.isNotEmpty) {
+        print('First report: ${reports.first}');
+      }
+      
+    } catch (e) {
+      print('Error using complex filter: $e');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -275,6 +332,11 @@ class _ThreadDatabaseFilterPageState extends State<ThreadDatabaseFilterPage> {
           IconButton(
             icon: Icon(Icons.refresh),
             onPressed: _refreshData,
+          ),
+          IconButton(
+            icon: Icon(Icons.bug_report),
+            onPressed: _testDynamicApiCall,
+            tooltip: 'Test Dynamic API',
           ),
           IconButton(icon: Icon(Icons.more_vert), onPressed: () {}),
         ],
@@ -487,6 +549,9 @@ class _ThreadDatabaseFilterPageState extends State<ThreadDatabaseFilterPage> {
                       ),
                       const SizedBox(height: 16),
 
+                      
+                      const SizedBox(height: 16),
+
                       // View All Reports Link
                       GestureDetector(
                         onTap: () {
@@ -498,6 +563,10 @@ class _ThreadDatabaseFilterPageState extends State<ThreadDatabaseFilterPage> {
                                 selectedType: null,
                                 selectedSeverity: null,
                                 scamTypeId: '',
+                                hasSearchQuery: false,
+                                hasSelectedType: false,
+                                hasSelectedSeverity: false,
+                                hasSelectedCategory: false,
                               ),
                             ),
                           );
@@ -540,6 +609,10 @@ class _ThreadDatabaseFilterPageState extends State<ThreadDatabaseFilterPage> {
                     print('- selectedType: ${selectedTypeIds.isNotEmpty ? selectedTypeIds.first : null}');
                     print('- selectedSeverity: ${selectedSeverities.isNotEmpty ? selectedSeverities.first : null}');
                     print('- scamTypeId: ${selectedCategoryIds.isNotEmpty ? selectedCategoryIds.first : ""}');
+                    print('- hasSearchQuery: ${searchQuery.isNotEmpty}');
+                    print('- hasSelectedType: ${selectedTypeIds.isNotEmpty}');
+                    print('- hasSelectedSeverity: ${selectedSeverities.isNotEmpty}');
+                    print('- hasSelectedCategory: ${selectedCategoryIds.isNotEmpty}');
                     print('===============================================');
 
                     Navigator.push(
@@ -556,6 +629,10 @@ class _ThreadDatabaseFilterPageState extends State<ThreadDatabaseFilterPage> {
                           scamTypeId: selectedCategoryIds.isNotEmpty
                               ? selectedCategoryIds.first
                               : '',
+                          hasSearchQuery: searchQuery.isNotEmpty,
+                          hasSelectedType: selectedTypeIds.isNotEmpty,
+                          hasSelectedSeverity: selectedSeverities.isNotEmpty,
+                          hasSelectedCategory: selectedCategoryIds.isNotEmpty,
                         ),
                       ),
                     );

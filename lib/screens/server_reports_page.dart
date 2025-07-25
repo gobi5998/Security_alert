@@ -7,7 +7,7 @@ class ServerReportsPage extends StatelessWidget {
 
   Future<List<Map<String, dynamic>>> fetchServerReports() async {
     final response = await http.get(
-      Uri.parse('https://your-backend-url/api/reports'),
+      Uri.parse('https://c61c0359421d.ngrok-free.app/reports'),
     );
     if (response.statusCode == 200) {
       final List<dynamic> data = jsonDecode(response.body);

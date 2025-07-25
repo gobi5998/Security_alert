@@ -56,7 +56,14 @@ class _ReportSuccessState extends State<ReportSuccess> {
                         onPressed: () {
                           Navigator.pushAndRemoveUntil(
                             context,
-                            MaterialPageRoute(builder: (_) =>  ThreadDatabaseListPage(searchQuery: '', scamTypeId: '', )),
+                            MaterialPageRoute(builder: (_) =>  ThreadDatabaseListPage(
+                              searchQuery: '', 
+                              scamTypeId: '',
+                              hasSearchQuery: false,
+                              hasSelectedType: false,
+                              hasSelectedSeverity: false,
+                              hasSelectedCategory: false,
+                            )),
                             (route) => false,
                           );
                         },
