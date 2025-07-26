@@ -12,8 +12,11 @@ class AuthProvider with ChangeNotifier {
   User? _currentUser;
 
   bool get isLoggedIn => _isLoggedIn;
+
   bool get isLoading => _isLoading;
+
   String get errorMessage => _errorMessage;
+
   User? get currentUser => _currentUser;
 
   // Check if user is already logged in on app start
@@ -92,13 +95,23 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
-  Future<bool> register(String firstname,String lastname, String username, String password) async {
+  Future<bool> register(
+    String firstname,
+    String lastname,
+    String username,
+    String password,
+  ) async {
     try {
       _isLoading = true;
       _errorMessage = '';
       notifyListeners();
 
-      final response = await _apiService.register(firstname,lastname,username, password);
+      final response = await _apiService.register(
+        firstname,
+        lastname,
+        username,
+        password,
+      );
       _currentUser = User.fromJson(response['user']);
       _isLoggedIn = true;
       _errorMessage = '';

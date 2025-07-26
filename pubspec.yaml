@@ -18,6 +18,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # of the product and file versions while build-number is used as the build suffix.
 version: 1.0.0+1
 
+
 environment:
   sdk: ^3.8.1
 
@@ -48,6 +49,8 @@ dependencies:
   hive: ^2.2.3
   hive_flutter: ^1.1.0
   image_picker: ^0.8.7+5
+  firebase_core: ^3.15.2
+  firebase_analytics: ^11.6.0
 
 
 dev_dependencies:

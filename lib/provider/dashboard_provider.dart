@@ -150,19 +150,28 @@ class DashboardProvider with ChangeNotifier {
   bool _isOnline = true;
 
   bool get isLoading => _isLoading;
+
   String get errorMessage => _errorMessage;
+
   DashboardStats? get stats => _stats;
+
   List<SecurityAlert> get alerts => _alerts;
+
   String get selectedTab => _selectedTab;
+
   bool get isOnline => _isOnline;
 
   // Fallback data when API is not available
   Map<String, double> get reportedFeatures {
     if (_stats?.alertsByType != null) {
-      final total = _stats!.alertsByType.values.fold(0, (sum, count) => sum + count);
+      final total = _stats!.alertsByType.values.fold(
+        0,
+        (sum, count) => sum + count,
+      );
       if (total > 0) {
-        return _stats!.alertsByType.map((key, value) =>
-            MapEntry(key, (value / total).toDouble()));
+        return _stats!.alertsByType.map(
+          (key, value) => MapEntry(key, (value / total).toDouble()),
+        );
       }
     }
     return {
@@ -205,7 +214,9 @@ class DashboardProvider with ChangeNotifier {
 
           // Load security alerts
           final alertsData = await _apiService.getSecurityAlerts();
-          _alerts = alertsData.map((json) => SecurityAlert.fromJson(json)).toList();
+          _alerts = alertsData
+              .map((json) => SecurityAlert.fromJson(json))
+              .toList();
 
           // Cache the alerts data
           await prefs.setString('dashboard_alerts', jsonEncode(alertsData));
@@ -220,12 +231,12 @@ class DashboardProvider with ChangeNotifier {
         // Offline: load from cache
         await _loadFromCache(prefs);
         if (_stats == null && _alerts.isEmpty) {
-          _errorMessage = 'No offline data available. Please connect to the internet.';
+          _errorMessage =
+              'No offline data available. Please connect to the internet.';
         } else {
           _errorMessage = 'You are offline. Showing cached data.';
         }
       }
-
     } catch (e) {
       _errorMessage = e.toString().replaceAll('Exception: ', '');
       // Keep fallback data if everything fails
@@ -247,7 +258,9 @@ class DashboardProvider with ChangeNotifier {
       final cachedAlerts = prefs.getString('dashboard_alerts');
       if (cachedAlerts != null) {
         final alertsList = jsonDecode(cachedAlerts) as List;
-        _alerts = alertsList.map((json) => SecurityAlert.fromJson(json)).toList();
+        _alerts = alertsList
+            .map((json) => SecurityAlert.fromJson(json))
+            .toList();
       }
     } catch (e) {
       print('Error loading cached data: $e');
@@ -315,6 +328,8 @@ class DashboardProvider with ChangeNotifier {
   List<SecurityAlert> getRecentAlerts() {
     final now = DateTime.now();
     final yesterday = now.subtract(const Duration(days: 1));
-    return _alerts.where((alert) => alert.timestamp.isAfter(yesterday)).toList();
+    return _alerts
+        .where((alert) => alert.timestamp.isAfter(yesterday))
+        .toList();
   }
 }

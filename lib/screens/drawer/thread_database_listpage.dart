@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:security_alert/screens/dashboard_page.dart';
-import 'package:security_alert/screens/menu/theard_database.dart';
+import 'package:security_alert/screens/drawer/theard_database.dart';
+import '../../models/filter_model.dart';
 import '../../models/scam_report_model.dart';
 import '../../models/fraud_report_model.dart';
 import '../../models/malware_report_model.dart';
@@ -11,6 +12,7 @@ import '../scam/scam_report_service.dart';
 import '../Fraud/fraud_report_service.dart';
 import '../malware/malware_report_service.dart';
 import '../../services/api_service.dart';
+import 'report_detail_view.dart';
 
 class ThreadDatabaseListPage extends StatefulWidget {
   final String searchQuery;
@@ -49,7 +51,7 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
   Set<int> syncingIndexes = {};
   Map<String, String> _typeIdToName = {}; // Cache for type ID to name mapping
   Map<String, String> _categoryIdToName = {}; // Cache for category ID to name mapping
-  
+
   // New: Pagination variables
   int _currentPage = 1;
   final int _pageSize = 20; // Number of items per page
@@ -67,14 +69,14 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
     print('- hasSelectedType: ${widget.hasSelectedType}');
     print('- hasSelectedSeverity: ${widget.hasSelectedSeverity}');
     print('- hasSelectedCategory: ${widget.hasSelectedCategory}');
-    
+
     // New: Add scroll listener for infinite scroll
     _scrollController.addListener(_onScroll);
-    
+
     // Load category and type names with enhanced method
     _loadCategoryAndTypeNames();
     _loadFilteredReports();
-    
+
     // Refresh the UI after a short delay to ensure category/type names are loaded
     Future.delayed(Duration(milliseconds: 500), () {
       if (mounted) {
@@ -92,17 +94,19 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
 
   // New: Scroll listener for infinite scroll
   void _onScroll() {
-    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 200) {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
       _loadMoreData();
     }
   }
 
   // New: Method to check if we should load more data
   bool _shouldLoadMore() {
-    return !_isLoadingMore && 
-           _hasMoreData && 
-           _scrollController.hasClients &&
-           _scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 200;
+    return !_isLoadingMore &&
+        _hasMoreData &&
+        _scrollController.hasClients &&
+        _scrollController.position.pixels >=
+            _scrollController.position.maxScrollExtent - 200;
   }
 
   // New: Method to load more data
@@ -112,7 +116,10 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
     // Check network connectivity
     final connectivityResult = await Connectivity().checkConnectivity();
     if (connectivityResult == ConnectivityResult.none) {
-      _handleError('No internet connection. Cannot load more data.', isWarning: true);
+      _handleError(
+        'No internet connection. Cannot load more data.',
+        isWarning: true,
+      );
       return;
     }
 
@@ -127,7 +134,8 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
       List<Map<String, dynamic>> newReports = [];
 
       // Check if we have any filters applied
-      bool hasFilters = widget.hasSearchQuery ||
+      bool hasFilters =
+          widget.hasSearchQuery ||
           widget.hasSelectedCategory ||
           widget.hasSelectedType ||
           widget.hasSelectedSeverity;
@@ -136,14 +144,16 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
         // Use the new complex filter method with pagination
         newReports = await _apiService.getReportsWithComplexFilter(
           searchQuery: widget.hasSearchQuery ? widget.searchQuery : null,
-          categoryIds: widget.hasSelectedCategory && widget.scamTypeId.isNotEmpty 
-              ? [widget.scamTypeId] 
+          categoryIds:
+              widget.hasSelectedCategory && widget.scamTypeId.isNotEmpty
+              ? [widget.scamTypeId]
               : null,
-          typeIds: widget.hasSelectedType && widget.selectedType != null 
-              ? [widget.selectedType!] 
+          typeIds: widget.hasSelectedType && widget.selectedType != null
+              ? [widget.selectedType!]
               : null,
-          severityLevels: widget.hasSelectedSeverity && widget.selectedSeverity != null 
-              ? [widget.selectedSeverity!] 
+          severityLevels:
+              widget.hasSelectedSeverity && widget.selectedSeverity != null
+              ? [widget.selectedSeverity!]
               : null,
           page: _currentPage,
           limit: _pageSize,
@@ -165,7 +175,9 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
         });
 
         // Deduplicate reports to prevent repeated data
-        final existingIds = _filteredReports.map((r) => r['_id'] ?? r['id']).toSet();
+        final existingIds = _filteredReports
+            .map((r) => r['_id'] ?? r['id'])
+            .toSet();
         final uniqueNewReports = newReports.where((report) {
           final reportId = report['_id'] ?? report['id'];
           return reportId != null && !existingIds.contains(reportId);
@@ -176,7 +188,7 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
         if (uniqueNewReports.isNotEmpty) {
           // Add new reports to existing lists
           _filteredReports.addAll(uniqueNewReports);
-          
+
           // Safely convert to ReportModel objects
           final newTypedReports = <ReportModel>[];
           for (var report in uniqueNewReports) {
@@ -190,7 +202,7 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
             }
           }
           _typedReports.addAll(newTypedReports);
-          
+
           // Check if we have more data (if we got less than page size, we're at the end)
           if (newReports.length < _pageSize) {
             _hasMoreData = false;
@@ -205,7 +217,10 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
             // If we're getting all duplicates and we have a full page, the API might not be paginated correctly
             _hasMoreData = false;
             print('Stopping infinite scroll due to API pagination issues');
-            _handleError('API pagination issue detected. Stopping infinite scroll.', isWarning: true);
+            _handleError(
+              'API pagination issue detected. Stopping infinite scroll.',
+              isWarning: true,
+            );
           }
         }
       } else {
@@ -213,7 +228,6 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
         _hasMoreData = false;
         print('No more data available');
       }
-
     } catch (e) {
       print('Error loading more data: $e');
       _currentPage--; // Revert page number on error
@@ -254,13 +268,20 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
     } catch (e) {
       print('Error converting report to ReportModel: $e');
       print('Original report data: $json');
-      
+
       // Create a fallback ReportModel with available data
       return ReportModel.fromJson({
-        'id': json['_id'] ?? json['id'] ?? 'unknown_${DateTime.now().millisecondsSinceEpoch}',
+        'id':
+            json['_id'] ??
+            json['id'] ??
+            'unknown_${DateTime.now().millisecondsSinceEpoch}',
         'description': json['description'] ?? json['name'] ?? 'Unknown Report',
-        'alertLevels': json['alertLevels'] ?? json['alertSeverityLevel'] ?? 'medium',
-        'createdAt': json['createdAt'] ?? json['date'] ?? DateTime.now().toIso8601String(),
+        'alertLevels':
+            json['alertLevels'] ?? json['alertSeverityLevel'] ?? 'medium',
+        'createdAt':
+            json['createdAt'] ??
+            json['date'] ??
+            DateTime.now().toIso8601String(),
         'email': json['email'],
         'phoneNumber': json['phoneNumber'],
         'website': json['website'],
@@ -271,17 +292,18 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
   // New: Method to normalize report data structure
   Map<String, dynamic> _normalizeReportData(Map<String, dynamic> json) {
     final normalized = Map<String, dynamic>.from(json);
-    
+
     // Handle nested objects that should be strings
     if (normalized['reportCategoryId'] is Map) {
       final categoryMap = normalized['reportCategoryId'] as Map;
-      normalized['reportCategoryId'] = categoryMap['_id'] ?? categoryMap['id'] ?? '';
+      normalized['reportCategoryId'] =
+          categoryMap['_id'] ?? categoryMap['id'] ?? '';
       // Also extract category name if available
       if (categoryMap['name'] != null) {
         normalized['categoryName'] = categoryMap['name'].toString();
       }
     }
-    
+
     if (normalized['reportTypeId'] is Map) {
       final typeMap = normalized['reportTypeId'] as Map;
       normalized['reportTypeId'] = typeMap['_id'] ?? typeMap['id'] ?? '';
@@ -290,36 +312,47 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
         normalized['typeName'] = typeMap['name'].toString();
       }
     }
-    
+
     // Ensure required fields exist
     normalized['id'] = normalized['_id'] ?? normalized['id'] ?? 'unknown';
-    normalized['description'] = normalized['description'] ?? normalized['name'] ?? 'Unknown Report';
-    normalized['alertLevels'] = normalized['alertLevels'] ?? normalized['alertSeverityLevel'] ?? 'medium';
-    normalized['createdAt'] = normalized['createdAt'] ?? normalized['date'] ?? DateTime.now().toIso8601String();
-    
+    normalized['description'] =
+        normalized['description'] ?? normalized['name'] ?? 'Unknown Report';
+    normalized['alertLevels'] =
+        normalized['alertLevels'] ??
+        normalized['alertSeverityLevel'] ??
+        'medium';
+    normalized['createdAt'] =
+        normalized['createdAt'] ??
+        normalized['date'] ??
+        DateTime.now().toIso8601String();
+
     // Mark as synced if it has a backend ID
     if (normalized['_id'] != null) {
       normalized['isSynced'] = true;
     }
-    
+
     return normalized;
   }
 
   // New: Method to check if we're getting duplicate data from API
   bool _isDuplicateData(List<Map<String, dynamic>> newReports) {
     if (newReports.isEmpty) return false;
-    
+
     // Check if all new reports already exist in current list
-    final existingIds = _filteredReports.map((r) => r['_id'] ?? r['id']).toSet();
+    final existingIds = _filteredReports
+        .map((r) => r['_id'] ?? r['id'])
+        .toSet();
     final allDuplicates = newReports.every((report) {
       final reportId = report['_id'] ?? report['id'];
       return reportId != null && existingIds.contains(reportId);
     });
-    
+
     if (allDuplicates) {
-      print('Warning: All new reports are duplicates. API may not be properly paginated.');
+      print(
+        'Warning: All new reports are duplicates. API may not be properly paginated.',
+      );
     }
-    
+
     return allDuplicates;
   }
 
@@ -360,12 +393,13 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
 
       // Try to use the new dynamic API methods first
       List<Map<String, dynamic>> typedReports = [];
-      
+
       print('Attempting to use new dynamic API methods...');
 
       try {
         // Check if we have any filters applied
-        bool hasFilters = widget.hasSearchQuery ||
+        bool hasFilters =
+            widget.hasSearchQuery ||
             widget.hasSelectedCategory ||
             widget.hasSelectedType ||
             widget.hasSelectedSeverity;
@@ -374,47 +408,56 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
           // Use the new complex filter method
           typedReports = await _apiService.getReportsWithComplexFilter(
             searchQuery: widget.hasSearchQuery ? widget.searchQuery : null,
-            categoryIds: widget.hasSelectedCategory && widget.scamTypeId.isNotEmpty 
-                ? [widget.scamTypeId] 
+            categoryIds:
+                widget.hasSelectedCategory && widget.scamTypeId.isNotEmpty
+                ? [widget.scamTypeId]
                 : null,
-            typeIds: widget.hasSelectedType && widget.selectedType != null 
-                ? [widget.selectedType!] 
+            typeIds: widget.hasSelectedType && widget.selectedType != null
+                ? [widget.selectedType!]
                 : null,
-            severityLevels: widget.hasSelectedSeverity && widget.selectedSeverity != null 
-                ? [widget.selectedSeverity!] 
+            severityLevels:
+                widget.hasSelectedSeverity && widget.selectedSeverity != null
+                ? [widget.selectedSeverity!]
                 : null,
             page: _currentPage,
             limit: _pageSize,
           );
-          
-          print('Used complex filter API, got ${typedReports.length} typed reports');
+
+          print(
+            'Used complex filter API, got ${typedReports.length} typed reports',
+          );
         } else {
           // No filters, get all reports
           final filter = ReportsFilter(page: _currentPage, limit: _pageSize);
           typedReports = await _apiService.fetchReportsWithFilter(filter);
-          print('Used basic filter API, got ${typedReports.length} typed reports');
+          print(
+            'Used basic filter API, got ${typedReports.length} typed reports',
+          );
         }
 
         // Convert typed reports to the format expected by existing UI
         _filteredReports = typedReports;
         // Convert to ReportModel objects for enhanced features
-        _typedReports = typedReports.map((json) => _safeConvertToReportModel(json)).toList();
-        
+        _typedReports = typedReports
+            .map((json) => _safeConvertToReportModel(json))
+            .toList();
+
         // Check if we have more data
         if (typedReports.length < _pageSize) {
           _hasMoreData = false;
         }
-        
-        print('Successfully converted ${typedReports.length} typed reports to UI format');
-        
+
+        print(
+          'Successfully converted ${typedReports.length} typed reports to UI format',
+        );
+
         if (mounted) {
           setState(() {
             _isLoading = false;
           });
         }
-        
+
         return; // Success with new API, exit early
-        
       } catch (e) {
         print('New API methods failed, falling back to old methods: $e');
         // Continue with old methods as fallback
@@ -422,7 +465,7 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
 
       // Fallback to old methods (without pagination for now)
       print('Using fallback API methods...');
-      
+
       // Fetch all reports from backend API
       List<Map<String, dynamic>> allReports = [];
 
@@ -435,7 +478,9 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
 
         if (response != null && response is List) {
           allReports = List<Map<String, dynamic>>.from(response);
-          print('Successfully fetched ${allReports.length} reports from backend');
+          print(
+            'Successfully fetched ${allReports.length} reports from backend',
+          );
 
           // Debug: Print first report structure
           if (allReports.isNotEmpty) {
@@ -464,11 +509,14 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
       print('Total reports before filtering: ${allReports.length}');
       print('Available reports:');
       for (var report in allReports) {
-        print('- ID: ${report['id']}, Category: ${report['reportCategoryId']}, Type: ${report['reportTypeId']}, Severity: ${report['alertLevels']}');
+        print(
+          '- ID: ${report['id']}, Category: ${report['reportCategoryId']}, Type: ${report['reportTypeId']}, Severity: ${report['alertLevels']}',
+        );
       }
 
       // If no filters are applied, show all reports
-      bool hasFilters = widget.hasSearchQuery ||
+      bool hasFilters =
+          widget.hasSearchQuery ||
           widget.hasSelectedCategory ||
           widget.hasSelectedType ||
           widget.hasSelectedSeverity;
@@ -487,7 +535,8 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
       // Search filter
       if (widget.hasSearchQuery && widget.searchQuery.isNotEmpty) {
         filteredReports = filteredReports.where((report) {
-          final description = report['description']?.toString().toLowerCase() ?? '';
+          final description =
+              report['description']?.toString().toLowerCase() ?? '';
           final email = report['email']?.toString().toLowerCase() ?? '';
           final phone = report['phoneNumber']?.toString().toLowerCase() ?? '';
           final website = report['website']?.toString().toLowerCase() ?? '';
@@ -515,14 +564,18 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
           }
 
           final matches = catId == widget.scamTypeId;
-          print('Checking report ${report['_id'] ?? report['id']}: category "$catId" matches "${widget.scamTypeId}" = $matches');
+          print(
+            'Checking report ${report['_id'] ?? report['id']}: category "$catId" matches "${widget.scamTypeId}" = $matches',
+          );
           return matches;
         }).toList();
         print('After category filter: ${filteredReports.length} reports');
       }
 
       // Type filter
-      if (widget.hasSelectedType && widget.selectedType != null && widget.selectedType!.isNotEmpty) {
+      if (widget.hasSelectedType &&
+          widget.selectedType != null &&
+          widget.selectedType!.isNotEmpty) {
         print('Applying type filter: ${widget.selectedType}');
         filteredReports = filteredReports.where((report) {
           final type = report['reportTypeId'];
@@ -535,20 +588,26 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
           }
 
           final matches = typeId == widget.selectedType;
-          print('Checking report ${report['_id'] ?? report['id']}: type "$typeId" matches "${widget.selectedType}" = $matches');
+          print(
+            'Checking report ${report['_id'] ?? report['id']}: type "$typeId" matches "${widget.selectedType}" = $matches',
+          );
           return matches;
         }).toList();
         print('After type filter: ${filteredReports.length} reports');
       }
 
       // Severity filter
-      if (widget.hasSelectedSeverity && widget.selectedSeverity != null && widget.selectedSeverity!.isNotEmpty) {
+      if (widget.hasSelectedSeverity &&
+          widget.selectedSeverity != null &&
+          widget.selectedSeverity!.isNotEmpty) {
         print('Applying severity filter: ${widget.selectedSeverity}');
         filteredReports = filteredReports.where((report) {
           final alertLevels = report['alertLevels']?.toString().toLowerCase();
           final selectedSeverity = widget.selectedSeverity!.toLowerCase();
           final matches = alertLevels == selectedSeverity;
-          print('Checking report ${report['_id'] ?? report['id']}: severity "$alertLevels" matches "$selectedSeverity" = $matches');
+          print(
+            'Checking report ${report['_id'] ?? report['id']}: severity "$alertLevels" matches "$selectedSeverity" = $matches',
+          );
           return matches;
         }).toList();
         print('After severity filter: ${filteredReports.length} reports');
@@ -573,9 +632,10 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
       for (var report in filteredReports) {
         final cat = report['reportCategoryId'];
         final type = report['reportTypeId'];
-        print('Report: ${report['_id'] ?? report['id']}, category: ${cat is Map ? cat['_id'] : cat}, type: ${type is Map ? type['_id'] : type}');
+        print(
+          'Report: ${report['_id'] ?? report['id']}, category: ${cat is Map ? cat['_id'] : cat}, type: ${type is Map ? type['_id'] : type}',
+        );
       }
-
     } catch (e) {
       if (mounted) {
         setState(() {
@@ -594,7 +654,9 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
     final scamBox = Hive.box<ScamReportModel>('scam_reports');
     print('Scam reports box length: ${scamBox.length}');
     for (var report in scamBox.values) {
-      print('Scam report: ID=${report.id}, Category=${report.reportCategoryId}, Type=${report.reportTypeId}, Severity=${report.alertLevels}');
+      print(
+        'Scam report: ID=${report.id}, Category=${report.reportCategoryId}, Type=${report.reportTypeId}, Severity=${report.alertLevels}',
+      );
       allReports.add({
         'id': report.id,
         'description': report.description,
@@ -615,7 +677,9 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
     final fraudBox = Hive.box<FraudReportModel>('fraud_reports');
     print('Fraud reports box length: ${fraudBox.length}');
     for (var report in fraudBox.values) {
-      print('Fraud report: ID=${report.id}, Category=${report.reportCategoryId}, Type=${report.reportTypeId}, Severity=${report.alertLevels}');
+      print(
+        'Fraud report: ID=${report.id}, Category=${report.reportCategoryId}, Type=${report.reportTypeId}, Severity=${report.alertLevels}',
+      );
       allReports.add({
         'id': report.id,
         'description': report.description ?? report.name ?? 'Fraud Report',
@@ -637,7 +701,9 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
     final malwareBox = Hive.box<MalwareReportModel>('malware_reports');
     print('Malware reports box length: ${malwareBox.length}');
     for (var report in malwareBox.values) {
-      print('Malware report: ID=${report.id}, Severity=${report.alertSeverityLevel}');
+      print(
+        'Malware report: ID=${report.id}, Severity=${report.alertSeverityLevel}',
+      );
       allReports.add({
         'id': report.id,
         'description': report.malwareType ?? 'Malware Report',
@@ -705,7 +771,8 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
             if (report['malwareType'] != null || report['fileName'] != null) {
               malwareReports.add(report);
               print('Classified as malware based on fields');
-            } else if (report['reportCategoryId'] != null && report['reportTypeId'] != null) {
+            } else if (report['reportCategoryId'] != null &&
+                report['reportTypeId'] != null) {
               // Default to scam if we have category and type
               scamReports.add(report);
               print('Classified as scam based on fields');
@@ -738,7 +805,9 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
             final typeObj = report['reportTypeId'];
 
             if (categoryObj is Map) {
-              categoryId = categoryObj['_id']?.toString() ?? categoryObj['id']?.toString();
+              categoryId =
+                  categoryObj['_id']?.toString() ??
+                  categoryObj['id']?.toString();
             } else {
               categoryId = categoryObj?.toString();
             }
@@ -754,17 +823,17 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
             // Extract category and type names if available
             String? categoryName;
             String? typeName;
-            
+
             final categoryObjForName = report['reportCategoryId'];
             final typeObjForName = report['reportTypeId'];
-            
+
             if (categoryObjForName is Map) {
               categoryName = categoryObjForName['name']?.toString();
             }
             if (typeObjForName is Map) {
               typeName = typeObjForName['name']?.toString();
             }
-            
+
             // Also check for direct name fields
             if (categoryName == null) {
               categoryName = report['categoryName']?.toString();
@@ -782,13 +851,13 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
               website: report['website']?.toString(),
               createdAt: report['createdAt'] != null
                   ? (report['createdAt'] is DateTime
-                      ? report['createdAt']
-                      : DateTime.parse(report['createdAt'].toString()))
+                        ? report['createdAt']
+                        : DateTime.parse(report['createdAt'].toString()))
                   : DateTime.now(),
               updatedAt: report['updatedAt'] != null
                   ? (report['updatedAt'] is DateTime
-                      ? report['updatedAt']
-                      : DateTime.parse(report['updatedAt'].toString()))
+                        ? report['updatedAt']
+                        : DateTime.parse(report['updatedAt'].toString()))
                   : DateTime.now(),
               reportCategoryId: categoryId,
               reportTypeId: typeId,
@@ -796,13 +865,17 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
             );
             await scamBox.add(scamReport);
             storedCount++;
-            print('Successfully stored scam report ${scamReport.id} with category: ${scamReport.reportCategoryId}, type: ${scamReport.reportTypeId}');
+            print(
+              'Successfully stored scam report ${scamReport.id} with category: ${scamReport.reportCategoryId}, type: ${scamReport.reportTypeId}',
+            );
           } catch (e) {
             print('Error storing scam report: $e');
             print('Report data: $report');
           }
         }
-        print('Successfully stored $storedCount/${scamReports.length} scam reports locally');
+        print(
+          'Successfully stored $storedCount/${scamReports.length} scam reports locally',
+        );
       }
 
       // Store fraud reports
@@ -826,7 +899,9 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
             final typeObj = report['reportTypeId'];
 
             if (categoryObj is Map) {
-              categoryId = categoryObj['_id']?.toString() ?? categoryObj['id']?.toString();
+              categoryId =
+                  categoryObj['_id']?.toString() ??
+                  categoryObj['id']?.toString();
             } else {
               categoryId = categoryObj?.toString();
             }
@@ -842,17 +917,17 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
             // Extract category and type names if available
             String? categoryName;
             String? typeName;
-            
+
             final categoryObjForName = report['reportCategoryId'];
             final typeObjForName = report['reportTypeId'];
-            
+
             if (categoryObjForName is Map) {
               categoryName = categoryObjForName['name']?.toString();
             }
             if (typeObjForName is Map) {
               typeName = typeObjForName['name']?.toString();
             }
-            
+
             // Also check for direct name fields
             if (categoryName == null) {
               categoryName = report['categoryName']?.toString();
@@ -870,13 +945,13 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
               website: report['website']?.toString(),
               createdAt: report['createdAt'] != null
                   ? (report['createdAt'] is DateTime
-                      ? report['createdAt']
-                      : DateTime.parse(report['createdAt'].toString()))
+                        ? report['createdAt']
+                        : DateTime.parse(report['createdAt'].toString()))
                   : DateTime.now(),
               updatedAt: report['updatedAt'] != null
                   ? (report['updatedAt'] is DateTime
-                      ? report['updatedAt']
-                      : DateTime.parse(report['updatedAt'].toString()))
+                        ? report['updatedAt']
+                        : DateTime.parse(report['updatedAt'].toString()))
                   : DateTime.now(),
               reportCategoryId: categoryId,
               reportTypeId: typeId,
@@ -885,13 +960,17 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
             );
             await fraudBox.add(fraudReport);
             storedCount++;
-            print('Successfully stored fraud report ${fraudReport.id} with category: ${fraudReport.reportCategoryId}, type: ${fraudReport.reportTypeId}');
+            print(
+              'Successfully stored fraud report ${fraudReport.id} with category: ${fraudReport.reportCategoryId}, type: ${fraudReport.reportTypeId}',
+            );
           } catch (e) {
             print('Error storing fraud report: $e');
             print('Report data: $report');
           }
         }
-        print('Successfully stored $storedCount/${fraudReports.length} fraud reports locally');
+        print(
+          'Successfully stored $storedCount/${fraudReports.length} fraud reports locally',
+        );
       }
 
       // Store malware reports
@@ -904,7 +983,9 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
         int storedCount = 0;
         for (var report in malwareReports) {
           try {
-            print('Processing malware report: ${report['_id'] ?? report['id']}');
+            print(
+              'Processing malware report: ${report['_id'] ?? report['id']}',
+            );
 
             // Extract category and type information
             String? categoryId;
@@ -915,7 +996,9 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
             final typeObj = report['reportTypeId'];
 
             if (categoryObj is Map) {
-              categoryId = categoryObj['_id']?.toString() ?? categoryObj['id']?.toString();
+              categoryId =
+                  categoryObj['_id']?.toString() ??
+                  categoryObj['id']?.toString();
             } else {
               categoryId = categoryObj?.toString();
             }
@@ -930,19 +1013,27 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
 
             final malwareReport = MalwareReportModel(
               id: report['_id']?.toString() ?? report['id']?.toString() ?? '',
-              malwareType: report['malwareType']?.toString() ?? 'Unknown Malware',
-              infectedDeviceType: report['infectedDeviceType']?.toString() ?? 'Unknown Device',
-              operatingSystem: report['operatingSystem']?.toString() ?? 'Unknown OS',
-              detectionMethod: report['detectionMethod']?.toString() ?? 'Unknown Method',
+              malwareType:
+                  report['malwareType']?.toString() ?? 'Unknown Malware',
+              infectedDeviceType:
+                  report['infectedDeviceType']?.toString() ?? 'Unknown Device',
+              operatingSystem:
+                  report['operatingSystem']?.toString() ?? 'Unknown OS',
+              detectionMethod:
+                  report['detectionMethod']?.toString() ?? 'Unknown Method',
               location: report['location']?.toString() ?? 'Unknown Location',
               fileName: report['fileName']?.toString() ?? '',
               name: report['name']?.toString() ?? 'Malware Report',
-              systemAffected: report['systemAffected']?.toString() ?? 'Unknown System',
-              alertSeverityLevel: report['alertLevels']?.toString() ?? report['alertSeverityLevel']?.toString() ?? 'medium',
+              systemAffected:
+                  report['systemAffected']?.toString() ?? 'Unknown System',
+              alertSeverityLevel:
+                  report['alertLevels']?.toString() ??
+                  report['alertSeverityLevel']?.toString() ??
+                  'medium',
               date: report['createdAt'] != null
                   ? (report['createdAt'] is DateTime
-                      ? report['createdAt']
-                      : DateTime.parse(report['createdAt'].toString()))
+                        ? report['createdAt']
+                        : DateTime.parse(report['createdAt'].toString()))
                   : DateTime.now(),
               isSynced: true, // Mark as synced since it came from backend
             );
@@ -954,7 +1045,9 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
             print('Report data: $report');
           }
         }
-        print('Successfully stored $storedCount/${malwareReports.length} malware reports locally');
+        print(
+          'Successfully stored $storedCount/${malwareReports.length} malware reports locally',
+        );
       }
 
       print('Successfully stored all reports locally');
@@ -977,16 +1070,22 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
       print('Scam reports in storage: ${scamBox.length}');
       print('Fraud reports in storage: ${fraudBox.length}');
       print('Malware reports in storage: ${malwareBox.length}');
-      print('Total reports in storage: ${scamBox.length + fraudBox.length + malwareBox.length}');
+      print(
+        'Total reports in storage: ${scamBox.length + fraudBox.length + malwareBox.length}',
+      );
 
       // Print first few reports from each box
       if (scamBox.isNotEmpty) {
         final firstScam = scamBox.values.first;
-        print('First scam report: ${firstScam.id} - Category: ${firstScam.reportCategoryId}, Type: ${firstScam.reportTypeId}');
+        print(
+          'First scam report: ${firstScam.id} - Category: ${firstScam.reportCategoryId}, Type: ${firstScam.reportTypeId}',
+        );
       }
       if (fraudBox.isNotEmpty) {
         final firstFraud = fraudBox.values.first;
-        print('First fraud report: ${firstFraud.id} - Category: ${firstFraud.reportCategoryId}, Type: ${firstFraud.reportTypeId}');
+        print(
+          'First fraud report: ${firstFraud.id} - Category: ${firstFraud.reportCategoryId}, Type: ${firstFraud.reportTypeId}',
+        );
       }
       if (malwareBox.isNotEmpty) {
         final firstMalware = malwareBox.values.first;
@@ -1001,14 +1100,14 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
   Future<void> _testBackendConnectivity() async {
     try {
       print('=== TESTING BACKEND CONNECTIVITY ===');
-      
+
       // Test basic connectivity
       final response = await _apiService.fetchAllReports();
       print('Backend test result: ${response.length} reports fetched');
-      
+
       // Test backend endpoints
       await _apiService.testBackendEndpoints();
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -1034,7 +1133,7 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
   Future<void> _createTestReports() async {
     try {
       print('=== CREATING TEST REPORTS ===');
-      
+
       // Create a test scam report
       final testScamReport = ScamReportModel(
         id: 'test_scam_${DateTime.now().millisecondsSinceEpoch}',
@@ -1095,23 +1194,32 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
 
       // Try to sync them to backend
       bool scamSynced = await ScamReportService.sendToBackend(testScamReport);
-      bool fraudSynced = await FraudReportService.sendToBackend(testFraudReport);
-      bool malwareSynced = await MalwareReportService.sendToBackend(testMalwareReport);
+      bool fraudSynced = await FraudReportService.sendToBackend(
+        testFraudReport,
+      );
+      bool malwareSynced = await MalwareReportService.sendToBackend(
+        testMalwareReport,
+      );
 
-      print('Sync results: Scam=$scamSynced, Fraud=$fraudSynced, Malware=$malwareSynced');
+      print(
+        'Sync results: Scam=$scamSynced, Fraud=$fraudSynced, Malware=$malwareSynced',
+      );
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Test reports created. Sync: Scam=$scamSynced, Fraud=$fraudSynced, Malware=$malwareSynced'),
-            backgroundColor: (scamSynced || fraudSynced || malwareSynced) ? Colors.green : Colors.orange,
+            content: Text(
+              'Test reports created. Sync: Scam=$scamSynced, Fraud=$fraudSynced, Malware=$malwareSynced',
+            ),
+            backgroundColor: (scamSynced || fraudSynced || malwareSynced)
+                ? Colors.green
+                : Colors.orange,
           ),
         );
       }
 
       // Reload the data
       await _loadFilteredReports();
-
     } catch (e) {
       print('Error creating test reports: $e');
       if (mounted) {
@@ -1144,10 +1252,12 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
     // First, check if we have category and type names directly from the report
     final categoryName = report['categoryName']?.toString();
     final typeName = report['typeName']?.toString();
-    
+
     // If we have both category and type names, combine them
-    if (categoryName != null && categoryName.isNotEmpty && 
-        typeName != null && typeName.isNotEmpty) {
+    if (categoryName != null &&
+        categoryName.isNotEmpty &&
+        typeName != null &&
+        typeName.isNotEmpty) {
       return '$categoryName - $typeName';
     }
 
@@ -1178,7 +1288,9 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
     }
 
     // Check if we have a description that looks like a type
-    if (description != null && description.isNotEmpty && description.length < 50) {
+    if (description != null &&
+        description.isNotEmpty &&
+        description.length < 50) {
       return description;
     }
 
@@ -1191,7 +1303,8 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
     final typeObj = report['reportTypeId'];
 
     if (categoryObj is Map) {
-      categoryId = categoryObj['_id']?.toString() ?? categoryObj['id']?.toString();
+      categoryId =
+          categoryObj['_id']?.toString() ?? categoryObj['id']?.toString();
     } else {
       categoryId = categoryObj?.toString();
     }
@@ -1204,7 +1317,8 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
 
     // Also check for alternative field names
     if (categoryId == null) {
-      categoryId = report['categoryId']?.toString() ?? report['category']?.toString();
+      categoryId =
+          report['categoryId']?.toString() ?? report['category']?.toString();
     }
     if (typeId == null) {
       typeId = report['typeId']?.toString() ?? report['type']?.toString();
@@ -1245,7 +1359,7 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
       case 'malware':
         return 'Report Malware';
       default:
-      // Try to construct a name from available data
+        // Try to construct a name from available data
         if (type != null && type.isNotEmpty) {
           return 'Report ${type.substring(0, 1).toUpperCase()}${type.substring(1)}';
         }
@@ -1262,7 +1376,8 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
       _typeIdToName.clear();
       for (var type in types) {
         final id = type['_id']?.toString() ?? type['id']?.toString();
-        final name = type['name']?.toString() ??
+        final name =
+            type['name']?.toString() ??
             type['typeName']?.toString() ??
             type['title']?.toString() ??
             type['description']?.toString() ??
@@ -1288,7 +1403,8 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
       _categoryIdToName.clear();
       for (var category in categories) {
         final id = category['_id']?.toString() ?? category['id']?.toString();
-        final name = category['name']?.toString() ??
+        final name =
+            category['name']?.toString() ??
             category['categoryName']?.toString() ??
             category['title']?.toString() ??
             'Category ${id ?? 'Unknown'}';
@@ -1298,7 +1414,9 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
           print('Category mapping: $id -> $name');
         }
       }
-      print('Category name cache built with ${_categoryIdToName.length} entries');
+      print(
+        'Category name cache built with ${_categoryIdToName.length} entries',
+      );
     } catch (e) {
       print('Error loading category names: $e');
     }
@@ -1318,13 +1436,18 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
 
     if (type == 'malware') {
       // For malware reports, check for file evidence
-      return (report['fileName'] != null && report['fileName'].toString().isNotEmpty) ||
-          (report['malwareType'] != null && report['malwareType'].toString().isNotEmpty);
+      return (report['fileName'] != null &&
+              report['fileName'].toString().isNotEmpty) ||
+          (report['malwareType'] != null &&
+              report['malwareType'].toString().isNotEmpty);
     } else {
       // For scam and fraud reports, check for contact evidence
-      return (report['email'] != null && report['email'].toString().isNotEmpty) ||
-          (report['phoneNumber'] != null && report['phoneNumber'].toString().isNotEmpty) ||
-          (report['website'] != null && report['website'].toString().isNotEmpty);
+      return (report['email'] != null &&
+              report['email'].toString().isNotEmpty) ||
+          (report['phoneNumber'] != null &&
+              report['phoneNumber'].toString().isNotEmpty) ||
+          (report['website'] != null &&
+              report['website'].toString().isNotEmpty);
     }
   }
 
@@ -1346,13 +1469,17 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
     }
 
     // Check boolean fields
-    if (isSynced == true || synced == true || uploaded == true || completed == true) {
+    if (isSynced == true ||
+        synced == true ||
+        uploaded == true ||
+        completed == true) {
       return 'Completed';
     }
 
     // Check if report has an ID from backend (indicates it's uploaded)
     final hasBackendId = report['_id'] != null || report['id'] != null;
-    if (hasBackendId && (report['createdAt'] != null || report['updatedAt'] != null)) {
+    if (hasBackendId &&
+        (report['createdAt'] != null || report['updatedAt'] != null)) {
       return 'Completed';
     }
 
@@ -1364,7 +1491,8 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
     // Check if report has category and type IDs (indicates it's from backend)
     final hasCategoryId = report['reportCategoryId'] != null;
     final hasTypeId = report['reportTypeId'] != null;
-    if (hasCategoryId || hasTypeId) {
+    final hasMalwareType = report['malwareType'] != null;
+    if (hasCategoryId || hasTypeId || hasMalwareType) {
       return 'Completed';
     }
 
@@ -1407,9 +1535,9 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
     final isOnline = connectivityResult != ConnectivityResult.none;
 
     if (!isOnline) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No internet connection.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('No internet connection.')));
       return;
     }
 
@@ -1484,7 +1612,9 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
         }
 
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('${report['type']} report synced successfully!')),
+          SnackBar(
+            content: Text('${report['type']} report synced successfully!'),
+          ),
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -1492,9 +1622,9 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
         );
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error syncing report: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error syncing report: $e')));
     } finally {
       if (mounted) {
         setState(() {
@@ -1505,92 +1635,94 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
   }
 
   // New method to test the dynamic API with the exact URL structure
-  Future<void> _testDynamicApi() async {
-    try {
-      setState(() {
-        _isLoading = true;
-        _errorMessage = null;
-      });
-
-      print('=== TESTING DYNAMIC API WITH EXACT URL ===');
-      
-      // Test the exact URL structure you provided
-      final reports = await _apiService.testExactUrlStructure();
-      
-      print('Dynamic API test result: ${reports.length} reports');
-      
-      if (reports.isNotEmpty) {
-        print('First report structure:');
-        reports.first.forEach((key, value) {
-          print('  $key: $value (${value.runtimeType})');
-        });
-        
-        // Debug: Check category and type structure
-        final firstReport = reports.first;
-        print('Category structure: ${firstReport['reportCategoryId']}');
-        print('Type structure: ${firstReport['reportTypeId']}');
-        
-        if (firstReport['reportCategoryId'] is Map) {
-          final categoryMap = firstReport['reportCategoryId'] as Map;
-          print('Category map keys: ${categoryMap.keys}');
-          print('Category name: ${categoryMap['name']}');
-        }
-        
-        if (firstReport['reportTypeId'] is Map) {
-          final typeMap = firstReport['reportTypeId'] as Map;
-          print('Type map keys: ${typeMap.keys}');
-          print('Type name: ${typeMap['name']}');
-        }
-      }
-      
-      // Convert to UI format
-      _filteredReports = reports;
-      _typedReports = reports.map((json) => ReportModel.fromJson(json)).toList();
-      
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-        
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Dynamic API test: ${reports.length} reports found'),
-            backgroundColor: reports.isNotEmpty ? Colors.green : Colors.orange,
-          ),
-        );
-      }
-      
-    } catch (e) {
-      print('Dynamic API test failed: $e');
-      if (mounted) {
-        setState(() {
-          _errorMessage = 'Dynamic API test failed: $e';
-          _isLoading = false;
-        });
-        
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Dynamic API test failed: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    }
-  }
+  // Future<void> _testDynamicApi() async {
+  //   try {
+  //     setState(() {
+  //       _isLoading = true;
+  //       _errorMessage = null;
+  //     });
+  //
+  //     print('=== TESTING DYNAMIC API WITH EXACT URL ===');
+  //
+  //     // Test the exact URL structure you provided
+  //     final reports = await _apiService.testExactUrlStructure();
+  //
+  //     print('Dynamic API test result: ${reports.length} reports');
+  //
+  //     if (reports.isNotEmpty) {
+  //       print('First report structure:');
+  //       reports.first.forEach((key, value) {
+  //         print('  $key: $value (${value.runtimeType})');
+  //       });
+  //
+  //       // Debug: Check category and type structure
+  //       final firstReport = reports.first;
+  //       print('Category structure: ${firstReport['reportCategoryId']}');
+  //       print('Type structure: ${firstReport['reportTypeId']}');
+  //
+  //       if (firstReport['reportCategoryId'] is Map) {
+  //         final categoryMap = firstReport['reportCategoryId'] as Map;
+  //         print('Category map keys: ${categoryMap.keys}');
+  //         print('Category name: ${categoryMap['name']}');
+  //       }
+  //
+  //       if (firstReport['reportTypeId'] is Map) {
+  //         final typeMap = firstReport['reportTypeId'] as Map;
+  //         print('Type map keys: ${typeMap.keys}');
+  //         print('Type name: ${typeMap['name']}');
+  //       }
+  //     }
+  //
+  //     // Convert to UI format
+  //     _filteredReports = reports;
+  //     _typedReports = reports
+  //         .map((json) => ReportModel.fromJson(json))
+  //         .toList();
+  //
+  //     if (mounted) {
+  //       setState(() {
+  //         _isLoading = false;
+  //       });
+  //
+  //       ScaffoldMessenger.of(context).showSnackBar(
+  //         SnackBar(
+  //           content: Text('Dynamic API test: ${reports.length} reports found'),
+  //           backgroundColor: reports.isNotEmpty ? Colors.green : Colors.orange,
+  //         ),
+  //       );
+  //     }
+  //   } catch (e) {
+  //     print('Dynamic API test failed: $e');
+  //     if (mounted) {
+  //       setState(() {
+  //         _errorMessage = 'Dynamic API test failed: $e';
+  //         _isLoading = false;
+  //       });
+  //
+  //       ScaffoldMessenger.of(context).showSnackBar(
+  //         SnackBar(
+  //           content: Text('Dynamic API test failed: $e'),
+  //           backgroundColor: Colors.red,
+  //         ),
+  //       );
+  //     }
+  //   }
+  // }
 
   // Enhanced method to load category and type names with better error handling
   Future<void> _loadCategoryAndTypeNames() async {
     try {
       print('Loading category and type names from API...');
-      
+
       // Load categories
       final categories = await _apiService.fetchReportCategories();
       print('Loaded ${categories.length} categories from API');
-      
+
       _categoryIdToName.clear();
       for (var category in categories) {
         final id = category['_id']?.toString() ?? category['id']?.toString();
-        final name = category['name']?.toString() ??
+        final name =
+            category['name']?.toString() ??
             category['categoryName']?.toString() ??
             category['title']?.toString() ??
             'Category ${id ?? 'Unknown'}';
@@ -1600,15 +1732,16 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
           print('Category mapping: $id -> $name');
         }
       }
-      
+
       // Load types
       final types = await _apiService.fetchReportTypes();
       print('Loaded ${types.length} types from API');
-      
+
       _typeIdToName.clear();
       for (var type in types) {
         final id = type['_id']?.toString() ?? type['id']?.toString();
-        final name = type['name']?.toString() ??
+        final name =
+            type['name']?.toString() ??
             type['typeName']?.toString() ??
             type['title']?.toString() ??
             'Type ${id ?? 'Unknown'}';
@@ -1618,21 +1751,23 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
           print('Type mapping: $id -> $name');
         }
       }
-      
-      print('Category name cache built with ${_categoryIdToName.length} entries');
+
+      print(
+        'Category name cache built with ${_categoryIdToName.length} entries',
+      );
       print('Type name cache built with ${_typeIdToName.length} entries');
-      
+
       // Debug: Print all available mappings
       print('Available category mappings:');
       _categoryIdToName.forEach((id, name) {
         print('  $id -> $name');
       });
-      
+
       print('Available type mappings:');
       _typeIdToName.forEach((id, name) {
         print('  $id -> $name');
       });
-      
+
       // Refresh the UI to show the resolved names
       if (mounted) {
         setState(() {});
@@ -1653,32 +1788,36 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
       });
 
       print('=== USING COMPLEX FILTER ===');
-      
+
       final reports = await _apiService.getReportsWithComplexFilter(
         searchQuery: widget.searchQuery.isNotEmpty ? widget.searchQuery : null,
         categoryIds: widget.scamTypeId.isNotEmpty ? [widget.scamTypeId] : null,
         typeIds: widget.selectedType != null ? [widget.selectedType!] : null,
-        severityLevels: widget.selectedSeverity != null ? [widget.selectedSeverity!] : null,
+        severityLevels: widget.selectedSeverity != null
+            ? [widget.selectedSeverity!]
+            : null,
         page: _currentPage,
         limit: _pageSize,
       );
-      
+
       print('Complex filter result: ${reports.length} reports');
-      
+
       // Convert to UI format
       _filteredReports = reports;
-      _typedReports = reports.map((json) => _safeConvertToReportModel(json)).toList();
-      
+      _typedReports = reports
+          .map((json) => _safeConvertToReportModel(json))
+          .toList();
+
       // Check if we have more data
       if (reports.length < _pageSize) {
         _hasMoreData = false;
       }
-      
+
       if (mounted) {
         setState(() {
           _isLoading = false;
         });
-        
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Complex filter: ${reports.length} reports found'),
@@ -1686,7 +1825,6 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
           ),
         );
       }
-      
     } catch (e) {
       print('Complex filter failed: $e');
       if (mounted) {
@@ -1694,7 +1832,7 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
           _errorMessage = 'Complex filter failed: $e';
           _isLoading = false;
         });
-        
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Complex filter failed: $e'),
@@ -1710,9 +1848,11 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
     // Use the new ReportModel helper methods
     final categoryName = report.displayCategory;
     final typeName = report.displayType;
-    
-    if (categoryName.isNotEmpty && typeName.isNotEmpty && 
-        categoryName != 'Unknown Category' && typeName != 'Unknown Type') {
+
+    if (categoryName.isNotEmpty &&
+        typeName.isNotEmpty &&
+        categoryName != 'Unknown Category' &&
+        typeName != 'Unknown Type') {
       return '$categoryName - $typeName';
     } else if (categoryName.isNotEmpty && categoryName != 'Unknown Category') {
       return categoryName;
@@ -1733,10 +1873,10 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
   // Enhanced method to check if report has evidence using ReportModel
   bool _hasEvidenceEnhanced(ReportModel report) {
     return report.email?.isNotEmpty == true ||
-           report.phoneNumber?.isNotEmpty == true ||
-           report.website?.isNotEmpty == true ||
-           report.screenshotPaths.isNotEmpty ||
-           report.documentPaths.isNotEmpty;
+        report.phoneNumber?.isNotEmpty == true ||
+        report.website?.isNotEmpty == true ||
+        report.screenshotPaths.isNotEmpty ||
+        report.documentPaths.isNotEmpty;
   }
 
   // Enhanced method to get report status using ReportModel
@@ -1818,21 +1958,34 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
     final priorityColor = _getPriorityColor(report);
     final severityColor = _getSeverityColor(report);
 
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            spreadRadius: 1,
-            blurRadius: 4,
-            offset: Offset(0, 2),
+    return GestureDetector(
+      onTap: () {
+        // Navigate to report detail view
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ReportDetailView(
+              report: _filteredReports[index],
+              typedReport: report,
+            ),
           ),
-        ],
-      ),
+        );
+      },
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.1),
+              spreadRadius: 1,
+              blurRadius: 4,
+              offset: Offset(0, 2),
+            ),
+          ],
+        ),
       child: Row(
         children: [
           // Report Icon with Priority Color
@@ -1843,11 +1996,7 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
               color: priorityColor,
               shape: BoxShape.circle,
             ),
-            child: Icon(
-              Icons.warning,
-              color: Colors.white,
-              size: 24,
-            ),
+            child: Icon(Icons.warning, color: Colors.white, size: 24),
           ),
           const SizedBox(width: 16),
 
@@ -1866,14 +2015,11 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
                   ),
                 ),
                 const SizedBox(height: 4),
-                
+
                 // Description
                 Text(
                   report.description ?? 'No description available',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey[600],
-                  ),
+                  style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -1916,12 +2062,15 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
                         ),
                       ),
                     ),
-                    
+
                     // Priority Tag (if high priority)
                     if (report.isHighPriority) ...[
                       const SizedBox(width: 8),
                       Container(
-                        padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
                           color: Colors.red,
                           borderRadius: BorderRadius.circular(12),
@@ -1938,17 +2087,23 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
                     ],
                   ],
                 ),
-                
+
                 // Tags (if any)
                 if (report.tags.isNotEmpty) ...[
                   const SizedBox(height: 8),
                   Wrap(
                     spacing: 4,
-                    children: report.tags.take(3).map((tag) => Chip(
-                      label: Text(tag, style: TextStyle(fontSize: 10)),
-                      backgroundColor: Colors.grey[200],
-                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    )).toList(),
+                    children: report.tags
+                        .take(3)
+                        .map(
+                          (tag) => Chip(
+                            label: Text(tag, style: TextStyle(fontSize: 10)),
+                            backgroundColor: Colors.grey[200],
+                            materialTapTargetSize:
+                                MaterialTapTargetSize.shrinkWrap,
+                          ),
+                        )
+                        .toList(),
                   ),
                 ],
               ],
@@ -1962,10 +2117,7 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
               // Time Ago
               Text(
                 timeAgo,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey[600],
-                ),
+                style: TextStyle(fontSize: 12, color: Colors.grey[600]),
               ),
               const SizedBox(height: 8),
 
@@ -1974,17 +2126,15 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   if (status == 'Pending')
-                    Icon(
-                      Icons.sync,
-                      size: 16,
-                      color: Colors.grey[600],
-                    ),
+                    Icon(Icons.sync, size: 16, color: Colors.grey[600]),
                   const SizedBox(width: 4),
                   Text(
                     status,
                     style: TextStyle(
                       fontSize: 12,
-                      color: status == 'Completed' ? Colors.green : Colors.grey[600],
+                      color: status == 'Completed'
+                          ? Colors.green
+                          : Colors.grey[600],
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -1994,29 +2144,29 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
           ),
         ],
       ),
-    );
+    ),
+  );
   }
-
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(onPressed: (){Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) =>
-                DashboardPage(),
-          ),
-        );}, icon: Icon(Icons.arrow_back)),
+        leading: IconButton(
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => DashboardPage()),
+            );
+          },
+          icon: Icon(Icons.arrow_back),
+        ),
         title: const Text('Thread Database'),
         centerTitle: true,
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
         elevation: 0,
-        actions: [
-
-        ],
+        actions: [],
       ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -2049,8 +2199,10 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
                 ElevatedButton(
                   onPressed: () async {
                     final result = await Navigator.push(
-                      context, 
-                      MaterialPageRoute(builder: (context) => ThreadDatabaseFilterPage())
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ThreadDatabaseFilterPage(),
+                      ),
                     );
                     // If we returned from filter page, reset and reload with new filters
                     if (result == true) {
@@ -2112,356 +2264,457 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
                 ? Center(child: CircularProgressIndicator())
                 : _filteredReports.isEmpty
                 ? SingleChildScrollView(
-              child: Column(
-                children: [
-                  SizedBox(height: 100), // Add some space at the top
-                  Center(
                     child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.search_off, size: 64, color: Colors.grey),
-                        SizedBox(height: 16),
-                        Text(
-                          'No reports found',
-                          style: TextStyle(fontSize: 18, color: Colors.grey),
-                        ),
-                        SizedBox(height: 8),
-                        Text(
-                          'Try adjusting your filters or pull to refresh',
-                          style: TextStyle(fontSize: 14, color: Colors.grey),
-                        ),
-                        SizedBox(height: 16),
-                        ElevatedButton(
-                          onPressed: _resetAndReload,
-                          child: Text('Refresh'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.blue,
-                            foregroundColor: Colors.white,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  SizedBox(height: 20),
-                  // Debug section to show all available reports
-                  Container(
-                    margin: EdgeInsets.all(16),
-                    padding: EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.blue.shade50,
-                      border: Border.all(color: Colors.blue.shade200),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Debug: Available Reports',
-                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                        ),
-                        SizedBox(height: 8),
-                        Text('Total reports in database: ${_filteredReports.length}'),
-                        SizedBox(height: 8),
-                        Text('Applied filters:'),
-                        Text('- Search: "${widget.searchQuery}"'),
-                        Text('- Category: "${widget.scamTypeId}"'),
-                        Text('- Type: "${widget.selectedType}"'),
-                        Text('- Severity: "${widget.selectedSeverity}"'),
-                        SizedBox(height: 8),
-                        Text('Hive Box Status:'),
-                        Text('- Scam reports: ${Hive.box<ScamReportModel>('scam_reports').length}'),
-                        Text('- Fraud reports: ${Hive.box<FraudReportModel>('fraud_reports').length}'),
-                        Text('- Malware reports: ${Hive.box<MalwareReportModel>('malware_reports').length}'),
-                        SizedBox(height: 8),
-                        Text('Category & Type Cache:'),
-                        Text('- Categories loaded: ${_categoryIdToName.length}'),
-                        Text('- Types loaded: ${_typeIdToName.length}'),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            )
-                : RefreshIndicator(
-              onRefresh: _resetAndReload,
-              child: ListView.builder(
-                controller: _scrollController, // Add scroll controller
-                itemCount: _filteredReports.length + (_hasMoreData ? 1 : 0), // Add 1 for loading indicator
-                itemBuilder: (context, index) {
-                // Show loading indicator or end message at the bottom
-                if (index == _filteredReports.length) {
-                  if (_isLoadingMore) {
-                    return Container(
-                      padding: EdgeInsets.all(16),
-                      child: Center(
-                        child: Column(
-                          children: [
-                            CircularProgressIndicator(),
-                            SizedBox(height: 8),
-                            Text('Loading more reports...'),
-                          ],
-                        ),
-                      ),
-                    );
-                  } else if (!_hasMoreData && _filteredReports.isNotEmpty) {
-                    return Container(
-                      padding: EdgeInsets.all(16),
-                      child: Center(
-                        child: Column(
-                          children: [
-                            Icon(Icons.check_circle, color: Colors.green, size: 32),
-                            SizedBox(height: 8),
-                            Text(
-                              'All reports loaded',
-                              style: TextStyle(
-                                color: Colors.green,
-                                fontWeight: FontWeight.bold,
+                        SizedBox(height: 100), // Add some space at the top
+                        Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.search_off,
+                                size: 64,
+                                color: Colors.grey,
                               ),
-                            ),
-                            SizedBox(height: 4),
-                            Text(
-                              'Total: ${_filteredReports.length} reports',
-                              style: TextStyle(
-                                color: Colors.grey[600],
-                                fontSize: 12,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  }
-                  return SizedBox.shrink();
-                }
-                // Use enhanced report card if we have typed reports
-                if (_typedReports.isNotEmpty && index < _typedReports.length) {
-                  return _buildEnhancedReportCard(_typedReports[index], index);
-                }
-                
-                // Fallback to original report card
-                final report = _filteredReports[index];
-                final reportType = _getReportTypeDisplay(report);
-                final hasEvidence = _hasEvidence(report);
-                final status = _getReportStatus(report);
-                final timeAgo = _getTimeAgo(report['createdAt']);
-
-                // Enhanced category and type name resolution
-                String categoryName = '';
-                String typeName = '';
-                
-                // Try to get category name from different possible sources
-                final categoryObj = report['reportCategoryId'];
-                if (categoryObj is Map) {
-                  categoryName = categoryObj['name']?.toString() ?? 
-                                categoryObj['categoryName']?.toString() ?? 
-                                categoryObj['title']?.toString() ?? '';
-                } else if (categoryObj is String) {
-                  // If it's a string ID, try to resolve it from cache
-                  categoryName = _resolveCategoryName(categoryObj) ?? '';
-                }
-                
-                // Try to get type name from different possible sources
-                final typeObj = report['reportTypeId'];
-                if (typeObj is Map) {
-                  typeName = typeObj['name']?.toString() ?? 
-                             typeObj['typeName']?.toString() ?? 
-                             typeObj['title']?.toString() ?? '';
-                } else if (typeObj is String) {
-                  // If it's a string ID, try to resolve it from cache
-                  typeName = _resolveTypeName(typeObj) ?? '';
-                }
-                
-                // Fallback: if we still don't have names, try to get them from other fields
-                if (categoryName.isEmpty) {
-                  categoryName = report['categoryName']?.toString() ?? 
-                                report['category']?.toString() ?? 
-                                report['reportCategory']?.toString() ?? '';
-                }
-                
-                if (typeName.isEmpty) {
-                  typeName = report['typeName']?.toString() ?? 
-                             report['type']?.toString() ?? 
-                             report['reportType']?.toString() ?? '';
-                }
-                
-                // Debug: Print the extracted names
-                print('Report ${report['_id'] ?? report['id']}: Category="$categoryName", Type="$typeName"');
-                
-                // Fallback: if we still don't have names, show the IDs
-                if (categoryName.isEmpty) {
-                  final categoryId = report['reportCategoryId']?.toString() ?? '';
-                  if (categoryId.isNotEmpty) {
-                    categoryName = 'Category ID: $categoryId';
-                  }
-                }
-                
-                if (typeName.isEmpty) {
-                  final typeId = report['reportTypeId']?.toString() ?? '';
-                  if (typeId.isNotEmpty) {
-                    typeName = 'Type ID: $typeId';
-                  }
-                }
-
-                return Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.grey.withOpacity(0.1),
-                        spreadRadius: 1,
-                        blurRadius: 4,
-                        offset: Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    children: [
-                      // Report Icon
-                      Container(
-                        width: 50,
-                        height: 50,
-                        decoration: BoxDecoration(
-                          color: Colors.red,
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          Icons.warning,
-                          color: Colors.white,
-                          size: 24,
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-
-                      // Report Content
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // Report Category and Type
-                            if (categoryName.isNotEmpty)
+                              SizedBox(height: 16),
                               Text(
-                                'Category: $categoryName',
+                                'No reports found',
                                 style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
-                                  color: Colors.black87,
+                                  fontSize: 18,
+                                  color: Colors.grey,
                                 ),
                               ),
-                            if (categoryName.isNotEmpty && typeName.isNotEmpty)
-                              const SizedBox(height: 4),
-                            if (typeName.isNotEmpty)
+                              SizedBox(height: 8),
                               Text(
-                                'Type: $typeName',
+                                'Try adjusting your filters or pull to refresh',
                                 style: TextStyle(
                                   fontSize: 14,
-                                  color: Colors.black54,
-                                  fontWeight: FontWeight.w500,
+                                  color: Colors.grey,
                                 ),
                               ),
-                            if (categoryName.isNotEmpty || typeName.isNotEmpty)
-                              const SizedBox(height: 8),
-                            // Description
-                            Text(
-                              report['description'] ?? 'No description available',
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: Colors.grey[600],
-                              ),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            const SizedBox(height: 8),
-
-                            // Tags Row
-                            Row(
-                              children: [
-                                // Severity Tag
-                                Container(
-                                  padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                  decoration: BoxDecoration(
-                                    color: severityColor(report['alertLevels'] ?? ''),
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: Text(
-                                    report['alertLevels'] ?? 'Unknown',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-
-                                // Evidence Tag
-                                Container(
-                                  padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                  decoration: BoxDecoration(
-                                    color: hasEvidence ? Colors.blue : Colors.grey[600],
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: Text(
-                                    hasEvidence ? 'Has Evidence' : 'No Evidence',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-
-                      // Right Side - Time and Status
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          // Time Ago
-                          Text(
-                            timeAgo,
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey[600],
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-
-                          // Status
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              if (status == 'Pending')
-                                Icon(
-                                  Icons.sync,
-                                  size: 16,
-                                  color: Colors.grey[600],
-                                ),
-                              const SizedBox(width: 4),
-                              Text(
-                                status,
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: status == 'Completed' ? Colors.green : Colors.grey[600],
-                                  fontWeight: FontWeight.bold,
+                              SizedBox(height: 16),
+                              ElevatedButton(
+                                onPressed: _resetAndReload,
+                                child: Text('Refresh'),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.blue,
+                                  foregroundColor: Colors.white,
                                 ),
                               ),
                             ],
                           ),
-                        ],
-                      ),
-                    ],
+                        ),
+                        SizedBox(height: 20),
+                        // Debug section to show all available reports
+                        Container(
+                          margin: EdgeInsets.all(16),
+                          padding: EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.blue.shade50,
+                            border: Border.all(color: Colors.blue.shade200),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Debug: Available Reports',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
+                              ),
+                              SizedBox(height: 8),
+                              Text(
+                                'Total reports in database: ${_filteredReports.length}',
+                              ),
+                              SizedBox(height: 8),
+                              Text('Applied filters:'),
+                              Text('- Search: "${widget.searchQuery}"'),
+                              Text('- Category: "${widget.scamTypeId}"'),
+                              Text('- Type: "${widget.selectedType}"'),
+                              Text('- Severity: "${widget.selectedSeverity}"'),
+                              SizedBox(height: 8),
+                              Text('Hive Box Status:'),
+                              Text(
+                                '- Scam reports: ${Hive.box<ScamReportModel>('scam_reports').length}',
+                              ),
+                              Text(
+                                '- Fraud reports: ${Hive.box<FraudReportModel>('fraud_reports').length}',
+                              ),
+                              Text(
+                                '- Malware reports: ${Hive.box<MalwareReportModel>('malware_reports').length}',
+                              ),
+                              SizedBox(height: 8),
+                              Text('Category & Type Cache:'),
+                              Text(
+                                '- Categories loaded: ${_categoryIdToName.length}',
+                              ),
+                              Text('- Types loaded: ${_typeIdToName.length}'),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                : RefreshIndicator(
+                    onRefresh: _resetAndReload,
+                    child: ListView.builder(
+                      controller: _scrollController,
+                      // Add scroll controller
+                      itemCount:
+                          _filteredReports.length + (_hasMoreData ? 1 : 0),
+                      // Add 1 for loading indicator
+                      itemBuilder: (context, index) {
+                        // Show loading indicator or end message at the bottom
+                        if (index == _filteredReports.length) {
+                          if (_isLoadingMore) {
+                            return Container(
+                              padding: EdgeInsets.all(16),
+                              child: Center(
+                                child: Column(
+                                  children: [
+                                    CircularProgressIndicator(),
+                                    SizedBox(height: 8),
+                                    Text('Loading more reports...'),
+                                  ],
+                                ),
+                              ),
+                            );
+                          } else if (!_hasMoreData &&
+                              _filteredReports.isNotEmpty) {
+                            return Container(
+                              padding: EdgeInsets.all(16),
+                              child: Center(
+                                child: Column(
+                                  children: [
+                                    Icon(
+                                      Icons.check_circle,
+                                      color: Colors.green,
+                                      size: 32,
+                                    ),
+                                    SizedBox(height: 8),
+                                    Text(
+                                      'All reports loaded',
+                                      style: TextStyle(
+                                        color: Colors.green,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    SizedBox(height: 4),
+                                    Text(
+                                      'Total: ${_filteredReports.length} reports',
+                                      style: TextStyle(
+                                        color: Colors.grey[600],
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          }
+                          return SizedBox.shrink();
+                        }
+                        // Use enhanced report card if we have typed reports
+                        if (_typedReports.isNotEmpty &&
+                            index < _typedReports.length) {
+                          return _buildEnhancedReportCard(
+                            _typedReports[index],
+                            index,
+                          );
+                        }
+
+                        // Fallback to original report card
+                        final report = _filteredReports[index];
+                        final reportType = _getReportTypeDisplay(report);
+                        final hasEvidence = _hasEvidence(report);
+                        final status = _getReportStatus(report);
+                        final timeAgo = _getTimeAgo(report['createdAt']);
+
+                        // Enhanced category and type name resolution
+                        String categoryName = '';
+                        String typeName = '';
+
+                        // Check if this is a malware report
+                        final reportTypeValue =
+                            report['type']?.toString() ?? '';
+                        final isMalwareReport = reportTypeValue == 'Malware';
+
+                        if (isMalwareReport) {
+                          // For malware reports, use malwareType as the type
+                          categoryName =
+                              'Malware'; // Set a default category for malware
+                          typeName =
+                              report['malwareType']?.toString() ??
+                              'Unknown Malware Type';
+                        } else {
+                          // For scam and fraud reports, use the existing logic
+                          // Try to get category name from different possible sources
+                          final categoryObj = report['reportCategoryId'];
+                          if (categoryObj is Map) {
+                            categoryName =
+                                categoryObj['name']?.toString() ??
+                                categoryObj['categoryName']?.toString() ??
+                                categoryObj['title']?.toString() ??
+                                '';
+                          } else if (categoryObj is String) {
+                            // If it's a string ID, try to resolve it from cache
+                            categoryName =
+                                _resolveCategoryName(categoryObj) ?? '';
+                          }
+
+                          // Try to get type name from different possible sources
+                          final typeObj = report['reportTypeId'];
+                          if (typeObj is Map) {
+                            typeName =
+                                typeObj['name']?.toString() ??
+                                typeObj['typeName']?.toString() ??
+                                typeObj['title']?.toString() ??
+                                '';
+                          } else if (typeObj is String) {
+                            // If it's a string ID, try to resolve it from cache
+                            typeName = _resolveTypeName(typeObj) ?? '';
+                          }
+
+                          // Fallback: if we still don't have names, try to get them from other fields
+                          if (categoryName.isEmpty) {
+                            categoryName =
+                                report['categoryName']?.toString() ??
+                                report['category']?.toString() ??
+                                report['reportCategory']?.toString() ??
+                                '';
+                          }
+
+                          if (typeName.isEmpty) {
+                            typeName =
+                                report['typeName']?.toString() ??
+                                report['type']?.toString() ??
+                                report['reportType']?.toString() ??
+                                '';
+                          }
+
+                          // Fallback: if we still don't have names, show the IDs
+                          if (categoryName.isEmpty) {
+                            final categoryId =
+                                report['reportCategoryId']?.toString() ?? '';
+                            if (categoryId.isNotEmpty) {
+                              categoryName = 'Category ID: $categoryId';
+                            }
+                          }
+
+                          if (typeName.isEmpty) {
+                            final typeId =
+                                report['reportTypeId']?.toString() ?? '';
+                            if (typeId.isNotEmpty) {
+                              typeName = 'Type ID: $typeId';
+                            }
+                          }
+                        }
+
+                        // Debug: Print the extracted names
+                        print(
+                          'Report ${report['_id'] ?? report['id']}: Category="$categoryName", Type="$typeName" (Type: $reportTypeValue)',
+                        );
+
+                        return GestureDetector(
+                          onTap: () {
+                            // Navigate to report detail view
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => ReportDetailView(
+                                  report: report,
+                                  typedReport: null,
+                                ),
+                              ),
+                            );
+                          },
+                          child: Container(
+                            margin: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 8,
+                            ),
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(12),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.grey.withOpacity(0.1),
+                                  spreadRadius: 1,
+                                  blurRadius: 4,
+                                  offset: Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                          child: Row(
+                            children: [
+                              // Report Icon
+                              Container(
+                                width: 50,
+                                height: 50,
+                                decoration: BoxDecoration(
+                                  color: Colors.red,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Icon(
+                                  Icons.warning,
+                                  color: Colors.white,
+                                  size: 24,
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+
+                              // Report Content
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    // Report Category and Type
+                                    if (categoryName.isNotEmpty)
+                                      Text(
+                                        'Category: $categoryName',
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 16,
+                                          color: Colors.black87,
+                                        ),
+                                      ),
+                                    if (categoryName.isNotEmpty &&
+                                        typeName.isNotEmpty)
+                                      const SizedBox(height: 4),
+                                    if (typeName.isNotEmpty)
+                                      Text(
+                                        'Type: $typeName',
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          color: Colors.black54,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    if (categoryName.isNotEmpty ||
+                                        typeName.isNotEmpty)
+                                      const SizedBox(height: 8),
+                                    // Description
+                                    Text(
+                                      report['description'] ??
+                                          'No description available',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        color: Colors.grey[600],
+                                      ),
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    const SizedBox(height: 8),
+
+                                    // Tags Row
+                                    Row(
+                                      children: [
+                                        // Severity Tag
+                                        Container(
+                                          padding: EdgeInsets.symmetric(
+                                            horizontal: 8,
+                                            vertical: 4,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: severityColor(
+                                              report['alertLevels'] ?? '',
+                                            ),
+                                            borderRadius: BorderRadius.circular(
+                                              12,
+                                            ),
+                                          ),
+                                          child: Text(
+                                            report['alertLevels'] ?? 'Unknown',
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+
+                                        // Evidence Tag
+                                        Container(
+                                          padding: EdgeInsets.symmetric(
+                                            horizontal: 8,
+                                            vertical: 4,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: hasEvidence
+                                                ? Colors.blue
+                                                : Colors.grey[600],
+                                            borderRadius: BorderRadius.circular(
+                                              12,
+                                            ),
+                                          ),
+                                          child: Text(
+                                            hasEvidence
+                                                ? 'Has Evidence'
+                                                : 'No Evidence',
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+
+                              // Right Side - Time and Status
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                children: [
+                                  // Time Ago
+                                  Text(
+                                    timeAgo,
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.grey[600],
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+
+                                  // Status
+                                  Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      if (status == 'Pending')
+                                        Icon(
+                                          Icons.sync,
+                                          size: 16,
+                                          color: Colors.grey[600],
+                                        ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        status,
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: status == 'Completed'
+                                              ? Colors.green
+                                              : Colors.grey[600],
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                      },
+                    ),
                   ),
-                );
-              },
-            ),
           ),
-        ),
         ],
       ),
     );

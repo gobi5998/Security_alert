@@ -1,61 +1,11 @@
 import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../config/api_config.dart';
+import '../models/filter_model.dart';
 import '../models/report_model.dart';
 
 // Reports Filter Class for Dynamic API Calls
-class ReportsFilter {
-  final int? page;
-  final int? limit;
-  final String? reportCategoryId;
-  final String? reportTypeId;
-  final String? deviceTypeId;
-  final String? detectTypeId;
-  final String? operatingSystemName;
-  final String? search;
 
-  ReportsFilter({
-    this.page,
-    this.limit,
-    this.reportCategoryId,
-    this.reportTypeId,
-    this.deviceTypeId,
-    this.detectTypeId,
-    this.operatingSystemName,
-    this.search,
-  });
-
-  Map<String, dynamic> toQueryParameters() {
-    final Map<String, dynamic> params = {};
-
-    if (page != null) params['page'] = page.toString();
-    if (limit != null) params['limit'] = limit.toString();
-    if (reportCategoryId != null) params['reportCategoryId'] = reportCategoryId;
-    if (reportTypeId != null) params['reportTypeId'] = reportTypeId;
-    if (deviceTypeId != null) params['deviceTypeId'] = deviceTypeId;
-    if (detectTypeId != null) params['detectTypeId'] = detectTypeId;
-    if (operatingSystemName != null) params['operatingSystemName'] = operatingSystemName;
-    if (search != null && search!.isNotEmpty) params['search'] = search;
-
-    return params;
-  }
-
-  String buildUrl() {
-    final params = toQueryParameters();
-    if (params.isEmpty) return '/reports';
-
-    final queryString = params.entries
-        .map((entry) => '${Uri.encodeComponent(entry.key)}=${Uri.encodeComponent(entry.value)}')
-        .join('&');
-
-    return '/reports?$queryString';
-  }
-
-  @override
-  String toString() {
-    return 'ReportsFilter(page: $page, limit: $limit, reportCategoryId: $reportCategoryId, reportTypeId: $reportTypeId, deviceTypeId: $deviceTypeId, detectTypeId: $detectTypeId, operatingSystemName: $operatingSystemName, search: $search)';
-  }
-}
 
 class ApiService {
   late Dio _dioAuth; // For Auth server
@@ -923,24 +873,24 @@ class ApiService {
   }
 
   // Method to test the exact URL structure you provided
-  Future<List<Map<String, dynamic>>> testExactUrlStructure() async {
-    final filter = ReportsFilter(
-      page: 1,
-      limit: 100,
-      reportCategoryId: 'https://c61c0359421d.ngrok-free.app',
-      reportTypeId: '68752de7a40625496c08b42a',
-      deviceTypeId: '687616edc688f12536d1d2d5',
-      detectTypeId: '68761767c688f12536d1d2dd',
-      operatingSystemName: '6875f41f652eaccf5ecbe6b2',
-      search: 'scam',
-    );
-    
-    print('Testing exact URL structure:');
-    print('Built URL: ${filter.buildUrl()}');
-    print('Expected: /reports?page=1&limit=100&reportCategoryId=https%3A%2F%2Fc61c0359421d.ngrok-free.app&reportTypeId=68752de7a40625496c08b42a&deviceTypeId=687616edc688f12536d1d2d5&detectTypeId=68761767c688f12536d1d2dd&operatingSystemName=6875f41f652eaccf5ecbe6b2&search=scam');
-    
-    return fetchReportsWithFilter(filter);
-  }
+  // Future<List<Map<String, dynamic>>> testExactUrlStructure() async {
+  //   final filter = ReportsFilter(
+  //     page: 1,
+  //     limit: 100,
+  //     reportCategoryId: 'https://c61c0359421d.ngrok-free.app',
+  //     reportTypeId: '68752de7a40625496c08b42a',
+  //     deviceTypeId: '687616edc688f12536d1d2d5',
+  //     detectTypeId: '68761767c688f12536d1d2dd',
+  //     operatingSystemName: '6875f41f652eaccf5ecbe6b2',
+  //     search: 'scam',
+  //   );
+  //
+  //   print('Testing exact URL structure:');
+  //   print('Built URL: ${filter.buildUrl()}');
+  //   print('Expected: /reports?page=1&limit=100&reportCategoryId=https%3A%2F%2Fc61c0359421d.ngrok-free.app&reportTypeId=68752de7a40625496c08b42a&deviceTypeId=687616edc688f12536d1d2d5&detectTypeId=68761767c688f12536d1d2dd&operatingSystemName=6875f41f652eaccf5ecbe6b2&search=scam');
+  //
+  //   return fetchReportsWithFilter(filter);
+  // }
 
   // ============================================================================
   // USAGE EXAMPLES AND DOCUMENTATION

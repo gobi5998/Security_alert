@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:security_alert/screens/menu/thread_database_listpage.dart';
+import 'package:security_alert/screens/drawer/thread_database_listpage.dart';
 import 'package:security_alert/services/api_service.dart';
+
+import '../../models/filter_model.dart';
 
 class ThreadDatabaseFilterPage extends StatefulWidget {
   @override
@@ -42,10 +44,7 @@ class _ThreadDatabaseFilterPageState extends State<ThreadDatabaseFilterPage> {
       _errorMessage = null;
     });
 
-    await Future.wait([
-      _loadCategories(),
-      _loadAllReportTypes(),
-    ]);
+    await Future.wait([_loadCategories(), _loadAllReportTypes()]);
   }
 
   Future<void> _loadCategories() async {
@@ -118,7 +117,9 @@ class _ThreadDatabaseFilterPageState extends State<ThreadDatabaseFilterPage> {
       List<Map<String, dynamic>> allTypes = [];
       for (String categoryId in categoryIds) {
         try {
-          final types = await _apiService.fetchReportTypesByCategory(categoryId);
+          final types = await _apiService.fetchReportTypesByCategory(
+            categoryId,
+          );
           print('API Response - Types for category $categoryId: $types');
           allTypes.addAll(types);
         } catch (e) {
@@ -266,7 +267,7 @@ class _ThreadDatabaseFilterPageState extends State<ThreadDatabaseFilterPage> {
   Future<void> _testDynamicApiCall() async {
     try {
       print('=== TESTING DYNAMIC API CALL ===');
-      
+
       // Create a filter with the exact parameters from your URL
       final filter = ReportsFilter(
         page: 1,
@@ -278,17 +279,16 @@ class _ThreadDatabaseFilterPageState extends State<ThreadDatabaseFilterPage> {
         operatingSystemName: '6875f41f652eaccf5ecbe6b2',
         search: 'scam',
       );
-      
+
       print('Testing filter: $filter');
       print('Built URL: ${filter.buildUrl()}');
-      
+
       final reports = await _apiService.fetchReportsWithFilter(filter);
       print('Received ${reports.length} reports');
-      
+
       if (reports.isNotEmpty) {
         print('First report: ${reports.first}');
       }
-      
     } catch (e) {
       print('Error testing dynamic API call: $e');
     }
@@ -298,22 +298,25 @@ class _ThreadDatabaseFilterPageState extends State<ThreadDatabaseFilterPage> {
   Future<void> _useComplexFilter() async {
     try {
       print('=== USING COMPLEX FILTER ===');
-      
+
       final reports = await _apiService.getReportsWithComplexFilter(
         searchQuery: searchQuery,
-        categoryIds: selectedCategoryIds.isNotEmpty ? selectedCategoryIds : null,
+        categoryIds: selectedCategoryIds.isNotEmpty
+            ? selectedCategoryIds
+            : null,
         typeIds: selectedTypeIds.isNotEmpty ? selectedTypeIds : null,
-        severityLevels: selectedSeverities.isNotEmpty ? selectedSeverities : null,
+        severityLevels: selectedSeverities.isNotEmpty
+            ? selectedSeverities
+            : null,
         page: 1,
         limit: 100,
       );
-      
+
       print('Received ${reports.length} reports from complex filter');
-      
+
       if (reports.isNotEmpty) {
         print('First report: ${reports.first}');
       }
-      
     } catch (e) {
       print('Error using complex filter: $e');
     }
@@ -329,10 +332,7 @@ class _ThreadDatabaseFilterPageState extends State<ThreadDatabaseFilterPage> {
         foregroundColor: Colors.black,
         elevation: 0,
         actions: [
-          IconButton(
-            icon: Icon(Icons.refresh),
-            onPressed: _refreshData,
-          ),
+          IconButton(icon: Icon(Icons.refresh), onPressed: _refreshData),
           IconButton(
             icon: Icon(Icons.bug_report),
             onPressed: _testDynamicApiCall,
@@ -409,131 +409,118 @@ class _ThreadDatabaseFilterPageState extends State<ThreadDatabaseFilterPage> {
                       // Category Multi-Select
                       _isLoadingCategories
                           ? Container(
-                        padding: EdgeInsets.symmetric(vertical: 16),
-                        decoration: BoxDecoration(
-                          border: Border.all(color: Colors.grey.shade300),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Row(
-                          children: [
-                            SizedBox(width: 16),
-                            SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
+                              padding: EdgeInsets.symmetric(vertical: 16),
+                              decoration: BoxDecoration(
+                                border: Border.all(color: Colors.grey.shade300),
+                                borderRadius: BorderRadius.circular(4),
                               ),
-                            ),
-                            SizedBox(width: 16),
-                            Text('Loading categories...'),
-                          ],
-                        ),
-                      )
-
-
-                      //category dropdown
-
+                              child: Row(
+                                children: [
+                                  SizedBox(width: 16),
+                                  SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                    ),
+                                  ),
+                                  SizedBox(width: 16),
+                                  Text('Loading categories...'),
+                                ],
+                              ),
+                            )
+                          //category dropdown
                           : _buildMultiSelectDropdown(
-                        'Category',
-                        reportCategoryId,
-                        selectedCategoryIds,
-                            (values) => _onCategoryChanged(values),
-                            (item) {
-                          final id =
-                              item['id']?.toString() ??
-                                  item['categoryId']?.toString() ??
-                                  item['_id']?.toString();
-                          print(
-                            'Category ID extracted: $id from item: $item',
-                          );
-                          return id;
-                        },
-                            (item) {
-                          final name =
-                              item['name']?.toString() ??
-                                  item['categoryName']?.toString() ??
-                                  item['title']?.toString() ??
-                                  'Unknown';
-                          print(
-                            'Category name extracted: $name from item: $item',
-                          );
-                          return name;
-                        },
-                      ),
+                              'Category',
+                              reportCategoryId,
+                              selectedCategoryIds,
+                              (values) => _onCategoryChanged(values),
+                              (item) {
+                                final id =
+                                    item['id']?.toString() ??
+                                    item['categoryId']?.toString() ??
+                                    item['_id']?.toString();
+                                print(
+                                  'Category ID extracted: $id from item: $item',
+                                );
+                                return id;
+                              },
+                              (item) {
+                                final name =
+                                    item['name']?.toString() ??
+                                    item['categoryName']?.toString() ??
+                                    item['title']?.toString() ??
+                                    'Unknown';
+                                print(
+                                  'Category name extracted: $name from item: $item',
+                                );
+                                return name;
+                              },
+                            ),
                       const SizedBox(height: 16),
 
                       // Type Multi-Select
                       _isLoadingTypes
                           ? Container(
-                        padding: EdgeInsets.symmetric(vertical: 16),
-                        decoration: BoxDecoration(
-                          border: Border.all(color: Colors.grey.shade300),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Row(
-                          children: [
-                            SizedBox(width: 16),
-                            SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
+                              padding: EdgeInsets.symmetric(vertical: 16),
+                              decoration: BoxDecoration(
+                                border: Border.all(color: Colors.grey.shade300),
+                                borderRadius: BorderRadius.circular(4),
                               ),
-                            ),
-                            SizedBox(width: 16),
-                            Text('Loading types...'),
-                          ],
-                        ),
-                      )
-
-                      //type dropdown
+                              child: Row(
+                                children: [
+                                  SizedBox(width: 16),
+                                  SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                    ),
+                                  ),
+                                  SizedBox(width: 16),
+                                  Text('Loading types...'),
+                                ],
+                              ),
+                            )
+                          //type dropdown
                           : Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          _buildMultiSelectDropdown(
-                            'Type',
-                            reportTypeId,
-                            selectedTypeIds,
-                                (values) {
-                              setState(() => selectedTypeIds = values);
-                              // Fetch detailed data for selected types
-                              _fetchSelectedTypeData(values);
-                            },
-                                (item) {
-                              final id =
-                                  item['_id']?.toString() ??
-                                      item['id']?.toString() ??
-                                      item['typeId']?.toString();
-                              print(
-                                'Type ID extracted: $id from item: $item',
-                              );
-                              return id;
-                            },
-                                (item) {
-                              final name =
-                                  item['name']?.toString() ??
-                                      item['typeName']?.toString() ??
-                                      item['title']?.toString() ??
-                                      item['description']?.toString() ??
-                                      'Unknown';
-                              print(
-                                'Type name extracted: $name from item: $item',
-                              );
-                              return name;
-                            },
-                          ),
-                          SizedBox(height: 8),
-                          // TextButton.icon(
-                          //   onPressed: _loadAllReportTypes,
-                          //   icon: Icon(Icons.refresh, size: 16),
-                          //   label: Text('Load All Types'),
-                          //   style: TextButton.styleFrom(
-                          //     foregroundColor: Colors.blue,
-                          //     padding: EdgeInsets.symmetric(horizontal: 8),
-                          //   ),
-                          // ),
-                        ],
-                      ),
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                _buildMultiSelectDropdown(
+                                  'Type',
+                                  reportTypeId,
+                                  selectedTypeIds,
+                                  (values) {
+                                    setState(() => selectedTypeIds = values);
+                                    // Fetch detailed data for selected types
+                                    _fetchSelectedTypeData(values);
+                                  },
+                                  (item) {
+                                    final id =
+                                        item['_id']?.toString() ??
+                                        item['id']?.toString() ??
+                                        item['typeId']?.toString();
+                                    print(
+                                      'Type ID extracted: $id from item: $item',
+                                    );
+                                    return id;
+                                  },
+                                  (item) {
+                                    final name =
+                                        item['name']?.toString() ??
+                                        item['typeName']?.toString() ??
+                                        item['title']?.toString() ??
+                                        item['description']?.toString() ??
+                                        'Unknown';
+                                    print(
+                                      'Type name extracted: $name from item: $item',
+                                    );
+                                    return name;
+                                  },
+                                ),
+                                SizedBox(height: 8),
+                              ],
+                            ),
                       const SizedBox(height: 16),
 
                       // Severity Multi-Select
@@ -543,13 +530,12 @@ class _ThreadDatabaseFilterPageState extends State<ThreadDatabaseFilterPage> {
                             .map((level) => {'id': level, 'name': level})
                             .toList(),
                         selectedSeverities,
-                            (values) => setState(() => selectedSeverities = values),
-                            (item) => item['id']?.toString(),
-                            (item) => item['name']?.toString() ?? 'Unknown',
+                        (values) => setState(() => selectedSeverities = values),
+                        (item) => item['id']?.toString(),
+                        (item) => item['name']?.toString() ?? 'Unknown',
                       ),
                       const SizedBox(height: 16),
 
-                      
                       const SizedBox(height: 16),
 
                       // View All Reports Link
@@ -599,22 +585,6 @@ class _ThreadDatabaseFilterPageState extends State<ThreadDatabaseFilterPage> {
                     ),
                   ),
                   onPressed: () {
-                    print('=== NAVIGATING TO THREAD DATABASE LIST PAGE ===');
-                    print('Search Query: "$searchQuery"');
-                    print('Selected Category IDs: $selectedCategoryIds');
-                    print('Selected Type IDs: $selectedTypeIds');
-                    print('Selected Severities: $selectedSeverities');
-                    print('Passing to ThreadDatabaseListPage:');
-                    print('- searchQuery: "$searchQuery"');
-                    print('- selectedType: ${selectedTypeIds.isNotEmpty ? selectedTypeIds.first : null}');
-                    print('- selectedSeverity: ${selectedSeverities.isNotEmpty ? selectedSeverities.first : null}');
-                    print('- scamTypeId: ${selectedCategoryIds.isNotEmpty ? selectedCategoryIds.first : ""}');
-                    print('- hasSearchQuery: ${searchQuery.isNotEmpty}');
-                    print('- hasSelectedType: ${selectedTypeIds.isNotEmpty}');
-                    print('- hasSelectedSeverity: ${selectedSeverities.isNotEmpty}');
-                    print('- hasSelectedCategory: ${selectedCategoryIds.isNotEmpty}');
-                    print('===============================================');
-
                     Navigator.push(
                       context,
                       MaterialPageRoute(
@@ -648,13 +618,13 @@ class _ThreadDatabaseFilterPageState extends State<ThreadDatabaseFilterPage> {
   }
 
   Widget _buildMultiSelectDropdown(
-      String label,
-      List<Map<String, dynamic>> items,
-      List<String> selectedValues,
-      Function(List<String>) onChanged,
-      String? Function(Map<String, dynamic>) getId,
-      String? Function(Map<String, dynamic>) getName,
-      ) {
+    String label,
+    List<Map<String, dynamic>> items,
+    List<String> selectedValues,
+    Function(List<String>) onChanged,
+    String? Function(Map<String, dynamic>) getId,
+    String? Function(Map<String, dynamic>) getName,
+  ) {
     return Container(
       decoration: BoxDecoration(
         border: Border.all(color: Colors.grey.shade300),

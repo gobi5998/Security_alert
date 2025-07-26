@@ -3,7 +3,7 @@ class ApiConfig {
   static const String baseUrl1 =
       'http://4795a8bab1f1.ngrok-free.app'; // auth server
   static const String baseUrl2 =
-      'https://8cdf4920083b.ngrok-free.app'; // Main Server
+      'https://246b219de44c.ngrok-free.app'; // Main Server
   // Replace with your actual API base URL
 
   // API Endpoints
@@ -14,6 +14,7 @@ class ApiConfig {
   static const String updateProfileEndpoint = '/auth/profile';
   static const String forgotPasswordEndpoint = '/auth/forgot-password';
   static const String resetPasswordEndpoint = '/auth/reset-password';
+
 
   // Security endpoints
   static const String reportTypeEndpoint = '/report-type';
@@ -40,11 +41,5 @@ class ApiConfig {
   // For development/testing purposes
   static const bool enableLogging = true;
 
-  // Get full URL for an endpoint
-  // static String getUrl(String endpoint) {
-  //   return '$baseUrl1$endpoint';
-  // }
-  // static String getUrl(String endpoint) {
-  //   return '$baseUrl2$endpoint';
-  // }
+
 }

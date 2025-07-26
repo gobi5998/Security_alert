@@ -1,5 +1,6 @@
 import 'package:hive/hive.dart';
 import '../services/sync_service.dart';
+
 part 'scam_report_model.g.dart';
 
 @HiveType(typeId: 0)

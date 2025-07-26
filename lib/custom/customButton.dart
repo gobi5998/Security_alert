@@ -96,22 +96,22 @@ class CustomButton extends StatelessWidget {
             ),
             child: isLoading
                 ? const SizedBox(
-              width: 20,
-              height: 20,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-              ),
-            )
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    ),
+                  )
                 : Text(
-              text,
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: resolvedFontSize,
-                fontWeight: fontWeight,
-                fontFamily: 'Nunito',
-              ),
-            ),
+                    text,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: resolvedFontSize,
+                      fontWeight: fontWeight,
+                      fontFamily: 'Nunito',
+                    ),
+                  ),
           ),
         );
       },

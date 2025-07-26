@@ -20,15 +20,12 @@ String? validatePhone(String? value) {
   return null; // ✅ valid
 }
 
-
 String? validateEmail(String? value) {
   if (value == null || value.isEmpty) {
     return 'Email is required';
   }
 
-  final regex = RegExp(
-      r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
-  );
+  final regex = RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$');
 
   if (!regex.hasMatch(value)) {
     return 'Enter a valid email address';
@@ -37,14 +34,13 @@ String? validateEmail(String? value) {
   return null;
 }
 
-
 String? validateWebsite(String? value) {
   if (value == null || value.isEmpty) {
     return 'Website is required';
   }
 
   final regex = RegExp(
-      r'^(https?:\/\/)?(www\.)[a-zA-Z0-9-]+(\.[a-zA-Z]{2,})+$'
+    r'^(https?:\/\/)?(www\.)[a-zA-Z0-9-]+(\.[a-zA-Z]{2,})+$',
   );
 
   if (!regex.hasMatch(value)) {
@@ -53,7 +49,6 @@ String? validateWebsite(String? value) {
 
   return null; // ✅ Valid
 }
-
 
 String? validateDescription(String? value) {
   if (value == null || value.trim().isEmpty) {

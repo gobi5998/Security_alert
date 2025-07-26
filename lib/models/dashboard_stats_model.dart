@@ -63,4 +63,4 @@ class DashboardStats {
     if (riskScore < 80) return '#F44336';
     return '#9C27B0';
   }
-} 
+}

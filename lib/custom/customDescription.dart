@@ -11,7 +11,8 @@ class CustomDescription extends StatelessWidget {
     required this.label,
     required this.hint,
     this.controller,
-    this.maxLines = 5, required String hintText,
+    this.maxLines = 5,
+    required String hintText,
   });
 
   @override
@@ -30,7 +31,10 @@ class CustomDescription extends StatelessWidget {
             filled: true,
             fillColor: Colors.white30,
             hintStyle: const TextStyle(color: Colors.grey),
-            contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+            contentPadding: const EdgeInsets.symmetric(
+              vertical: 12,
+              horizontal: 12,
+            ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(4),
               borderSide: const BorderSide(color: Colors.grey),

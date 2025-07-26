@@ -248,13 +248,13 @@ class ReportModel extends HiveObject implements SyncableReport {
           ? DateTime.tryParse(json['updatedAt'])
           : null,
       isSynced: json['isSynced'] ?? false,
-      screenshotPaths: (json['screenshotPaths'] as List?)
+      screenshotPaths:
+          (json['screenshotPaths'] as List?)
               ?.map((e) => e.toString())
               .toList() ??
           [],
-      documentPaths: (json['documentPaths'] as List?)
-              ?.map((e) => e.toString())
-              .toList() ??
+      documentPaths:
+          (json['documentPaths'] as List?)?.map((e) => e.toString()).toList() ??
           [],
       keycloakUserId: json['keycloackUserId'] ?? json['keycloakUserId'],
       deviceTypeId: json['deviceTypeId'],
@@ -348,7 +348,8 @@ class ReportModel extends HiveObject implements SyncableReport {
       typeName: typeName ?? this.typeName,
       deviceTypeName: deviceTypeName ?? this.deviceTypeName,
       detectTypeName: detectTypeName ?? this.detectTypeName,
-      operatingSystemNameValue: operatingSystemNameValue ?? this.operatingSystemNameValue,
+      operatingSystemNameValue:
+          operatingSystemNameValue ?? this.operatingSystemNameValue,
       metadata: metadata ?? this.metadata,
       tags: tags ?? this.tags,
       userId: userId ?? this.userId,
@@ -364,12 +365,18 @@ class ReportModel extends HiveObject implements SyncableReport {
 
   // Helper methods for common operations
   bool get isHighPriority => priority != null && priority! >= 8;
-  bool get isMediumPriority => priority != null && priority! >= 5 && priority! < 8;
+
+  bool get isMediumPriority =>
+      priority != null && priority! >= 5 && priority! < 8;
+
   bool get isLowPriority => priority != null && priority! < 5;
 
-  String get displayName => name ?? 'Unnamed Report';
+  String get displayName => name ?? ' Report Malware';
+
   String get displayCategory => categoryName ?? 'Unknown Category';
+
   String get displayType => typeName ?? 'Unknown Type';
+
   String get displaySeverity => severity ?? alertLevels ?? 'Unknown';
 
   DateTime? get sortDate => updatedAt ?? createdAt;
@@ -377,16 +384,16 @@ class ReportModel extends HiveObject implements SyncableReport {
   // Method to check if report matches search criteria
   bool matchesSearch(String searchTerm) {
     if (searchTerm.isEmpty) return true;
-    
+
     final term = searchTerm.toLowerCase();
     return displayName.toLowerCase().contains(term) ||
-           description?.toLowerCase().contains(term) == true ||
-           displayCategory.toLowerCase().contains(term) ||
-           displayType.toLowerCase().contains(term) ||
-           email?.toLowerCase().contains(term) == true ||
-           website?.toLowerCase().contains(term) == true ||
-           phoneNumber?.toLowerCase().contains(term) == true ||
-           tags.any((tag) => tag.toLowerCase().contains(term));
+        description?.toLowerCase().contains(term) == true ||
+        displayCategory.toLowerCase().contains(term) ||
+        displayType.toLowerCase().contains(term) ||
+        email?.toLowerCase().contains(term) == true ||
+        website?.toLowerCase().contains(term) == true ||
+        phoneNumber?.toLowerCase().contains(term) == true ||
+        tags.any((tag) => tag.toLowerCase().contains(term));
   }
 
   // Method to get a summary for display
@@ -396,7 +403,7 @@ class ReportModel extends HiveObject implements SyncableReport {
     if (displayCategory.isNotEmpty) parts.add(displayCategory);
     if (displayType.isNotEmpty) parts.add(displayType);
     if (displaySeverity.isNotEmpty) parts.add(displaySeverity);
-    
+
     return parts.join(' • ');
   }
 
@@ -413,4 +420,4 @@ class ReportModel extends HiveObject implements SyncableReport {
 
   @override
   int get hashCode => id.hashCode;
-} 
+}

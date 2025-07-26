@@ -7,14 +7,7 @@ BottomNavigationBarItem customBottomNavItem({
   double size = 24,
 }) {
   return BottomNavigationBarItem(
-
-    icon: Image.asset(
-      BottomNav,
-      width: size,
-      height: size,
-
-    ),
-    
+    icon: Image.asset(BottomNav, width: size, height: size),
 
     label: label,
   );

@@ -13,12 +13,10 @@ import '../widget/graph_widget.dart';
 import '../widget/Drawer/appDrawer.dart';
 import '../services/biometric_service.dart';
 import 'ReportedFeatureCard.dart';
-import 'ReportedFeatureItem.dart';
-import 'alert.dart';
+import 'drawer/profile_page.dart';
+import 'drawer/theard_database.dart';
 import 'malware/report_malware_1.dart';
-import 'menu/theard_database.dart';
-import 'server_reports_page.dart';
-import 'menu/profile_page.dart';
+
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});

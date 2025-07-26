@@ -15,7 +15,6 @@ class _PeriodDropdownState extends State<PeriodDropdown> {
   @override
   Widget build(BuildContext context) {
     return DropdownButtonHideUnderline(
-      
       child: DropdownButton<String>(
         icon: null,
         value: _selected,
@@ -51,7 +50,6 @@ class _PeriodDropdownState extends State<PeriodDropdown> {
                     ),
                   ),
                   const SizedBox(width: 4),
-
                 ],
               ),
             );

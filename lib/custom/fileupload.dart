@@ -61,11 +61,11 @@ class FileUploadService {
 
   // Upload single file
   static Future<Map<String, dynamic>?> uploadFile(
-      File file,
-      String reportId,
-      String fileType, {
-        Function(int, int)? onProgress,
-      }) async {
+    File file,
+    String reportId,
+    String fileType, {
+    Function(int, int)? onProgress,
+  }) async {
     try {
       // Get auth token
       final prefs = await SharedPreferences.getInstance();
@@ -102,7 +102,8 @@ class FileUploadService {
             'Content-Type': 'multipart/form-data',
             if (token != null) 'Authorization': 'Bearer $token',
           },
-          validateStatus: (status) => status! < 500, // Accept all status codes < 500
+          validateStatus: (status) =>
+              status! < 500, // Accept all status codes < 500
         ),
         onSendProgress: onProgress,
       );
@@ -113,7 +114,9 @@ class FileUploadService {
       if (response.statusCode == 200 || response.statusCode == 201) {
         return _createFileData(response.data);
       } else {
-        throw Exception('Upload failed: ${response.statusCode} - ${response.data}');
+        throw Exception(
+          'Upload failed: ${response.statusCode} - ${response.data}',
+        );
       }
     } catch (e) {
       print('Error uploading file: $e');
@@ -128,11 +131,11 @@ class FileUploadService {
 
   // Upload multiple files
   static Future<List<Map<String, dynamic>>> uploadFiles(
-      List<File> files,
-      String reportId,
-      String fileType, {
-        Function(int, int)? onProgress,
-      }) async {
+    List<File> files,
+    String reportId,
+    String fileType, {
+    Function(int, int)? onProgress,
+  }) async {
     List<Map<String, dynamic>> uploadedFiles = [];
 
     for (int i = 0; i < files.length; i++) {
@@ -142,12 +145,18 @@ class FileUploadService {
       Function(int, int)? progressCallback;
       if (onProgress != null) {
         progressCallback = (sent, total) {
-          int overallProgress = ((i * 100) + (sent * 100 / total)) ~/ files.length;
+          int overallProgress =
+              ((i * 100) + (sent * 100 / total)) ~/ files.length;
           onProgress(overallProgress, 100);
         };
       }
 
-      var result = await uploadFile(file, reportId, fileType, onProgress: progressCallback);
+      var result = await uploadFile(
+        file,
+        reportId,
+        fileType,
+        onProgress: progressCallback,
+      );
       if (result != null) {
         uploadedFiles.add(result);
       }
@@ -158,8 +167,8 @@ class FileUploadService {
 
   // Categorize files by type
   static Map<String, List<Map<String, dynamic>>> categorizeFiles(
-      List<Map<String, dynamic>> uploadedFiles,
-      ) {
+    List<Map<String, dynamic>> uploadedFiles,
+  ) {
     List<Map<String, dynamic>> images = [];
     List<Map<String, dynamic>> documents = [];
     List<Map<String, dynamic>> voiceFiles = [];
@@ -186,11 +195,7 @@ class FileUploadService {
       }
     }
 
-    return {
-      'images': images,
-      'documents': documents,
-      'voiceFiles': voiceFiles,
-    };
+    return {'images': images, 'documents': documents, 'voiceFiles': voiceFiles};
   }
 }
 
@@ -224,7 +229,9 @@ class FileUploadWidgetState extends State<FileUploadWidget> {
 
   // Method to trigger upload from outside
   Future<List<Map<String, dynamic>>> triggerUpload() async {
-    if (selectedImages.isEmpty && selectedDocuments.isEmpty && selectedVoiceFiles.isEmpty) {
+    if (selectedImages.isEmpty &&
+        selectedDocuments.isEmpty &&
+        selectedVoiceFiles.isEmpty) {
       return [];
     }
 
@@ -238,7 +245,9 @@ class FileUploadWidgetState extends State<FileUploadWidget> {
       List<Map<String, dynamic>> allUploadedFiles = [];
 
       // Upload all files with the same fileType
-      if (selectedImages.isNotEmpty || selectedDocuments.isNotEmpty || selectedVoiceFiles.isNotEmpty) {
+      if (selectedImages.isNotEmpty ||
+          selectedDocuments.isNotEmpty ||
+          selectedVoiceFiles.isNotEmpty) {
         setState(() => uploadStatus = 'Uploading files...');
 
         List<File> allFiles = [];
@@ -266,7 +275,6 @@ class FileUploadWidgetState extends State<FileUploadWidget> {
       widget.onFilesUploaded(allUploadedFiles);
 
       return allUploadedFiles;
-
     } catch (e) {
       setState(() {
         isUploading = false;
@@ -325,8 +333,6 @@ class FileUploadWidgetState extends State<FileUploadWidget> {
     }
   }
 
-
-
   // Pick voice files
   Future<void> _pickVoiceFiles() async {
     final result = await FilePicker.platform.pickFiles(
@@ -351,9 +357,13 @@ class FileUploadWidgetState extends State<FileUploadWidget> {
 
   // Upload all files
   Future<void> _uploadAllFiles() async {
-    if (selectedImages.isEmpty && selectedDocuments.isEmpty && selectedVoiceFiles.isEmpty) {
+    if (selectedImages.isEmpty &&
+        selectedDocuments.isEmpty &&
+        selectedVoiceFiles.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select at least one file to upload')),
+        const SnackBar(
+          content: Text('Please select at least one file to upload'),
+        ),
       );
       return;
     }
@@ -368,7 +378,9 @@ class FileUploadWidgetState extends State<FileUploadWidget> {
       List<Map<String, dynamic>> allUploadedFiles = [];
 
       // Upload all files with the same fileType
-      if (selectedImages.isNotEmpty || selectedDocuments.isNotEmpty || selectedVoiceFiles.isNotEmpty) {
+      if (selectedImages.isNotEmpty ||
+          selectedDocuments.isNotEmpty ||
+          selectedVoiceFiles.isNotEmpty) {
         setState(() => uploadStatus = 'Uploading files...');
 
         List<File> allFiles = [];
@@ -397,11 +409,12 @@ class FileUploadWidgetState extends State<FileUploadWidget> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Successfully uploaded ${allUploadedFiles.length} files'),
+          content: Text(
+            'Successfully uploaded ${allUploadedFiles.length} files',
+          ),
           backgroundColor: Colors.green,
         ),
       );
-
     } catch (e) {
       setState(() {
         isUploading = false;
@@ -440,7 +453,7 @@ class FileUploadWidgetState extends State<FileUploadWidget> {
         // Images
         ListTile(
           leading: Image.asset(
-            'assets/image/document.png',  // your local image path
+            'assets/image/document.png', // your local image path
             width: 30,
             height: 30,
           ),
@@ -452,7 +465,7 @@ class FileUploadWidgetState extends State<FileUploadWidget> {
         // Documents
         ListTile(
           leading: Image.asset(
-            'assets/image/document.png',  // your local image path
+            'assets/image/document.png', // your local image path
             width: 30,
             height: 30,
           ),
@@ -464,7 +477,7 @@ class FileUploadWidgetState extends State<FileUploadWidget> {
         // Voice Files
         ListTile(
           leading: Image.asset(
-            'assets/image/document.png',  // your local image path
+            'assets/image/document.png', // your local image path
             width: 30,
             height: 30,
           ),

@@ -1,4 +1,5 @@
 enum AlertSeverity { low, medium, high, critical }
+
 enum AlertType { spam, malware, fraud, phishing, other }
 
 class SecurityAlert {
@@ -83,4 +84,4 @@ class SecurityAlert {
         return 'Critical';
     }
   }
-} 
+}

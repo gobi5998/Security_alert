@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-
 class Shareapp extends StatelessWidget {
   const Shareapp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(

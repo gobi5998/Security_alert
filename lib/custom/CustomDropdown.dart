@@ -8,7 +8,6 @@ class CustomDropdown extends StatefulWidget {
   final String? value;
   final void Function(String?) onChanged;
 
-
   const CustomDropdown({
     super.key,
     required this.label,
@@ -40,9 +39,7 @@ class _CustomDropdownState extends State<CustomDropdown> {
         const SizedBox(height: 6),
         DropdownButtonFormField<String>(
           value: widget.value,
-          icon: Image.asset("assets/icon/Vector.png",
-            width: 16,
-            height: 16),
+          icon: Image.asset("assets/icon/Vector.png", width: 16, height: 16),
           decoration: InputDecoration(
             border: const OutlineInputBorder(),
             hintText: widget.hint,
@@ -61,7 +58,9 @@ class _CustomDropdownState extends State<CustomDropdown> {
             ),
           ),
 
-          items: widget.items.map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
+          items: widget.items
+              .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+              .toList(),
           onChanged: widget.onChanged,
           validator: (val) => val == null ? "Required" : null,
         ),

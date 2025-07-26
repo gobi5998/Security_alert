@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import '../screens/dashboard_page.dart';
-import '../screens/menu/thread_database_listpage.dart';
+import '../screens/drawer/thread_database_listpage.dart';
 
 class ReportSuccess extends StatefulWidget {
   final String label;
+
   const ReportSuccess({super.key, required this.label});
 
   @override
@@ -11,7 +11,6 @@ class ReportSuccess extends StatefulWidget {
 }
 
 class _ReportSuccessState extends State<ReportSuccess> {
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -35,7 +34,11 @@ class _ReportSuccessState extends State<ReportSuccess> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.check_circle, color: Colors.green, size: 64),
+                      const Icon(
+                        Icons.check_circle,
+                        color: Colors.green,
+                        size: 64,
+                      ),
                       const SizedBox(height: 16),
                       Text(
                         widget.label,
@@ -56,14 +59,16 @@ class _ReportSuccessState extends State<ReportSuccess> {
                         onPressed: () {
                           Navigator.pushAndRemoveUntil(
                             context,
-                            MaterialPageRoute(builder: (_) =>  ThreadDatabaseListPage(
-                              searchQuery: '', 
-                              scamTypeId: '',
-                              hasSearchQuery: false,
-                              hasSelectedType: false,
-                              hasSelectedSeverity: false,
-                              hasSelectedCategory: false,
-                            )),
+                            MaterialPageRoute(
+                              builder: (_) => ThreadDatabaseListPage(
+                                searchQuery: '',
+                                scamTypeId: '',
+                                hasSearchQuery: false,
+                                hasSelectedType: false,
+                                hasSelectedSeverity: false,
+                                hasSelectedCategory: false,
+                              ),
+                            ),
                             (route) => false,
                           );
                         },
@@ -72,11 +77,18 @@ class _ReportSuccessState extends State<ReportSuccess> {
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 32,
+                            vertical: 12,
+                          ),
                         ),
                         child: const Text(
                           'Go to ThreadDatabaseListPage',
-                          style: TextStyle(fontSize: 16, color: Colors.white, fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                     ],
@@ -89,5 +101,4 @@ class _ReportSuccessState extends State<ReportSuccess> {
       ),
     );
   }
-
 }

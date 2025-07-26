@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-
 class Ratepage extends StatelessWidget {
   const Ratepage({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
