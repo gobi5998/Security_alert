@@ -169,9 +169,9 @@ class ScamReportService {
         'keycloackUserId':
             report.keycloakUserId ?? 'anonymous_user', // Fallback for no auth
         'name': report.name ?? 'Scam Report',
-        'screenshotUrls': report.screenshotPaths ?? [],
-        'documentUrls': report.documentPaths ?? [],
-        'voiceMessageUrls': [], // Scam reports don't typically have voice files
+        'screenshots': report.screenshots ?? [],
+        'documents': report.documents ?? [],
+        'voiceMessages': report.voiceMessages ?? [], // Scam reports don't typically have voice files
       };
 
       print('📤 Sending scam report to backend...');

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:security_alert/custom/customButton.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'thread_database_listpage.dart';
@@ -103,7 +104,8 @@ class _ThreadDatabaseFilterPageState extends State<ThreadDatabaseFilterPage> {
 
   // Load online data
   Future<void> _loadOnlineData() async {
-    await Future.wait([_loadCategories(), _loadAllReportTypes(), _loadAlertLevels()]);
+    await Future.wait(
+        [_loadCategories(), _loadAllReportTypes(), _loadAlertLevels()]);
   }
 
   // Load local categories
@@ -112,10 +114,10 @@ class _ThreadDatabaseFilterPageState extends State<ThreadDatabaseFilterPage> {
       // Try to get categories from local storage or use fallback
       final prefs = await SharedPreferences.getInstance();
       final categoriesJson = prefs.getString('local_categories');
-      
+
       if (categoriesJson != null) {
         final categories = List<Map<String, dynamic>>.from(
-          jsonDecode(categoriesJson).map((x) => Map<String, dynamic>.from(x))
+            jsonDecode(categoriesJson).map((x) => Map<String, dynamic>.from(x))
         );
         _localCategories = categories;
         reportCategoryId = categories;
@@ -146,19 +148,31 @@ class _ThreadDatabaseFilterPageState extends State<ThreadDatabaseFilterPage> {
       // Try to get types from local storage or use fallback
       final prefs = await SharedPreferences.getInstance();
       final typesJson = prefs.getString('local_types');
-      
+
       if (typesJson != null) {
         final types = List<Map<String, dynamic>>.from(
-          jsonDecode(typesJson).map((x) => Map<String, dynamic>.from(x))
+            jsonDecode(typesJson).map((x) => Map<String, dynamic>.from(x))
         );
         _localTypes = types;
         reportTypeId = types;
       } else {
         // Use fallback types
         _localTypes = [
-          {'_id': 'scam_type', 'name': 'Scam Report', 'categoryId': 'scam_category'},
-          {'_id': 'malware_type', 'name': 'Malware Report', 'categoryId': 'malware_category'},
-          {'_id': 'fraud_type', 'name': 'Fraud Report', 'categoryId': 'fraud_category'},
+          {
+            '_id': 'scam_type',
+            'name': 'Scam Report',
+            'categoryId': 'scam_category'
+          },
+          {
+            '_id': 'malware_type',
+            'name': 'Malware Report',
+            'categoryId': 'malware_category'
+          },
+          {
+            '_id': 'fraud_type',
+            'name': 'Fraud Report',
+            'categoryId': 'fraud_category'
+          },
         ];
         reportTypeId = _localTypes;
       }
@@ -166,9 +180,21 @@ class _ThreadDatabaseFilterPageState extends State<ThreadDatabaseFilterPage> {
       print('Error loading local types: $e');
       // Use fallback types
       _localTypes = [
-        {'_id': 'scam_type', 'name': 'Scam Report', 'categoryId': 'scam_category'},
-        {'_id': 'malware_type', 'name': 'Malware Report', 'categoryId': 'malware_category'},
-        {'_id': 'fraud_type', 'name': 'Fraud Report', 'categoryId': 'fraud_category'},
+        {
+          '_id': 'scam_type',
+          'name': 'Scam Report',
+          'categoryId': 'scam_category'
+        },
+        {
+          '_id': 'malware_type',
+          'name': 'Malware Report',
+          'categoryId': 'malware_category'
+        },
+        {
+          '_id': 'fraud_type',
+          'name': 'Fraud Report',
+          'categoryId': 'fraud_category'
+        },
       ];
       reportTypeId = _localTypes;
     }
@@ -180,10 +206,10 @@ class _ThreadDatabaseFilterPageState extends State<ThreadDatabaseFilterPage> {
       // Try to get alert levels from local storage or use fallback
       final prefs = await SharedPreferences.getInstance();
       final alertLevelsJson = prefs.getString('local_alert_levels');
-      
+
       if (alertLevelsJson != null) {
         final alertLevels = List<Map<String, dynamic>>.from(
-          jsonDecode(alertLevelsJson).map((x) => Map<String, dynamic>.from(x))
+            jsonDecode(alertLevelsJson).map((x) => Map<String, dynamic>.from(x))
         );
         severityLevels = alertLevels;
       } else {
@@ -291,7 +317,8 @@ class _ThreadDatabaseFilterPageState extends State<ThreadDatabaseFilterPage> {
     if (connectivityResult == ConnectivityResult.none) {
       await _loadLocalData();
     } else {
-      await Future.wait([_loadCategories(), _loadAllReportTypes(), _loadAlertLevels()]);
+      await Future.wait(
+          [_loadCategories(), _loadAllReportTypes(), _loadAlertLevels()]);
     }
   }
 
@@ -458,18 +485,20 @@ class _ThreadDatabaseFilterPageState extends State<ThreadDatabaseFilterPage> {
       if (response.data != null && response.data is List) {
         final alertLevelsData = List<Map<String, dynamic>>.from(response.data);
         // Filter only active alert levels
-        final activeAlertLevels = alertLevelsData.where((level) => level['isActive'] == true).toList();
-        
+        final activeAlertLevels = alertLevelsData.where((
+            level) => level['isActive'] == true).toList();
+
         setState(() {
           severityLevels = activeAlertLevels;
         });
-        
+
         print('✅ Loaded ${activeAlertLevels.length} active alert levels');
-        
+
         // Save alert levels locally for offline use
         try {
           final prefs = await SharedPreferences.getInstance();
-          await prefs.setString('local_alert_levels', jsonEncode(activeAlertLevels));
+          await prefs.setString(
+              'local_alert_levels', jsonEncode(activeAlertLevels));
           print('✅ Alert levels saved locally for offline use');
         } catch (e) {
           print('⚠️ Failed to save alert levels locally: $e');
@@ -605,23 +634,26 @@ class _ThreadDatabaseFilterPageState extends State<ThreadDatabaseFilterPage> {
     try {
       print('=== USING COMPLEX FILTER ===');
       print('🔍 Debug - selectedSeverities: $selectedSeverities');
-      print('🔍 Debug - selectedSeverities type: ${selectedSeverities.runtimeType}');
-      print('🔍 Debug - selectedSeverities isEmpty: ${selectedSeverities.isEmpty}');
+      print('🔍 Debug - selectedSeverities type: ${selectedSeverities
+          .runtimeType}');
+      print('🔍 Debug - selectedSeverities isEmpty: ${selectedSeverities
+          .isEmpty}');
 
       // Convert alert level IDs to names for API
       final severityLevelsForAPI = selectedSeverities.isNotEmpty
           ? selectedSeverities.map((severityId) {
-              // Find the alert level name from the severityLevels list
-              final alertLevel = severityLevels.firstWhere(
-                (level) => (level['_id'] ?? level['id']) == severityId,
-                orElse: () => {'name': severityId.toLowerCase()},
-              );
-              return (alertLevel['name'] ?? severityId).toString().toLowerCase();
-            }).toList()
+        // Find the alert level name from the severityLevels list
+        final alertLevel = severityLevels.firstWhere(
+              (level) => (level['_id'] ?? level['id']) == severityId,
+          orElse: () => {'name': severityId.toLowerCase()},
+        );
+        return (alertLevel['name'] ?? severityId).toString().toLowerCase();
+      }).toList()
           : null;
-      
+
       print('🔍 Debug - severityLevelsForAPI: $severityLevelsForAPI');
-      print('🔍 Debug - severityLevelsForAPI type: ${severityLevelsForAPI.runtimeType}');
+      print('🔍 Debug - severityLevelsForAPI type: ${severityLevelsForAPI
+          .runtimeType}');
 
       final reports = await _apiService.getReportsWithComplexFilter(
         searchQuery: searchQuery,
@@ -654,12 +686,12 @@ class _ThreadDatabaseFilterPageState extends State<ThreadDatabaseFilterPage> {
         foregroundColor: Colors.black,
         elevation: 0,
         actions: [
-          IconButton(icon: Icon(Icons.refresh), onPressed: _refreshData),
-          IconButton(
-            icon: Icon(Icons.bug_report),
-            onPressed: _testDynamicApiCall,
-            tooltip: 'Test Dynamic API',
-          ),
+          // IconButton(icon: Icon(Icons.refresh), onPressed: _refreshData),
+          // IconButton(
+          //   icon: Icon(Icons.bug_report),
+          //   onPressed: _testDynamicApiCall,
+          //   tooltip: 'Test Dynamic API',
+          // ),
           IconButton(icon: Icon(Icons.more_vert), onPressed: () {}),
         ],
       ),
@@ -705,7 +737,8 @@ class _ThreadDatabaseFilterPageState extends State<ThreadDatabaseFilterPage> {
                       ),
                       if (_hasLocalData)
                         Container(
-                          padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          padding: EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(
                             color: Colors.green.shade100,
                             borderRadius: BorderRadius.circular(12),
@@ -780,141 +813,147 @@ class _ThreadDatabaseFilterPageState extends State<ThreadDatabaseFilterPage> {
                       // Category Multi-Select
                       _isLoadingCategories
                           ? Container(
-                              padding: EdgeInsets.symmetric(vertical: 16),
-                              decoration: BoxDecoration(
-                                border: Border.all(color: Colors.grey.shade300),
-                                borderRadius: BorderRadius.circular(4),
+                        padding: EdgeInsets.symmetric(vertical: 16),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.grey.shade300),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Row(
+                          children: [
+                            SizedBox(width: 16),
+                            SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
                               ),
-                              child: Row(
-                                children: [
-                                  SizedBox(width: 16),
-                                  SizedBox(
-                                    width: 20,
-                                    height: 20,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                    ),
-                                  ),
-                                  SizedBox(width: 16),
-                                  Text('Loading categories...'),
-                                ],
-                              ),
-                            )
-                          //category dropdown
-                          : _buildMultiSelectDropdown(
-                              'Category',
-                              reportCategoryId,
-                              selectedCategoryIds,
-                              (values) => _onCategoryChanged(values),
-                              (item) {
-                                final id =
-                                    item['id']?.toString() ??
-                                    item['categoryId']?.toString() ??
-                                    item['_id']?.toString();
-                                print(
-                                  'Category ID extracted: $id from item: $item',
-                                );
-                                return id;
-                              },
-                              (item) {
-                                final name =
-                                    item['name']?.toString() ??
-                                    item['categoryName']?.toString() ??
-                                    item['title']?.toString() ??
-                                    'Unknown';
-                                print(
-                                  'Category name extracted: $name from item: $item',
-                                );
-                                return name;
-                              },
                             ),
+                            SizedBox(width: 16),
+                            Text('Loading categories...'),
+                          ],
+                        ),
+                      )
+                      //category dropdown
+                          : _buildMultiSelectDropdown(
+                        'Category',
+                        reportCategoryId,
+                        selectedCategoryIds,
+                            (values) => _onCategoryChanged(values),
+                            (item) {
+                          final id =
+                              item['id']?.toString() ??
+                                  item['categoryId']?.toString() ??
+                                  item['_id']?.toString();
+                          print(
+                            'Category ID extracted: $id from item: $item',
+                          );
+                          return id;
+                        },
+                            (item) {
+                          final name =
+                              item['name']?.toString() ??
+                                  item['categoryName']?.toString() ??
+                                  item['title']?.toString() ??
+                                  'Unknown';
+                          print(
+                            'Category name extracted: $name from item: $item',
+                          );
+                          return name;
+                        },
+                      ),
                       const SizedBox(height: 16),
 
                       // Type Multi-Select
                       _isLoadingTypes
                           ? Container(
-                              padding: EdgeInsets.symmetric(vertical: 16),
-                              decoration: BoxDecoration(
-                                border: Border.all(color: Colors.grey.shade300),
-                                borderRadius: BorderRadius.circular(4),
+                        padding: EdgeInsets.symmetric(vertical: 16),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.grey.shade300),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Row(
+                          children: [
+                            SizedBox(width: 16),
+                            SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
                               ),
-                              child: Row(
-                                children: [
-                                  SizedBox(width: 16),
-                                  SizedBox(
-                                    width: 20,
-                                    height: 20,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                    ),
-                                  ),
-                                  SizedBox(width: 16),
-                                  Text('Loading types...'),
-                                ],
-                              ),
-                            )
-                          //type dropdown
-                          : Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                _buildMultiSelectDropdown(
-                                  'Type',
-                                  reportTypeId,
-                                  selectedTypeIds,
-                                  (values) {
-                                    setState(() => selectedTypeIds = values);
-                                    // Fetch detailed data for selected types
-                                    _fetchSelectedTypeData(values);
-                                  },
-                                  (item) {
-                                    final id =
-                                        item['_id']?.toString() ??
-                                        item['id']?.toString() ??
-                                        item['typeId']?.toString();
-                                    print(
-                                      'Type ID extracted: $id from item: $item',
-                                    );
-                                    return id;
-                                  },
-                                  (item) {
-                                    final name =
-                                        item['name']?.toString() ??
-                                        item['typeName']?.toString() ??
-                                        item['title']?.toString() ??
-                                        item['description']?.toString() ??
-                                        'Unknown';
-                                    print(
-                                      'Type name extracted: $name from item: $item',
-                                    );
-                                    return name;
-                                  },
-                                ),
-                                SizedBox(height: 8),
-                              ],
                             ),
+                            SizedBox(width: 16),
+                            Text('Loading types...'),
+                          ],
+                        ),
+                      )
+                      //type dropdown
+                          : Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          _buildMultiSelectDropdown(
+                            'Type',
+                            reportTypeId,
+                            selectedTypeIds,
+                                (values) {
+                              setState(() => selectedTypeIds = values);
+                              // Fetch detailed data for selected types
+                              _fetchSelectedTypeData(values);
+                            },
+                                (item) {
+                              final id =
+                                  item['_id']?.toString() ??
+                                      item['id']?.toString() ??
+                                      item['typeId']?.toString();
+                              print(
+                                'Type ID extracted: $id from item: $item',
+                              );
+                              return id;
+                            },
+                                (item) {
+                              final name =
+                                  item['name']?.toString() ??
+                                      item['typeName']?.toString() ??
+                                      item['title']?.toString() ??
+                                      item['description']?.toString() ??
+                                      'Unknown';
+                              print(
+                                'Type name extracted: $name from item: $item',
+                              );
+                              return name;
+                            },
+                          ),
+                          SizedBox(height: 8),
+                        ],
+                      ),
                       const SizedBox(height: 16),
 
                       // Severity Multi-Select
                       _buildMultiSelectDropdown(
                         'Alert Severity Levels',
                         severityLevels.isNotEmpty
-                            ? severityLevels.map((level) => {
-                                'id': level['_id'] ?? level['id'],
-                                'name': (level['name'] ?? 'Unknown').toString().substring(0, 1).toUpperCase() + 
-                                       (level['name'] ?? 'Unknown').toString().substring(1).toLowerCase()
-                              }).toList()
+                            ? severityLevels.map((level) =>
+                        {
+                          'id': level['_id'] ?? level['id'],
+                          'name': (level['name'] ?? 'Unknown')
+                              .toString()
+                              .substring(0, 1)
+                              .toUpperCase() +
+                              (level['name'] ?? 'Unknown').toString().substring(
+                                  1).toLowerCase()
+                        }).toList()
                             : [
-                                {'id': 'low', 'name': 'Low'},
-                                {'id': 'medium', 'name': 'Medium'},
-                                {'id': 'high', 'name': 'High'},
-                              ],
+                          {'id': 'low', 'name': 'Low'},
+                          {'id': 'medium', 'name': 'Medium'},
+                          {'id': 'high', 'name': 'High'},
+                        ],
                         selectedSeverities,
-                        (values) {
-                          print('🔍 UI Debug - Severity selection changed: $values');
+                            (values) {
+                          print(
+                              '🔍 UI Debug - Severity selection changed: $values');
                           setState(() => selectedSeverities = values);
                         },
-                        (item) => item['id']?.toString(),
-                        (item) => item['name']?.toString() ?? 'Unknown',
+                            (item) => item['id']?.toString(),
+                            (item) => item['name']?.toString() ?? 'Unknown',
                       ),
                       const SizedBox(height: 16),
 
@@ -923,24 +962,25 @@ class _ThreadDatabaseFilterPageState extends State<ThreadDatabaseFilterPage> {
                       // View All Reports Link
                       GestureDetector(
                         onTap: () {
-                                                   Navigator.push(
-                           context,
-                           MaterialPageRoute(
-                             builder: (context) => ThreadDatabaseListPage(
-                               searchQuery: '',
-                               selectedTypes: [],
-                               selectedSeverities: [],
-                               selectedCategories: [],
-                               hasSearchQuery: false,
-                               hasSelectedType: false,
-                               hasSelectedSeverity: false,
-                               hasSelectedCategory: false,
-                               isOffline: _isOffline,
-                               localReports: _localReports,
-                               severityLevels: severityLevels,
-                             ),
-                           ),
-                         );
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  ThreadDatabaseListPage(
+                                    searchQuery: '',
+                                    selectedTypes: [],
+                                    selectedSeverities: [],
+                                    selectedCategories: [],
+                                    hasSearchQuery: false,
+                                    hasSelectedType: false,
+                                    hasSelectedSeverity: false,
+                                    hasSelectedCategory: false,
+                                    isOffline: _isOffline,
+                                    localReports: _localReports,
+                                    severityLevels: severityLevels,
+                                  ),
+                            ),
+                          );
                         },
                         child: Text(
                           'View All Reports',
@@ -959,47 +999,90 @@ class _ThreadDatabaseFilterPageState extends State<ThreadDatabaseFilterPage> {
               ),
 
               // Bottom Button Section
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue[900],
-                    minimumSize: const Size(double.infinity, 48),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
+              // SizedBox(
+              //   width: double.infinity,
+              //   child: ElevatedButton(
+              //     style: ElevatedButton.styleFrom(
+              //       backgroundColor: Colors.blue[900],
+              //       minimumSize: const Size(double.infinity, 48),
+              //       shape: RoundedRectangleBorder(
+              //         borderRadius: BorderRadius.circular(8),
+              //       ),
+              //     ),
+              //     onPressed: () {
+              //       print('🔍 UI Debug - Next button pressed');
+              //       print(
+              //           '🔍 UI Debug - selectedSeverities: $selectedSeverities');
+              //       print(
+              //           '🔍 UI Debug - selectedSeverities isEmpty: ${selectedSeverities
+              //               .isEmpty}');
+              //       print('🔍 Filter Debug - searchQuery: $searchQuery');
+              //       print(
+              //           '🔍 Filter Debug - selectedCategoryIds: $selectedCategoryIds');
+              //       print('🔍 Filter Debug - selectedTypeIds: $selectedTypeIds');
+              //       print(
+              //           '🔍 Filter Debug - selectedSeverities: $selectedSeverities');
+              //
+              //       Navigator.push(
+              //         context,
+              //         MaterialPageRoute(
+              //           builder: (context) =>
+              //               ThreadDatabaseListPage(
+              //                 searchQuery: searchQuery,
+              //                 selectedTypes: selectedTypeIds,
+              //                 selectedSeverities: selectedSeverities,
+              //                 selectedCategories: selectedCategoryIds,
+              //                 hasSearchQuery: searchQuery.isNotEmpty,
+              //                 hasSelectedType: selectedTypeIds.isNotEmpty,
+              //                 hasSelectedSeverity: selectedSeverities
+              //                     .isNotEmpty,
+              //                 hasSelectedCategory: selectedCategoryIds
+              //                     .isNotEmpty,
+              //                 isOffline: _isOffline,
+              //                 localReports: _localReports,
+              //                 severityLevels: severityLevels,
+              //               ),
+              //         ),
+              //       );
+              //     },
+              //     child: const Text(
+              //       'Next', style: TextStyle(color: Colors.white),),
+              //   ),
+              // ),
+              CustomButton(text: 'Next',
+                  onPressed: () async {
+                print('🔍 UI Debug - Next button pressed');
+                print('🔍 UI Debug - selectedSeverities: $selectedSeverities');
+                print(
+                    '🔍 UI Debug - selectedSeverities isEmpty: ${selectedSeverities
+                        .isEmpty}');
+                print('🔍 Filter Debug - searchQuery: $searchQuery');
+                print(
+                    '🔍 Filter Debug - selectedCategoryIds: $selectedCategoryIds');
+                print('🔍 Filter Debug - selectedTypeIds: $selectedTypeIds');
+                print(
+                    '🔍 Filter Debug - selectedSeverities: $selectedSeverities');
+
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) =>
+                        ThreadDatabaseListPage(
+                          searchQuery: searchQuery,
+                          selectedTypes: selectedTypeIds,
+                          selectedSeverities: selectedSeverities,
+                          selectedCategories: selectedCategoryIds,
+                          hasSearchQuery: searchQuery.isNotEmpty,
+                          hasSelectedType: selectedTypeIds.isNotEmpty,
+                          hasSelectedSeverity: selectedSeverities.isNotEmpty,
+                          hasSelectedCategory: selectedCategoryIds.isNotEmpty,
+                          isOffline: _isOffline,
+                          localReports: _localReports,
+                          severityLevels: severityLevels,
+                        ),
                   ),
-                  onPressed: () {
-                    print('🔍 UI Debug - Next button pressed');
-                    print('🔍 UI Debug - selectedSeverities: $selectedSeverities');
-                    print('🔍 UI Debug - selectedSeverities isEmpty: ${selectedSeverities.isEmpty}');
-                                         print('🔍 Filter Debug - searchQuery: $searchQuery');
-                     print('🔍 Filter Debug - selectedCategoryIds: $selectedCategoryIds');
-                     print('🔍 Filter Debug - selectedTypeIds: $selectedTypeIds');
-                     print('🔍 Filter Debug - selectedSeverities: $selectedSeverities');
-                     
-                     Navigator.push(
-                       context,
-                       MaterialPageRoute(
-                         builder: (context) => ThreadDatabaseListPage(
-                           searchQuery: searchQuery,
-                           selectedTypes: selectedTypeIds,
-                           selectedSeverities: selectedSeverities,
-                           selectedCategories: selectedCategoryIds,
-                           hasSearchQuery: searchQuery.isNotEmpty,
-                           hasSelectedType: selectedTypeIds.isNotEmpty,
-                           hasSelectedSeverity: selectedSeverities.isNotEmpty,
-                           hasSelectedCategory: selectedCategoryIds.isNotEmpty,
-                           isOffline: _isOffline,
-                           localReports: _localReports,
-                           severityLevels: severityLevels,
-                         ),
-                       ),
-                     );
-                  },
-                  child: const Text('Next'),
-                ),
-              ),
+                );
+              },  fontWeight: FontWeight.normal)
             ],
           ),
         ),
@@ -1007,14 +1090,12 @@ class _ThreadDatabaseFilterPageState extends State<ThreadDatabaseFilterPage> {
     );
   }
 
-  Widget _buildMultiSelectDropdown(
-    String label,
-    List<Map<String, dynamic>> items,
-    List<String> selectedValues,
-    Function(List<String>) onChanged,
-    String? Function(Map<String, dynamic>) getId,
-    String? Function(Map<String, dynamic>) getName,
-  ) {
+  Widget _buildMultiSelectDropdown(String label,
+      List<Map<String, dynamic>> items,
+      List<String> selectedValues,
+      Function(List<String>) onChanged,
+      String? Function(Map<String, dynamic>) getId,
+      String? Function(Map<String, dynamic>) getName,) {
     return Container(
       decoration: BoxDecoration(
         border: Border.all(color: Colors.grey.shade300),

@@ -30,7 +30,12 @@ class DrawerMenuItem extends StatelessWidget {
       ),
       onTap: () {
         Navigator.pop(context); // Close drawer
-        Navigator.pushNamed(context, routeName); // Navigate using named route
+        // Use pushNamedAndRemoveUntil to ensure only one instance exists
+        Navigator.pushNamedAndRemoveUntil(
+          context, 
+          routeName, 
+          (route) => route.isFirst,
+        );
       },
     );
   }

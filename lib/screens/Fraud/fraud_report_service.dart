@@ -281,9 +281,10 @@ class FraudReportService {
         'keycloackUserId':
             report.keycloakUserId ?? 'anonymous_user', // Fallback for no auth
         'name': report.name ?? 'Fraud Report',
-        'screenshotUrls': report.screenshotPaths ?? [],
-        'documentUrls': report.documentPaths ?? [],
-        'voiceMessageUrls':
+        'screenshots': report.screenshots ?? [],
+        'documents': report.documents ?? [],
+        'videoUpload': [],
+        'voiceMessages':
             [], // Fraud reports don't typically have voice files
       };
 

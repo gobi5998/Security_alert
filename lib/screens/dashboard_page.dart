@@ -31,6 +31,7 @@ class DashboardPage extends StatefulWidget {
 }
 
 class _DashboardPageState extends State<DashboardPage> {
+  static int _instanceCounter = 0;
   late final GlobalKey<ScaffoldState> _scaffoldKey;
   List<Map<String, dynamic>> reportTypes = [];
   bool isLoadingTypes = true;
@@ -40,10 +41,18 @@ class _DashboardPageState extends State<DashboardPage> {
   @override
   void initState() {
     super.initState();
-    // Initialize the GlobalKey with a unique identifier
+    // Initialize the GlobalKey with a simple but unique identifier
+    _instanceCounter++;
     _scaffoldKey = GlobalKey<ScaffoldState>(
-      debugLabel: 'dashboard_scaffold_${hashCode}',
+      debugLabel: 'dashboard_scaffold_${_instanceCounter}',
     );
+    
+    // Debug logging to track instance creation
+    print('🔧 DashboardPage instance created:');
+    print('   - Instance counter: $_instanceCounter');
+    print('   - Debug label: dashboard_scaffold_$_instanceCounter');
+    print('   - Stack trace: ${StackTrace.current}');
+    
     // Load dashboard data when the page is initialized
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<DashboardProvider>(
@@ -53,6 +62,14 @@ class _DashboardPageState extends State<DashboardPage> {
     });
     _loadReportTypes();
     _loadReportCategories();
+  }
+
+  @override
+  void dispose() {
+    print('🗑️ DashboardPage instance disposed:');
+    print('   - Instance counter: $_instanceCounter');
+    print('   - Debug label: dashboard_scaffold_$_instanceCounter');
+    super.dispose();
   }
 
   Future<void> _loadReportTypes() async {

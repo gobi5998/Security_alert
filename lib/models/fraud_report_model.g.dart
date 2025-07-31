@@ -28,17 +28,19 @@ class FraudReportModelAdapter extends TypeAdapter<FraudReportModel> {
       createdAt: fields[8] as DateTime?,
       updatedAt: fields[9] as DateTime?,
       isSynced: fields[10] as bool,
-      screenshotPaths: (fields[11] as List).cast<String>(),
-      documentPaths: (fields[12] as List).cast<String>(),
-      name: fields[13] as String?,
-      keycloakUserId: fields[14] as String?,
+      screenshots: (fields[11] as List).cast<String>(),
+      documents: (fields[12] as List).cast<String>(),
+      voiceMessages: (fields[13] as List).cast<String>(),
+      videoUpload: (fields[14] as List).cast<String>(),
+      name: fields[15] as String?,
+      keycloakUserId: fields[16] as String?,
     );
   }
 
   @override
   void write(BinaryWriter writer, FraudReportModel obj) {
     writer
-      ..writeByte(15)
+      ..writeByte(17)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -62,12 +64,16 @@ class FraudReportModelAdapter extends TypeAdapter<FraudReportModel> {
       ..writeByte(10)
       ..write(obj.isSynced)
       ..writeByte(11)
-      ..write(obj.screenshotPaths)
+      ..write(obj.screenshots)
       ..writeByte(12)
-      ..write(obj.documentPaths)
+      ..write(obj.documents)
       ..writeByte(13)
-      ..write(obj.name)
+      ..write(obj.voiceMessages)
       ..writeByte(14)
+      ..write(obj.videoUpload)
+      ..writeByte(15)
+      ..write(obj.name)
+      ..writeByte(16)
       ..write(obj.keycloakUserId);
   }
 

@@ -16,6 +16,7 @@ import '../../custom/fileUpload.dart';
 
 class ReportFraudStep2 extends StatefulWidget {
   final FraudReportModel report;
+
   const ReportFraudStep2({required this.report});
 
   @override
@@ -25,14 +26,16 @@ class ReportFraudStep2 extends StatefulWidget {
 class _ReportFraudStep2State extends State<ReportFraudStep2> {
   final _formKey = GlobalKey<FormState>();
   String? alertLevel;
-  List<File> screenshots = [], documents = [], voices = [];
+  List<File> screenshots = [],
+      documents = [],
+      voiceMessage = [];
   final List<String> alertLevels = ['Low', 'Medium', 'High', 'Critical'];
   final ImagePicker picker = ImagePicker();
   bool isUploading = false;
   String? uploadStatus = '';
 
   final GlobalKey<FileUploadWidgetState> _fileUploadKey =
-      GlobalKey<FileUploadWidgetState>(debugLabel: 'fraud_file_upload');
+  GlobalKey<FileUploadWidgetState>(debugLabel: 'fraud_file_upload');
 
   @override
   void initState() {
@@ -74,7 +77,8 @@ class _ReportFraudStep2State extends State<ReportFraudStep2> {
         setState(() {
           final files = result.paths.map((e) => File(e!)).toList();
           if (type == 'document') documents.addAll(files);
-          if (type == 'voice') voices.addAll(files);
+          if (type == 'voiceMessage') voiceMessage.addAll(files);
+          if (type == 'screenshots') screenshots.addAll(files);
         });
       }
     }
@@ -100,38 +104,40 @@ class _ReportFraudStep2State extends State<ReportFraudStep2> {
     }
 
     print('🔍 SUBMIT DEBUG - Alert level validation passed: $alertLevel');
-
+    print('🔍 User selected alert level: $alertLevel');
     print('🔍 User selected alert level: $alertLevel');
 
     try {
       // Upload files first
-      List<Map<String, dynamic>> uploadedFiles = [];
+      Map<String, dynamic> uploadedFiles = {};
       if (_fileUploadKey.currentState != null) {
         uploadedFiles = await _fileUploadKey.currentState!.triggerUpload();
-      }
-
-      // Categorize uploaded files
-      List<String> screenshotUrls = [];
-      List<String> documentUrls = [];
-
-      for (var file in uploadedFiles) {
-        String fileName = file['fileName']?.toString().toLowerCase() ?? '';
-        String fileUrl = file['url']?.toString() ?? '';
-
-        if (fileName.endsWith('.png') ||
-            fileName.endsWith('.jpg') ||
-            fileName.endsWith('.jpeg') ||
-            fileName.endsWith('.gif') ||
-            fileName.endsWith('.bmp') ||
-            fileName.endsWith('.webp')) {
-          screenshotUrls.add(fileUrl);
-        } else if (fileName.endsWith('.pdf') ||
-            fileName.endsWith('.doc') ||
-            fileName.endsWith('.docx') ||
-            fileName.endsWith('.txt')) {
-          documentUrls.add(fileUrl);
+        print('📤 Upload completed. Files structure: $uploadedFiles');
+        
+        // Validate that files were uploaded
+        final screenshots = uploadedFiles['screenshots'] as List? ?? [];
+        final documents = uploadedFiles['documents'] as List? ?? [];
+        final voiceMessages = uploadedFiles['voiceMessages'] as List? ?? [];
+        
+        print('📊 Upload validation:');
+        print('  📸 Screenshots: ${screenshots.length}');
+        print('  📄 Documents: ${documents.length}');
+        print('  🎵 Voice Messages: ${voiceMessages.length}');
+        
+        if (screenshots.isEmpty && documents.isEmpty && voiceMessages.isEmpty) {
+          print('⚠️  No files were uploaded');
         }
       }
+
+      // Debug: Check if files were actually uploaded
+      final uploadedScreenshots = uploadedFiles['screenshots'] as List? ?? [];
+      final uploadedDocuments = uploadedFiles['documents'] as List? ?? [];
+      final uploadedVoiceMessages = uploadedFiles['voiceMessages'] as List? ?? [];
+      
+      print('📊 Upload Summary:');
+      print('  📸 Screenshots uploaded: ${uploadedScreenshots.length}');
+      print('  📄 Documents uploaded: ${uploadedDocuments.length}');
+      print('  🎵 Voice messages uploaded: ${uploadedVoiceMessages.length}');
 
       final connectivity = await Connectivity().checkConnectivity();
       final isOnline = connectivity != ConnectivityResult.none;
@@ -141,7 +147,8 @@ class _ReportFraudStep2State extends State<ReportFraudStep2> {
 
       print('🔍 SUBMIT DEBUG - alertLevel variable: $alertLevel');
       print(
-        '🔍 SUBMIT DEBUG - widget.report.alertLevels: ${widget.report.alertLevels}',
+        '🔍 SUBMIT DEBUG - widget.report.alertLevels: ${widget.report
+            .alertLevels}',
       );
       print('🔍 SUBMIT DEBUG - finalAlertLevel: $finalAlertLevel');
       print(
@@ -151,7 +158,8 @@ class _ReportFraudStep2State extends State<ReportFraudStep2> {
         '🔍 SUBMIT DEBUG - finalAlertLevel is null: ${finalAlertLevel == null}',
       );
       print(
-        '🔍 SUBMIT DEBUG - finalAlertLevel is empty: ${finalAlertLevel?.isEmpty}',
+        '🔍 SUBMIT DEBUG - finalAlertLevel is empty: ${finalAlertLevel
+            ?.isEmpty}',
       );
 
       // Validate that we have a proper alert level
@@ -165,10 +173,83 @@ class _ReportFraudStep2State extends State<ReportFraudStep2> {
         return;
       }
 
+      // Extract URLs for local storage (backward compatibility)
+      List<String> screenshotUrls = [];
+      List<String> documentUrls = [];
+      List<String> voiceMessageUrls = [];
+
+      for (var file in uploadedScreenshots) {
+        String fileUrl = file['url']?.toString() ?? '';
+        if (fileUrl.isNotEmpty) {
+          screenshotUrls.add(fileUrl);
+        }
+      }
+
+      for (var file in uploadedDocuments) {
+        String fileUrl = file['url']?.toString() ?? '';
+        if (fileUrl.isNotEmpty) {
+          documentUrls.add(fileUrl);
+        }
+      }
+
+      for (var file in uploadedVoiceMessages) {
+        String fileUrl = file['url']?.toString() ?? '';
+        if (fileUrl.isNotEmpty) {
+          voiceMessageUrls.add(fileUrl);
+        }
+      }
+
+      // Create complete report data with file objects for backend
+      final formData = {
+        'reportCategoryId': widget.report.reportCategoryId,
+        'reportTypeId': widget.report.reportTypeId,
+        'alertLevels': finalAlertLevel ?? '',
+        'keycloackUserId': widget.report.keycloakUserId,
+        'status': 'draft',
+        'phoneNumber': widget.report.phoneNumber,
+        'email': widget.report.email,
+        'website': widget.report.website,
+        'description': widget.report.description,
+        'name': widget.report.name ?? 'Anonymous',
+        'isActive': true,
+      };
+
+      // Create complete report data with file objects for backend
+      final completeReportData = FileUploadService.createReportData(
+        formData: formData,
+        fileData: uploadedFiles,
+      );
+
+      print('📋 Complete report data for backend:');
+      print('  Report Category ID: ${completeReportData['reportCategoryId']}');
+      print('  Report Type ID: ${completeReportData['reportTypeId']}');
+      print('  Alert Level: ${completeReportData['alertLevels']}');
+      print('  Email: ${completeReportData['email']}');
+      print('  Description: ${completeReportData['description']}');
+      print('  Screenshots: ${(completeReportData['screenshots'] as List).length} files');
+      print('  Voice Messages: ${(completeReportData['voiceMessages'] as List).length} files');
+      print('  Documents: ${(completeReportData['documents'] as List).length} files');
+      
+      // Debug: Print detailed file information
+      print('📸 Screenshots details:');
+      for (var file in completeReportData['screenshots'] as List) {
+        print('  - ${file['fileName']}: ${file['url']}');
+      }
+      print('🎵 Voice Messages details:');
+      for (var file in completeReportData['voiceMessages'] as List) {
+        print('  - ${file['fileName']}: ${file['url']}');
+      }
+      print('📄 Documents details:');
+      for (var file in completeReportData['documents'] as List) {
+        print('  - ${file['fileName']}: ${file['url']}');
+      }
+
+      // Update local report model for backward compatibility
       final updatedReport = widget.report
         ..alertLevels = finalAlertLevel
-        ..screenshotPaths = screenshotUrls
-        ..documentPaths = documentUrls;
+        ..screenshots = screenshotUrls
+        ..documents = documentUrls
+        ..voiceMessages = voiceMessageUrls;
 
       print('🔍 Selected alert level: $alertLevel');
       print('🔍 Original report alert level: ${widget.report.alertLevels}');
@@ -185,13 +266,34 @@ class _ReportFraudStep2State extends State<ReportFraudStep2> {
         print('Local save failed but continuing: $e');
       }
 
-      // 2. If online, send to backend and update local status
+      // 2. If online, send to backend with complete file objects
       if (isOnline) {
         try {
-          print('Sending to backend: ${updatedReport.toJson()}');
-          await ApiService().submitFraudReport(updatedReport.toJson());
-          print('Backend response: submitted');
+          print('📤 Sending complete report data to backend...');
+          print('📤 Report data structure: $completeReportData');
+          
+          // Final validation of report data
+          print('🔍 Final validation of report data:');
+          print('  Alert Level: ${completeReportData['alertLevels']}');
+          print('  Report Category ID: ${completeReportData['reportCategoryId']}');
+          print('  Report Type ID: ${completeReportData['reportTypeId']}');
+          print('  Email: ${completeReportData['email']}');
+          print('  Description: ${completeReportData['description']}');
+          print('  Screenshots count: ${(completeReportData['screenshots'] as List).length}');
+          print('  Voice Messages count: ${(completeReportData['voiceMessages'] as List).length}');
+          print('  Documents count: ${(completeReportData['documents'] as List).length}');
+          
+          // Send the complete report data with file objects to backend
+          await ApiService().submitFraudReport(completeReportData);
+          
+          print('✅ Backend response: submitted successfully with files');
+          print('✅ Files sent to backend:');
+          print('  📸 Screenshots: ${(completeReportData['screenshots'] as List).length}');
+          print('  🎵 Voice Messages: ${(completeReportData['voiceMessages'] as List).length}');
+          print('  📄 Documents: ${(completeReportData['documents'] as List).length}');
+          
           updatedReport.isSynced = true;
+          
           // Clone the object before updating to avoid HiveError
           final clonedReport = FraudReportModel(
             id: updatedReport.id,
@@ -206,8 +308,9 @@ class _ReportFraudStep2State extends State<ReportFraudStep2> {
             createdAt: updatedReport.createdAt,
             updatedAt: DateTime.now(),
             isSynced: true,
-            screenshotPaths: updatedReport.screenshotPaths,
-            documentPaths: updatedReport.documentPaths,
+            screenshots: updatedReport.screenshots,
+            documents: updatedReport.documents,
+            voiceMessages: updatedReport.voiceMessages,
           );
           try {
             await FraudReportService.updateReport(clonedReport); // mark synced
@@ -216,6 +319,7 @@ class _ReportFraudStep2State extends State<ReportFraudStep2> {
           }
         } catch (e) {
           debugPrint('❌ Failed to sync now, will retry later: $e');
+          print('❌ Error details: $e');
         }
       }
 
@@ -225,9 +329,9 @@ class _ReportFraudStep2State extends State<ReportFraudStep2> {
         Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(
-            builder: (_) => const ReportSuccess(label: 'Scam Report'),
+            builder: (_) => const ReportSuccess(label: 'Fraud Report'),
           ),
-          (route) => false,
+              (route) => false,
         );
       }
     } catch (e, stack) {
@@ -269,15 +373,19 @@ class _ReportFraudStep2State extends State<ReportFraudStep2> {
               //     ),
               //   ],
               // ),
+
               FileUploadWidget(
-                key: _fileUploadKey,
-                reportId: widget.report.id ?? '123',
-                reportType: 'fraud', // Specify fraud report type
-                autoUpload: true,
-                onFilesUploaded: (List<Map<String, dynamic>> uploadedFiles) {
-                  // Handle uploaded files
-                  print('Files uploaded: ${uploadedFiles.length}');
-                },
+                  key: _fileUploadKey,
+                  reportId: widget.report.id ?? '123',
+                  fileType: 'fraud',
+                  autoUpload: true,
+                  onFilesUploaded: (Map<String, dynamic> uploadedFiles) {
+                    // Handle uploaded files
+                    final screenshots = uploadedFiles['screenshots'] as List? ?? [];
+                    final documents = uploadedFiles['documents'] as List? ?? [];
+                    final voiceMessages = uploadedFiles['voiceMessages'] as List? ?? [];
+                    print('Files uploaded: ${screenshots.length} screenshots, ${documents.length} documents, ${voiceMessages.length} voice messages');
+                  },
               ),
               CustomDropdown(
                 label: 'Alert Severity',

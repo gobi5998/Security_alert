@@ -598,13 +598,48 @@ class ApiService {
 
   Future<void> submitScamReport(Map<String, dynamic> data) async {
     try {
-      print('Dio baseUrl: ${_dioService.mainApi.options.baseUrl}');
-      print('Dio path: /reports');
-      print('Data: $data');
+      print('🚀 Submitting scam report to backend...');
+      print('📡 Dio baseUrl: ${_dioService.mainApi.options.baseUrl}');
+      print('📡 Endpoint: /reports/scam');
+      print('📋 Data being sent:');
+      print('  - Report Category ID: ${data['reportCategoryId']}');
+      print('  - Report Type ID: ${data['reportTypeId']}');
+      print('  - Alert Level: ${data['alertLevels']}');
+      print('  - Email: ${data['email']}');
+      print('  - Description: ${data['description']}');
+      print('  - Screenshots: ${(data['screenshots'] as List? ?? []).length} files');
+      print('  - Voice Messages: ${(data['voiceMessages'] as List? ?? []).length} files');
+      print('  - Documents: ${(data['documents'] as List? ?? []).length} files');
+      
+      // Use the scam-specific endpoint
       final response = await _dioService.post('/reports', data: data);
-      print('Backend response: ${response.data}');
+      print('✅ Backend response: ${response.data}');
+      
+      // Check if files were actually sent
+      final responseData = response.data;
+      if (responseData != null && responseData is Map<String, dynamic>) {
+        final screenshots = responseData['screenshots'] as List? ?? [];
+        final voiceMessages = responseData['voiceMessages'] as List? ?? [];
+        final documents = responseData['documents'] as List? ?? [];
+        
+        print('📊 Backend received:');
+        print('  📸 Screenshots: ${screenshots.length}');
+        print('  🎵 Voice Messages: ${voiceMessages.length}');
+        print('  📄 Documents: ${documents.length}');
+        
+        if (screenshots.isEmpty && voiceMessages.isEmpty && documents.isEmpty) {
+          print('⚠️  WARNING: Backend received empty file arrays!');
+        }
+      }
     } catch (e) {
-      print('Error sending to backend: $e');
+      print('❌ Error sending to backend: $e');
+      if (e is DioException) {
+        print('📡 DioException type: ${e.type}');
+        print('📡 DioException message: ${e.message}');
+        print('📡 Response status: ${e.response?.statusCode}');
+        print('📡 Response data: ${e.response?.data}');
+      }
+      rethrow;
     }
   }
 

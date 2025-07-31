@@ -10,6 +10,8 @@ class FraudRemoteService {
       FraudReportModel report, {
         List<File>? screenshots,
         List<File>? documents,
+        List<File>? voiceMessage,
+        List<File>? videoUpload,
       }) async {
     try {
       final url = Uri.parse('${ApiConfig.mainBaseUrl}fraud_reports');
@@ -31,11 +33,11 @@ class FraudRemoteService {
       request.fields['website'] = report.website ?? '';
 
       // Add file paths as JSON
-      if (report.screenshotPaths.isNotEmpty) {
-        request.fields['screenshotPaths'] = jsonEncode(report.screenshotPaths);
+      if (report.screenshots.isNotEmpty) {
+        request.fields['screenshots'] = jsonEncode(report.screenshots);
       }
-      if (report.documentPaths.isNotEmpty) {
-        request.fields['documentPaths'] = jsonEncode(report.documentPaths);
+      if (report.documents.isNotEmpty) {
+        request.fields['documents'] = jsonEncode(report.documents);
       }
 
       // Add screenshots
@@ -62,6 +64,36 @@ class FraudRemoteService {
           final length = await file.length();
           final multipartFile = http.MultipartFile(
             'documents',
+            stream,
+            length,
+            filename: file.path.split('/').last,
+          );
+          request.files.add(multipartFile);
+        }
+      }
+
+      if (voiceMessage != null && voiceMessage.isNotEmpty) {
+        for (int i = 0; i < voiceMessage.length; i++) {
+          final file = voiceMessage[i];
+          final stream = http.ByteStream(file.openRead());
+          final length = await file.length();
+          final multipartFile = http.MultipartFile(
+            'voiceMessage',
+            stream,
+            length,
+            filename: file.path.split('/').last,
+          );
+          request.files.add(multipartFile);
+        }
+      }
+
+      if (videoUpload != null && videoUpload.isNotEmpty) {
+        for (int i = 0; i < videoUpload.length; i++) {
+          final file = videoUpload[i];
+          final stream = http.ByteStream(file.openRead());
+          final length = await file.length();
+          final multipartFile = http.MultipartFile(
+            'videoUpload',
             stream,
             length,
             filename: file.path.split('/').last,

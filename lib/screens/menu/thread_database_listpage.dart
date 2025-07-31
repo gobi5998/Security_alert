@@ -1142,9 +1142,9 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
       appBar: AppBar(
         leading: IconButton(
           onPressed: () {
-            Navigator.push(
+            Navigator.pushReplacement(
               context,
-              MaterialPageRoute(builder: (context) => DashboardPage()),
+              MaterialPageRoute(builder: (context) => const DashboardPage()),
             );
           },
           icon: Icon(Icons.arrow_back),

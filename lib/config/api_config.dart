@@ -3,16 +3,17 @@ class ApiConfig {
   // static const String baseUrl =
   //     'https://6694dcc2db28.ngrok-free.app'; // Main server (working)
   static const String authBaseUrl =
-      'https://0c94968f8ca9.ngrok-free.app'; // Auth server
+      'https://mvp.edetectives.co.bw/api'; // Auth server
   // TODO: Replace with your new ngrok URL after restarting ngrok
   static const String mainBaseUrl =
-      'https://ea4b9a782d06.ngrok-free.app'; // Main server
+      'https://mvp.edetectives.co.bw/api'; // Main server
   static const String fileUploadBaseUrl =
-      'https://YOUR_NEW_NGROK_URL.ngrok-free.app'; // File upload server
+      'https://mvp.edetectives.co.bw'; // File upload server
   static const String reportsBaseUrl =
-      'https://ea4b9a782d06.ngrok-free.app'; // Reports server
+      'https://mvp.edetectives.co.bw/api'; // Reports server
 
   // API Endpoints
+
   // Authentication endpoints
   static const String loginEndpoint = '/auth/login-user';
   static const String registerEndpoint = '/auth/create-user';

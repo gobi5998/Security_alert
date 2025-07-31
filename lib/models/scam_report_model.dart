@@ -1,5 +1,6 @@
 import 'package:hive/hive.dart';
 import '../services/sync_service.dart';
+
 part 'scam_report_model.g.dart';
 
 @HiveType(typeId: 0)
@@ -38,16 +39,22 @@ class ScamReportModel extends HiveObject {
   bool? isSynced;
 
   @HiveField(11)
-  List<String> screenshotPaths;
+  List<String> screenshots;
 
   @HiveField(12)
-  List<String> documentPaths;
+  List<String> documents;
 
   @HiveField(13)
   String? name;
 
   @HiveField(14)
   String? keycloakUserId; // Keycloak user ID from JWT token sub field
+
+  @HiveField(15)
+  List<String> voiceMessages;
+
+  @HiveField(16)
+  List<String> videoUpload;
 
   // Add other fields as needed
 
@@ -63,8 +70,10 @@ class ScamReportModel extends HiveObject {
     this.createdAt,
     this.updatedAt,
     this.isSynced = false,
-    this.screenshotPaths = const [],
-    this.documentPaths = const [],
+    this.screenshots = const [],
+    this.documents = const [],
+    this.voiceMessages = const [],
+    this.videoUpload = const [],
     this.name,
     this.keycloakUserId,
   });
@@ -83,8 +92,9 @@ class ScamReportModel extends HiveObject {
     'createdAt': createdAt?.toIso8601String(),
     'updatedAt': updatedAt?.toIso8601String(),
     'isSynced': isSynced,
-    'screenshotPaths': screenshotPaths,
-    'documentPaths': documentPaths,
+    'screenshots': screenshots,
+    'documents': documents,
+    'voiceMessages': voiceMessages,
     'keycloackUserId': keycloakUserId,
   };
 
@@ -107,12 +117,14 @@ class ScamReportModel extends HiveObject {
         ? DateTime.tryParse(json['updatedAt'])
         : null,
     isSynced: json['isSynced'],
-    screenshotPaths:
-        (json['screenshotPaths'] as List?)?.map((e) => e as String).toList() ??
-        [],
-    documentPaths:
-        (json['documentPaths'] as List?)?.map((e) => e as String).toList() ??
-        [],
+    screenshots:
+        (json['screenshots'] as List?)?.map((e) => e as String).toList() ?? [],
+    documents:
+        (json['documents'] as List?)?.map((e) => e as String).toList() ?? [],
+    voiceMessages:
+        (json['voiceMessage'] as List?)?.map((e) => e as String).toList() ?? [],
+    videoUpload:
+    (json['videoUpload'] as List?)?.map((e) => e as String).toList() ?? [],
     keycloakUserId: json['keycloackUserId'],
   );
 
@@ -129,8 +141,11 @@ class ScamReportModel extends HiveObject {
     DateTime? createdAt,
     DateTime? updatedAt,
     bool? isSynced,
-    List<String>? screenshotPaths,
-    List<String>? documentPaths,
+    List<String>? screenshots,
+    List<String>? documents,
+    List<String>? videoUpload,
+    List<String>? voiceMessages,
+
     String? keycloakUserId,
   }) {
     return ScamReportModel(
@@ -146,8 +161,10 @@ class ScamReportModel extends HiveObject {
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       isSynced: isSynced ?? this.isSynced,
-      screenshotPaths: screenshotPaths ?? this.screenshotPaths,
-      documentPaths: documentPaths ?? this.documentPaths,
+      screenshots: screenshots ?? this.screenshots,
+      documents: documents ?? this.documents,
+      voiceMessages: voiceMessages ?? this.voiceMessages,
+      videoUpload: videoUpload ?? this.videoUpload,
       keycloakUserId: keycloakUserId ?? this.keycloakUserId,
     );
   }

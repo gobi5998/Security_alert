@@ -87,13 +87,29 @@ class ReportedFeatureItem extends StatelessWidget {
                 onTap: () {
                   // Navigate to specific pages based on the title
                   if (title == 'Reported Scam') {
-                    Navigator.pushNamed(context, '/scam-report');
+                    Navigator.pushNamedAndRemoveUntil(
+                      context, 
+                      '/scam-report', 
+                      (route) => route.isFirst,
+                    );
                   } else if (title == 'Reported Malware') {
-                    Navigator.pushNamed(context, '/malware-report');
+                    Navigator.pushNamedAndRemoveUntil(
+                      context, 
+                      '/malware-report', 
+                      (route) => route.isFirst,
+                    );
                   } else if (title == 'Reported Fraud') {
-                    Navigator.pushNamed(context, '/fraud-report');
+                    Navigator.pushNamedAndRemoveUntil(
+                      context, 
+                      '/fraud-report', 
+                      (route) => route.isFirst,
+                    );
                   } else {
-                    Navigator.pushNamed(context, onAdd);
+                    Navigator.pushNamedAndRemoveUntil(
+                      context, 
+                      onAdd, 
+                      (route) => route.isFirst,
+                    );
                   }
                 },
                 child: Container(

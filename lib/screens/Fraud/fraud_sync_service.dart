@@ -39,8 +39,11 @@ class FraudSyncService {
         // Convert file paths to File objects
         List<File> screenshots = [];
         List<File> documents = [];
+        List<File> voiceMessage = [];
+        List<File> videoUpload = [];
 
-        for (String path in report.screenshotPaths) {
+
+        for (String path in report.screenshots) {
           try {
             screenshots.add(File(path));
           } catch (e) {
@@ -48,9 +51,23 @@ class FraudSyncService {
           }
         }
 
-        for (String path in report.documentPaths) {
+        for (String path in report.documents) {
           try {
             documents.add(File(path));
+          } catch (e) {
+            print('Warning: Could not load document at $path: $e');
+          }
+        }
+        for (String path in report.videoUpload) {
+          try {
+            videoUpload.add(File(path));
+          } catch (e) {
+            print('Warning: Could not load document at $path: $e');
+          }
+        }
+        for (String path in report.voiceMessages) {
+          try {
+            voiceMessage.add(File(path));
           } catch (e) {
             print('Warning: Could not load document at $path: $e');
           }

@@ -40,15 +40,21 @@ class FraudReportModel extends HiveObject implements SyncableReport {
   bool isSynced;
 
   @HiveField(11)
-  List<String> screenshotPaths;
+  List<String> screenshots;
 
   @HiveField(12)
-  List<String> documentPaths;
+  List<String> documents;
 
   @HiveField(13)
-  String? name;
+  List<String> voiceMessages;
 
   @HiveField(14)
+  List<String> videoUpload;
+
+  @HiveField(15)
+  String? name;
+
+  @HiveField(16)
   String? keycloakUserId; // Keycloak user ID from JWT token sub field
 
   FraudReportModel({
@@ -63,8 +69,10 @@ class FraudReportModel extends HiveObject implements SyncableReport {
     this.createdAt,
     this.updatedAt,
     this.isSynced = false,
-    this.screenshotPaths = const [],
-    this.documentPaths = const [],
+    this.screenshots = const [],
+    this.documents = const [],
+    this.voiceMessages = const [],
+    this.videoUpload = const [],
     this.name,
     this.keycloakUserId,
   });
@@ -82,8 +90,10 @@ class FraudReportModel extends HiveObject implements SyncableReport {
     'createdAt': createdAt?.toIso8601String(),
     'updatedAt': updatedAt?.toIso8601String(),
     'isSynced': isSynced,
-    'screenshotPaths': screenshotPaths,
-    'documentPaths': documentPaths,
+    'screenshots': screenshots,
+    'documents': documents,
+    'voiceMessage': voiceMessages,
+    'videoUpload': videoUpload,
     'name': name,
     'keycloackUserId': keycloakUserId,
   };
@@ -104,8 +114,11 @@ class FraudReportModel extends HiveObject implements SyncableReport {
     'createdAt': createdAt?.toIso8601String(),
     'updatedAt': updatedAt?.toIso8601String(),
     'isSynced': isSynced,
-    'screenshotPaths': screenshotPaths,
-    'documentPaths': documentPaths,
+    'screenshots': screenshots,
+    'voiceMessage': voiceMessages,
+    'videoUpload': videoUpload,
+    'documents': documents,
+
     'keycloakUserId': keycloakUserId,
   };
 
@@ -128,11 +141,17 @@ class FraudReportModel extends HiveObject implements SyncableReport {
         ? DateTime.tryParse(json['updatedAt'])
         : null,
     isSynced: json['isSynced'] ?? false,
-    screenshotPaths:
-        (json['screenshotPaths'] as List?)?.map((e) => e as String).toList() ??
+    screenshots:
+        (json['screenshots'] as List?)?.map((e) => e as String).toList() ??
         [],
-    documentPaths:
-        (json['documentPaths'] as List?)?.map((e) => e as String).toList() ??
+    documents:
+        (json['documents'] as List?)?.map((e) => e as String).toList() ??
+        [],
+    voiceMessages:
+    (json['voiceMessages'] as List?)?.map((e) => e as String).toList() ??
+        [],
+    videoUpload:
+    (json['videoUpload'] as List?)?.map((e) => e as String).toList() ??
         [],
     keycloakUserId: json['keycloakUserId'],
   );
@@ -150,8 +169,10 @@ class FraudReportModel extends HiveObject implements SyncableReport {
     DateTime? createdAt,
     DateTime? updatedAt,
     bool? isSynced,
-    List<String>? screenshotPaths,
-    List<String>? documentPaths,
+    List<String>? screenshots,
+    List<String>? documents,
+    List<String>? voiceMessages,
+    List<String>? videoUpload,
     String? keycloakUserId,
   }) {
     return FraudReportModel(
@@ -167,8 +188,10 @@ class FraudReportModel extends HiveObject implements SyncableReport {
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       isSynced: isSynced ?? this.isSynced,
-      screenshotPaths: screenshotPaths ?? this.screenshotPaths,
-      documentPaths: documentPaths ?? this.documentPaths,
+      screenshots: screenshots ?? this.screenshots,
+      documents: documents ?? this.documents,
+      voiceMessages: voiceMessages ?? this.voiceMessages,
+      videoUpload: videoUpload ?? this.videoUpload,
       keycloakUserId: keycloakUserId ?? this.keycloakUserId,
     );
   }
