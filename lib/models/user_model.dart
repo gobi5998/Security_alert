@@ -24,7 +24,7 @@ class User {
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
-    print('🔍 Parsing user JSON: $json');
+
     print('🔍 Available keys: ${json.keys.toList()}');
 
     final user = User(
@@ -40,13 +40,13 @@ class User {
       updatedAt: json['updatedAt'] ?? '',
     );
 
-    print('🔍 Parsed user:');
-    print('  - ID: ${user.id}');
-    print('  - Username: ${user.username}');
-    print('  - Email: ${user.email}');
-    print('  - FirstName: ${user.firstName}');
-    print('  - LastName: ${user.lastName}');
-    print('  - FullName: ${user.fullName}');
+
+
+
+
+
+
+
 
     return user;
   }

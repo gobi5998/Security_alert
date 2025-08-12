@@ -189,7 +189,7 @@ class _ReportFraudStep2State extends State<ReportFraudStep2> {
 
     setState(() {
       isUploading = true;
-      uploadStatus = 'Preparing report submission...';
+      uploadStatus = 'Preparing report submission (using already uploaded files)...';
     });
 
     try {
@@ -209,15 +209,38 @@ class _ReportFraudStep2State extends State<ReportFraudStep2> {
         final state = _fileUploadKey.currentState!;
         print('🚀 File upload state found');
         
-        // Get the already uploaded files from the widget
+        // Check if files are currently being uploaded
+        if (state.isCurrentlyUploading) {
+          print('⚠️ Files are currently being uploaded, waiting for completion...');
+          setState(() {
+            uploadStatus = 'Waiting for file uploads to complete...';
+          });
+          
+          // Wait a bit for upload to complete
+          await Future.delayed(Duration(seconds: 2));
+        }
+        
+        // Get the already uploaded files from the widget (NO UPLOAD TRIGGER)
         uploadedFiles = state.getCurrentUploadedFiles();
         
-        print('🚀 Using already uploaded files from auto-upload');
+        print('🚀 Using already uploaded files from auto-upload (NO NEW UPLOAD)');
         print('🚀 Uploaded files: $uploadedFiles');
         print('🚀 Screenshots: ${uploadedFiles['screenshots']?.length ?? 0}');
         print('🚀 Documents: ${uploadedFiles['documents']?.length ?? 0}');
         print('🚀 Voice messages: ${uploadedFiles['voiceMessages']?.length ?? 0}');
         print('🚀 Video files: ${uploadedFiles['videofiles']?.length ?? 0}');
+        
+        // Check if files are actually uploaded
+        final totalUploadedFiles = (uploadedFiles['screenshots']?.length ?? 0) +
+                                 (uploadedFiles['documents']?.length ?? 0) +
+                                 (uploadedFiles['voiceMessages']?.length ?? 0) +
+                                 (uploadedFiles['videofiles']?.length ?? 0);
+        
+        if (totalUploadedFiles == 0) {
+          print('⚠️ No files found in uploaded files. This might indicate files were not auto-uploaded properly.');
+        } else {
+          print('✅ Found $totalUploadedFiles uploaded files ready for submission');
+        }
       } else {
         print('🚀 File upload state not found');
       }
@@ -457,7 +480,7 @@ class _ReportFraudStep2State extends State<ReportFraudStep2> {
           }
 
           setState(() {
-            uploadStatus = 'Successfully saved to backend and local database!';
+            uploadStatus = 'Report submitted successfully! (Files were auto-uploaded when selected)';
           });
         } catch (e) {
           print('❌ Error syncing with backend: $e');
@@ -492,7 +515,7 @@ class _ReportFraudStep2State extends State<ReportFraudStep2> {
           SnackBar(
             content: Text(
               isOnline
-                  ? 'Fraud report successfully submitted and saved locally!'
+                  ? 'Fraud report submitted successfully! (Files were auto-uploaded when selected)'
                   : 'Fraud report saved locally. Will sync when online.',
             ),
             duration: Duration(seconds: 3),
@@ -722,14 +745,9 @@ class _ReportFraudStep2State extends State<ReportFraudStep2> {
                   allowMultipleFiles: true,
                 ),
                 onFilesUploaded: (files) {
-                  print('🚀 Files uploaded successfully: ${files.length} files');
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Files uploaded successfully!'),
-                      backgroundColor: Colors.green,
-                      duration: Duration(seconds: 2),
-                    ),
-                  );
+                  print('🚀 Files auto-uploaded successfully: ${files.length} files');
+                  // Don't show success message for auto-upload to avoid confusion
+                  // The success message will be shown only during final submission
                 },
                 onError: (error) {
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -851,6 +869,694 @@ class _ReportFraudStep2State extends State<ReportFraudStep2> {
 
 
 
+
+
+
+// import 'package:flutter/material.dart';
+// import 'dart:io';
+// import 'package:hive/hive.dart';
+// import 'package:connectivity_plus/connectivity_plus.dart';
+// import 'package:image_picker/image_picker.dart';
+// import 'package:file_picker/file_picker.dart';
+// import 'package:security_alert/screens/Fraud/fraud_report_service.dart';
+// import 'package:shared_preferences/shared_preferences.dart';
+// import 'dart:convert';
+// import 'package:http/http.dart' as http;
+// import 'package:geolocator/geolocator.dart';
+// import 'package:geocoding/geocoding.dart';
+// import '../../services/jwt_service.dart';
+// import '../../services/token_storage.dart';
+// import '../../models/fraud_report_model.dart';
+// import '../../custom/customButton.dart';
+// import '../../custom/customDropdown.dart';
+// import '../../custom/Success_page.dart';
+// import '../../services/api_service.dart';
+// import '../../config/api_config.dart';
+// import '../../custom/fileUpload.dart';
+
+// class ReportFraudStep2 extends StatefulWidget {
+//   final FraudReportModel report;
+//   const ReportFraudStep2({required this.report});
+
+//   @override
+//   State<ReportFraudStep2> createState() => _ReportFraudStep2State();
+// }
+
+// class _ReportFraudStep2State extends State<ReportFraudStep2> {
+//   final _formKey = GlobalKey<FormState>();
+//   String? alertLevel;
+//   String? alertLevelId; // Add alert level ID
+//   List<Map<String, dynamic>> alertLevelOptions =
+//       []; // Store alert level options from API
+//   bool isUploading = false;
+//   String uploadStatus = '';
+//   String? selectedAddress; // Add selected address variable
+
+//   final GlobalKey<FileUploadWidgetState> _fileUploadKey =
+//       GlobalKey<FileUploadWidgetState>(
+//         debugLabel:
+//             'fraud_file_upload_${DateTime.now().millisecondsSinceEpoch}',
+//       );
+
+//   @override
+//   void initState() {
+//     super.initState();
+//     alertLevel = widget.report.alertLevels;
+//     _loadAlertLevels();
+
+//     // Debug: Print received data
+
+//     print('🔍 - Report JSON: ${widget.report.toJson()}');
+//   }
+
+//   Future<void> _loadAlertLevels() async {
+//     try {
+//       // Try to fetch alert levels from backend
+//       try {
+//         final apiService = ApiService();
+//         final alertLevels = await apiService.fetchAlertLevels();
+
+//         if (alertLevels.isNotEmpty) {
+//           if (mounted) {
+//             setState(() {
+//               alertLevelOptions = alertLevels;
+//             });
+//           }
+//         } else {
+//           throw Exception('No alert levels returned from API');
+//         }
+//       } catch (e) {
+//         if (mounted) {
+//           ScaffoldMessenger.of(context).showSnackBar(
+//             SnackBar(
+//               content: Text(
+//                 'Failed to load alert levels from server. Please check your connection and try again.',
+//               ),
+//               backgroundColor: Colors.orange,
+//               duration: Duration(seconds: 5),
+//             ),
+//           );
+//         }
+//       }
+//     } catch (e) {}
+//   }
+
+//   // Debug method to test backend connectivity
+//   Future<void> _testBackendConnectivity() async {
+//     try {
+//       // Test 1: Check if we can reach the backend
+//       final connectivity = await Connectivity().checkConnectivity();
+//       final isOnline = connectivity != ConnectivityResult.none;
+
+//       if (!isOnline) {
+//         ScaffoldMessenger.of(context).showSnackBar(
+//           SnackBar(
+//             content: Text('No internet connection detected'),
+//             backgroundColor: Colors.orange,
+//           ),
+//         );
+//         return;
+//       }
+
+//       // Test 2: Check authentication token
+//       final token = await TokenStorage.getAccessToken();
+
+//       if (token == null || token.isEmpty) {
+//         ScaffoldMessenger.of(context).showSnackBar(
+//           SnackBar(
+//             content: Text('Authentication token not found'),
+//             backgroundColor: Colors.red,
+//           ),
+//         );
+//         return;
+//       }
+
+//       // Test 3: Try a simple API call
+//       try {
+//         final response = await ApiService().fetchAllReports();
+
+//         // ScaffoldMessenger.of(context).showSnackBar(
+//         //   SnackBar(
+//         //     content: Text(
+//         //       'Backend connection successful! Found ${response.length} reports',
+//         //     ),
+//         //     backgroundColor: Colors.green,
+//         //   ),
+//         // );
+//       } catch (e) {
+//         ScaffoldMessenger.of(context).showSnackBar(
+//           SnackBar(
+//             content: Text('Backend connection failed: $e'),
+//             backgroundColor: Colors.red,
+//           ),
+//         );
+//       }
+//     } catch (e) {
+//       ScaffoldMessenger.of(context).showSnackBar(
+//         SnackBar(
+//           content: Text('Connectivity test failed: $e'),
+//           backgroundColor: Colors.red,
+//         ),
+//       );
+//     }
+//   }
+
+//   Future<void> _submitFinalReport() async {
+//     if (alertLevel == null || alertLevel!.isEmpty) {
+//       ScaffoldMessenger.of(context).showSnackBar(
+//         SnackBar(
+//           content: Text('Please select an alert severity level'),
+//           backgroundColor: Colors.red,
+//         ),
+//       );
+//       return;
+//     }
+
+//     setState(() {
+//       isUploading = true;
+//       uploadStatus = 'Preparing report submission...';
+//     });
+
+//     try {
+//       // Test backend connectivity first
+//       await _testBackendConnectivity();
+
+//       // Use already uploaded files from FileUploadWidget (auto-upload enabled)
+//       Map<String, dynamic> uploadedFiles = {
+//         'screenshots': [],
+//         'documents': [],
+//         'voiceMessages': [],
+//         'videofiles': [],
+//       };
+
+//       // Get uploaded files from FileUploadWidget (auto-upload enabled)
+//       if (_fileUploadKey.currentState != null) {
+//         final state = _fileUploadKey.currentState!;
+
+//         // Get the already uploaded files from the widget
+//         uploadedFiles = state.getCurrentUploadedFiles();
+//       } else {}
+
+//       // Extract file data for backend submission and URLs for local storage
+//       final screenshots = (uploadedFiles['screenshots'] as List)
+//           .cast<Map<String, dynamic>>();
+
+//       final documents = (uploadedFiles['documents'] as List)
+//           .cast<Map<String, dynamic>>();
+
+//       final voiceMessages = (uploadedFiles['voiceMessages'] as List)
+//           .cast<Map<String, dynamic>>();
+
+//       final videofiles = (uploadedFiles['videofiles'] as List)
+//           .cast<Map<String, dynamic>>();
+
+//       // Extract URLs for local model storage
+//       final screenshotUrls = screenshots
+//           .map((f) => f['url']?.toString() ?? '')
+//           .where((url) => url.isNotEmpty)
+//           .toList();
+
+//       final documentUrls = documents
+//           .map((f) => f['url']?.toString() ?? '')
+//           .where((url) => url.isNotEmpty)
+//           .toList();
+
+//       final voiceMessageUrls = voiceMessages
+//           .map((f) => f['url']?.toString() ?? '')
+//           .where((url) => url.isNotEmpty)
+//           .toList();
+
+//       // Check connectivity
+//       final connectivity = await Connectivity().checkConnectivity();
+//       final isOnline = connectivity != ConnectivityResult.none;
+
+//       // Validate alert level ID before submission
+//       if (alertLevelId == null || alertLevelId!.isEmpty) {
+//         ScaffoldMessenger.of(context).showSnackBar(
+//           SnackBar(
+//             content: Text('Please select an alert severity level'),
+//             backgroundColor: Colors.red,
+//           ),
+//         );
+//         setState(() {
+//           isUploading = false;
+//         });
+//         return;
+//       }
+
+//       // Prepare form data for backend submission - EXACT FORMAT MATCH
+//       final formData = {
+//         // Required fields with exact backend format
+//         'reportCategoryId': widget.report.reportCategoryId,
+//         'reportTypeId': widget.report.reportTypeId,
+//         'alertLevels':
+//             alertLevelId, // This should be the alert level ID, not name
+//         'keycloackUserId':
+//             await JwtService.getCurrentUserId() ??
+//             widget.report.keycloakUserId ??
+//             '',
+//         'createdBy':
+//             await JwtService.getCurrentUserEmail() ??
+//             await JwtService.getCurrentUserId() ??
+//             widget.report.keycloakUserId ??
+//             '',
+//         'isActive': true,
+//         'location': await _getCurrentLocation(), // Dynamic coordinates
+//         'phoneNumbers': widget.report.phoneNumbers ?? [],
+//         'emails': widget.report.emails ?? [],
+//         'mediaHandles': widget.report.socialMediaHandles ?? [],
+//         'website': widget.report.website ?? '',
+//         'currency': widget.report.currency ?? 'INR',
+//         'moneyLost': widget.report.amountInvolved?.toString() ?? '0',
+//         'reportOutcome': false,
+//         'description': widget.report.description ?? '',
+//         'incidentDate':
+//             widget.report.incidentDateTime?.toUtc().toIso8601String() ??
+//             DateTime.now().toUtc().toIso8601String(),
+//         'fraudsterName': widget.report.fraudsterName ?? '',
+//         'companyName': widget.report.companyName ?? '',
+//         'screenshots': screenshots,
+//         'voiceMessages': voiceMessages,
+//         'documents': documents,
+//         'videofiles': videofiles,
+//         'createdAt':
+//             widget.report.createdAt?.toUtc().toIso8601String() ??
+//             DateTime.now().toUtc().toIso8601String(),
+//         'updatedAt': DateTime.now().toUtc().toIso8601String(),
+//       };
+
+//       // Validate arrays are not empty
+//       if (widget.report.phoneNumbers?.isEmpty ?? true) {}
+//       if (widget.report.emails?.isEmpty ?? true) {}
+//       if (widget.report.socialMediaHandles?.isEmpty ?? true) {}
+
+//       // Verify files are included in form data
+//       final totalFiles =
+//           (formData['screenshots'] as List).length +
+//           (formData['voiceMessages'] as List).length +
+//           (formData['documents'] as List).length +
+//           (formData['videofiles'] as List).length;
+
+//       if (totalFiles == 0) {
+//       } else {}
+
+//       // Create updated report model with all data including uploaded files
+//       final updatedReport = widget.report.copyWith(
+//         alertLevels: alertLevel,
+//         screenshots: screenshotUrls,
+//         documents: documentUrls,
+//         voiceMessages: voiceMessageUrls,
+//         // videofiles : videofiles,
+//         updatedAt: DateTime.now(),
+//         isSynced: isOnline, // Mark as synced if online
+//       );
+
+//       // Save to local thread database first (offline-first approach)
+//       setState(() {
+//         uploadStatus = 'Saving to local database...';
+//       });
+
+//       final box = Hive.box<FraudReportModel>('fraud_reports');
+
+//       if (updatedReport.isInBox) {
+//         await FraudReportService.updateReport(updatedReport);
+//       } else {
+//         await FraudReportService.saveReportOffline(updatedReport);
+//       }
+
+//       // Verify the save by reading back the data
+//       final allReports = box.values.toList();
+
+//       if (allReports.isNotEmpty) {
+//         final lastReport = allReports.last;
+//       }
+
+//       // Additional verification - check if we can read the data back
+
+//       final verificationBox = Hive.box<FraudReportModel>('fraud_reports');
+//       final allStoredReports = verificationBox.values.toList();
+
+//       // Test thread database visibility
+
+//       await _testThreadDatabaseVisibility();
+
+//       // Submit to backend if online - TEMPORARILY BYPASS CONNECTIVITY TEST
+//       if (isOnline) {
+//         try {
+//           setState(() {
+//             uploadStatus = 'Submitting to backend...';
+//           });
+
+//           // Use API service method like scam report
+//           await ApiService().submitFraudReport(formData);
+
+//           // Update local report to mark as synced
+//           final syncedReport = updatedReport.copyWith(isSynced: true);
+//           if (syncedReport.isInBox) {
+//             await FraudReportService.updateReport(syncedReport);
+//           } else {
+//             await FraudReportService.saveReportOffline(syncedReport);
+//           }
+
+//           setState(() {
+//             uploadStatus = 'Successfully saved to backend and local database!';
+//           });
+//         } catch (e) {
+//           setState(() {
+//             uploadStatus =
+//                 'Saved locally, but backend sync failed. Will retry later.';
+//           });
+//         }
+//       } else {
+//         setState(() {
+//           uploadStatus = 'Saved to local database. Will sync when online.';
+//         });
+//       }
+
+//       setState(() {
+//         isUploading = false;
+//       });
+
+//       // Show success message and navigate
+//       if (mounted) {
+//         Navigator.pushAndRemoveUntil(
+//           context,
+//           MaterialPageRoute(
+//             builder: (_) => const ReportSuccess(label: 'Fraud Report'),
+//           ),
+//           (route) => false,
+//         );
+
+//         ScaffoldMessenger.of(context).showSnackBar(
+//           SnackBar(
+//             content: Text(
+//               isOnline
+//                   ? 'Fraud report successfully submitted and saved locally!'
+//                   : 'Fraud report saved locally. Will sync when online.',
+//             ),
+//             duration: Duration(seconds: 3),
+//             backgroundColor: Colors.green,
+//           ),
+//         );
+//       }
+//     } catch (e, stack) {
+//       setState(() {
+//         isUploading = false;
+//         uploadStatus = '';
+//       });
+
+//       ScaffoldMessenger.of(context).showSnackBar(
+//         SnackBar(
+//           content: Text('Error submitting report: $e'),
+//           backgroundColor: Colors.red,
+//           duration: Duration(seconds: 5),
+//         ),
+//       );
+//     }
+//   }
+
+//   // Add method to validate form before submission
+//   bool _validateForm() {
+//     if (alertLevel == null || alertLevel!.isEmpty) {
+//       ScaffoldMessenger.of(context).showSnackBar(
+//         SnackBar(
+//           content: Text('Please select an alert severity level'),
+//           backgroundColor: Colors.red,
+//         ),
+//       );
+//       return false;
+//     }
+//     return true;
+//   }
+
+//   // Add method to get current location dynamically
+//   Future<Map<String, dynamic>> _getCurrentLocation() async {
+//     try {
+//       // Check if location services are enabled
+//       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+//       if (!serviceEnabled) {
+//         return {
+//           'type': 'Point',
+//           'coordinates': [0.0, 0.0], // Fallback coordinates
+//           'address': 'Location services disabled',
+//         };
+//       }
+
+//       // Check location permission
+//       LocationPermission permission = await Geolocator.checkPermission();
+//       if (permission == LocationPermission.denied) {
+//         permission = await Geolocator.requestPermission();
+//         if (permission == LocationPermission.denied) {
+//           return {
+//             'type': 'Point',
+//             'coordinates': [0.0, 0.0], // Fallback coordinates
+//             'address':
+//                 'Location permission denied - Please grant location access',
+//           };
+//         }
+//       }
+
+//       if (permission == LocationPermission.deniedForever) {
+//         // Try to open app settings
+//         try {
+//           await Geolocator.openAppSettings();
+//         } catch (e) {}
+
+//         return {
+//           'type': 'Point',
+//           'coordinates': [0.0, 0.0], // Fallback coordinates
+//           'address':
+//               'Location permission denied forever - Please enable in app settings',
+//         };
+//       }
+
+//       if (permission == LocationPermission.unableToDetermine) {
+//         return {
+//           'type': 'Point',
+//           'coordinates': [0.0, 0.0], // Fallback coordinates
+//           'address': 'Location permission denied',
+//         };
+//       }
+
+//       // Step 3: Get current position with better error handling
+//       Position? position;
+//       try {
+//         position = await Geolocator.getCurrentPosition(
+//           desiredAccuracy: LocationAccuracy.high,
+//           timeLimit: const Duration(seconds: 15), // Increased timeout
+//         );
+//       } catch (e) {
+//         // Try with lower accuracy as fallback
+//         try {
+//           position = await Geolocator.getCurrentPosition(
+//             desiredAccuracy: LocationAccuracy.medium,
+//             timeLimit: const Duration(seconds: 10),
+//           );
+//         } catch (e2) {
+//           // Try to get last known position as final fallback
+//           try {
+//             position = await Geolocator.getLastKnownPosition();
+//             if (position != null) {
+//             } else {}
+//           } catch (e3) {}
+//         }
+//       }
+
+//       if (position == null) {
+//         return {
+//           'type': 'Point',
+//           'coordinates': [0.0, 0.0], // Fallback coordinates
+//           'address':
+//               'Could not obtain location - Check device GPS and try again',
+//         };
+//       }
+
+//       // Get real address using geocoding
+//       String address = '${position.latitude}, ${position.longitude}';
+
+//       try {
+//         List<Placemark> placemarks = await placemarkFromCoordinates(
+//           position.latitude,
+//           position.longitude,
+//         );
+
+//         if (placemarks.isNotEmpty) {
+//           Placemark placemark = placemarks[0];
+//           address = [
+//             placemark.street,
+//             placemark.subLocality,
+//             placemark.locality,
+//             placemark.administrativeArea,
+//             placemark.country,
+//           ].where((e) => e != null && e.isNotEmpty).join(', ');
+//         }
+//       } catch (e) {
+//         // Keep the coordinates as fallback
+//         address = '${position.latitude}, ${position.longitude}';
+//       }
+
+//       return {
+//         'type': 'Point',
+//         'coordinates': [
+//           position.longitude,
+//           position.latitude,
+//         ], // [lng, lat] format
+//         'address': address,
+//       };
+//     } catch (e) {
+//       return {
+//         'type': 'Point',
+//         'coordinates': [0.0, 0.0], // Fallback coordinates
+//         'address': 'Location services disabled',
+//       };
+//     }
+//   }
+
+//   // Add a test method to verify thread database visibility
+//   Future<void> _testThreadDatabaseVisibility() async {
+//     final box = Hive.box<FraudReportModel>('fraud_reports');
+//     final allReports = box.values.toList();
+//   }
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return Scaffold(
+//       appBar: AppBar(title: const Text('Upload Evidence')),
+//       body: Padding(
+//         padding: const EdgeInsets.all(20),
+//         child: Form(
+//           key: _formKey,
+//           child: ListView(
+//             children: [
+//               FileUploadWidget(
+//                 key: _fileUploadKey,
+//                 config: FileUploadConfig(
+//                   reportType: 'fraud',
+//                   reportId:
+//                       widget.report.id ?? FileUploadService.generateObjectId(),
+//                   autoUpload: true, // Enable auto-upload
+//                   showProgress: true,
+//                   allowMultipleFiles: true,
+//                 ),
+//                 onFilesUploaded: (files) {
+//                   ScaffoldMessenger.of(context).showSnackBar(
+//                     SnackBar(
+//                       content: Text('Files uploaded successfully!'),
+//                       backgroundColor: Colors.green,
+//                       duration: Duration(seconds: 2),
+//                     ),
+//                   );
+//                 },
+//                 onError: (error) {
+//                   ScaffoldMessenger.of(context).showSnackBar(
+//                     SnackBar(
+//                       content: Text('File upload error: $error'),
+//                       backgroundColor: Colors.red,
+//                     ),
+//                   );
+//                 },
+//               ),
+
+//               const SizedBox(height: 20),
+//               CustomDropdown(
+//                 label: 'Alert Severity *',
+//                 hint: 'Select severity (Required)',
+//                 items: alertLevelOptions.isNotEmpty
+//                     ? alertLevelOptions
+//                           .map((level) => level['name'] as String)
+//                           .toList()
+//                     : ['Loading...'],
+//                 value: alertLevel,
+//                 onChanged: (val) {
+//                   setState(() {
+//                     alertLevel = val;
+//                     // Find the corresponding ID
+//                     if (val != null && alertLevelOptions.isNotEmpty) {
+//                       try {
+//                         final selectedLevel = alertLevelOptions.firstWhere(
+//                           (level) => level['name'] == val,
+//                           orElse: () => <String, dynamic>{},
+//                         );
+//                         if (selectedLevel.isNotEmpty) {
+//                           alertLevelId = selectedLevel['_id'];
+//                           print(
+//                             '✅ Selected alert level: $val with ID: $alertLevelId',
+//                           );
+//                         } else {
+//                           print(
+//                             '❌ Available options: ${alertLevelOptions.map((e) => e['name']).toList()}',
+//                           );
+//                           alertLevelId = null;
+//                         }
+//                       } catch (e) {
+//                         alertLevelId = null;
+//                       }
+//                     } else {
+//                       alertLevelId = null;
+//                     }
+//                   });
+//                 },
+//               ),
+//               const SizedBox(height: 10),
+
+//               if (uploadStatus.isNotEmpty) ...[
+//                 Container(
+//                   padding: const EdgeInsets.all(12),
+//                   margin: const EdgeInsets.only(bottom: 10),
+//                   decoration: BoxDecoration(
+//                     color: Colors.blue.shade50,
+//                     border: Border.all(color: Colors.blue.shade200),
+//                     borderRadius: BorderRadius.circular(8),
+//                   ),
+//                   child: Row(
+//                     children: [
+//                       Icon(Icons.info_outline, color: Colors.blue.shade600),
+//                       const SizedBox(width: 8),
+//                       Expanded(
+//                         child: Text(
+//                           uploadStatus,
+//                           style: TextStyle(
+//                             color: Colors.blue.shade700,
+//                             fontWeight: FontWeight.w500,
+//                           ),
+//                         ),
+//                       ),
+//                     ],
+//                   ),
+//                 ),
+//               ],
+
+//               // // Debug button to test connectivity
+//               // if (!isUploading) ...[
+//               //   Container(
+//               //     margin: const EdgeInsets.only(bottom: 10),
+//               //     child: CustomButton(
+//               //       text: 'Test Backend Connection',
+//               //       onPressed: () async {
+//               //         await _testBackendConnectivity();
+//               //       },
+//               //       fontWeight: FontWeight.normal,
+//               //     ),
+//               //   ),
+//               // ],
+//               CustomButton(
+//                 text: isUploading ? 'Submitting Report...' : 'Submit Report',
+//                 onPressed: isUploading
+//                     ? null
+//                     : () async {
+//                         if (_validateForm()) {
+//                           await _submitFinalReport();
+//                         }
+//                       },
+//                 fontWeight: FontWeight.normal,
+//               ),
+//             ],
+//           ),
+//         ),
+//       ),
+//     );
+//   }
+// }
 
 // import 'package:flutter/material.dart';
 // import 'dart:io';

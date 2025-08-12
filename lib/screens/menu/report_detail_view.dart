@@ -852,7 +852,6 @@ class _ReportDetailViewState extends State<ReportDetailView> {
   //   );
   // }
 
-
   Widget _buildFinancialDetailsSection() {
     final report = widget.report;
     List<Widget> children = [];
@@ -1110,8 +1109,6 @@ class _ReportDetailViewState extends State<ReportDetailView> {
 
     children.add(_buildInfoRow('Created At', _formatDateTime(createdAt)));
     // children.add(_buildInfoRow('Last Updated', _formatDateTime(updatedAt)));
-  
-
 
     //    if (report['location'] != null) {
     //   final location = report['location'];
@@ -3026,14 +3023,14 @@ class _ReportDetailViewState extends State<ReportDetailView> {
               Expanded(
                 child: Text(
                   filename,
-                  style: TextStyle(
-                    fontWeight: FontWeight.w500,
-                    fontSize: 14,
-                  ),
+                  style: TextStyle(fontWeight: FontWeight.w500, fontSize: 14),
                 ),
               ),
               IconButton(
-                icon: Icon(Icons.play_circle_filled, color: Colors.purple.shade600),
+                icon: Icon(
+                  Icons.play_circle_filled,
+                  color: Colors.purple.shade600,
+                ),
                 onPressed: () {
                   _showVideoPlayer(context, url, filename);
                 },
@@ -3044,10 +3041,7 @@ class _ReportDetailViewState extends State<ReportDetailView> {
           SizedBox(height: 8),
           Text(
             'Video File',
-            style: TextStyle(
-              color: Colors.grey[600],
-              fontSize: 12,
-            ),
+            style: TextStyle(color: Colors.grey[600], fontSize: 12),
           ),
         ],
       ),
@@ -3098,8 +3092,10 @@ class _VideoPlayerDialogState extends State<VideoPlayerDialog> {
       });
 
       // Initialize video player controller
-      _videoPlayerController = VideoPlayerController.networkUrl(Uri.parse(widget.videoUrl));
-      
+      _videoPlayerController = VideoPlayerController.networkUrl(
+        Uri.parse(widget.videoUrl),
+      );
+
       // Wait for the controller to initialize
       await _videoPlayerController!.initialize();
 
@@ -3113,9 +3109,7 @@ class _VideoPlayerDialogState extends State<VideoPlayerDialog> {
         showControls: true,
         placeholder: Container(
           color: Colors.black,
-          child: Center(
-            child: CircularProgressIndicator(color: Colors.white),
-          ),
+          child: Center(child: CircularProgressIndicator(color: Colors.white)),
         ),
         errorBuilder: (context, errorMessage) {
           return Center(
@@ -3220,40 +3214,43 @@ class _VideoPlayerDialogState extends State<VideoPlayerDialog> {
                       ),
                     )
                   : _errorMessage.isNotEmpty
-                      ? Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.error, color: Colors.white, size: 48),
-                              SizedBox(height: 16),
-                              Text(
-                                'Error',
-                                style: TextStyle(color: Colors.white, fontSize: 16),
-                              ),
-                              SizedBox(height: 8),
-                              Text(
-                                _errorMessage,
-                                style: TextStyle(color: Colors.white70, fontSize: 12),
-                                textAlign: TextAlign.center,
-                              ),
-                              SizedBox(height: 16),
-                              ElevatedButton(
-                                onPressed: () {
-                                  _initializeVideoPlayer();
-                                },
-                                child: Text('Retry'),
-                              ),
-                            ],
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.error, color: Colors.white, size: 48),
+                          SizedBox(height: 16),
+                          Text(
+                            'Error',
+                            style: TextStyle(color: Colors.white, fontSize: 16),
                           ),
-                        )
-                      : _chewieController != null
-                          ? Chewie(controller: _chewieController!)
-                          : Center(
-                              child: Text(
-                                'Video player not available',
-                                style: TextStyle(color: Colors.white),
-                              ),
+                          SizedBox(height: 8),
+                          Text(
+                            _errorMessage,
+                            style: TextStyle(
+                              color: Colors.white70,
+                              fontSize: 12,
                             ),
+                            textAlign: TextAlign.center,
+                          ),
+                          SizedBox(height: 16),
+                          ElevatedButton(
+                            onPressed: () {
+                              _initializeVideoPlayer();
+                            },
+                            child: Text('Retry'),
+                          ),
+                        ],
+                      ),
+                    )
+                  : _chewieController != null
+                  ? Chewie(controller: _chewieController!)
+                  : Center(
+                      child: Text(
+                        'Video player not available',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ),
             ),
           ],
         ),
@@ -3261,27 +3258,6 @@ class _VideoPlayerDialogState extends State<VideoPlayerDialog> {
     );
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 // import 'package:flutter/material.dart';
 // import 'package:flutter/services.dart';

@@ -1,11 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:security_alert/screens/menu/profile_page.dart';
-import 'package:security_alert/screens/subscriptionPage/subscription_plans_page.dart';
-import 'package:security_alert/screens/menu/theard_database.dart';
 import 'package:security_alert/provider/auth_provider.dart';
 import 'package:security_alert/screens/login.dart';
-import 'package:security_alert/services/api_service.dart';
 
 import '../../custom/Image/image.dart';
 import 'drawer_menu_item.dart';
@@ -67,7 +63,7 @@ class DashboardDrawer extends StatelessWidget {
             ),
             DrawerMenuItem(
               ImagePath: ImagePath.thread,
-              label: 'Thread Database',
+              label: 'Thread',
               routeName: '/thread',
               textColor: Colors.black,
               iconColor: Colors.black,
@@ -115,6 +111,7 @@ class DashboardDrawer extends StatelessWidget {
                 );
               },
             ),
+           
             const SizedBox(height: 16),
           ],
         ),

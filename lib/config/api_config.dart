@@ -81,11 +81,6 @@ class ApiConfig {
   // For development/testing purposes
   static const bool enableLogging = true;
 
-  // Get full URL for an endpoint
-  // static String getUrl(String endpoint) {
-  //   return '$baseUrl$endpoint';
-  // }
-
   static String getAuthUrl(String endpoint) {
     return '$authBaseUrl$endpoint';
   }

@@ -98,18 +98,18 @@ class DioService {
 
             // Add logging if enabled
             if (ApiConfig.enableLogging) {
-              print('🌐 API Request: ${options.method} ${options.path}');
-              print('🌐 Full URL: ${options.uri}');
-              print('🌐 Base URL: ${ApiConfig.authBaseUrl}');
-              print('📋 Headers: ${options.headers}');
+
+
+
+
               if (options.data != null) {
-                print('📦 Data: ${options.data}');
+
               }
             }
 
             handler.next(options);
           } catch (e) {
-            print('❌ Error in request interceptor: $e');
+
             handler.next(options); // still proceed
           }
         },
@@ -118,7 +118,7 @@ class DioService {
             print(
               '✅ API Response: ${response.statusCode} ${response.requestOptions.path}',
             );
-            print('📄 Response Data: ${response.data}');
+
           }
           handler.next(response);
         },
@@ -127,11 +127,11 @@ class DioService {
             print(
               '❌ API Error: ${error.response?.statusCode} ${error.requestOptions.path}',
             );
-            print('🌐 Full Error URL: ${error.requestOptions.uri}');
-            print('🚨 Error Message: ${error.message}');
-            print('📄 Error Response: ${error.response?.data}');
-            print('📋 Error Headers: ${error.response?.headers}');
-            print('📦 Error Request Data: ${error.requestOptions.data}');
+
+
+
+
+
           }
 
           // Handle 401 Unauthorized with token refresh
@@ -153,7 +153,7 @@ class DioService {
   ) async {
     await _refreshLock.synchronized(() async {
       try {
-        print('🔄 Attempting token refresh...');
+
 
         // If token was already refreshed by another waiting request, reuse it
         final currentAccess = await TokenStorage.getAccessToken();
@@ -174,7 +174,7 @@ class DioService {
         }
 
         if (refreshToken == null || refreshToken.isEmpty) {
-          print('❌ No refresh token available');
+
           await _clearAllTokens();
           return handler.next(error);
         }
@@ -215,7 +215,7 @@ class DioService {
           }
 
           _cachedAccessToken = newAccessToken;
-          print('✅ Token refresh successful');
+
 
           // Retry original request with new token
           final requestOptions = error.requestOptions;
@@ -226,16 +226,16 @@ class DioService {
             final retryResponse = await dio.fetch(requestOptions);
             return handler.resolve(retryResponse);
           } catch (retryError) {
-            print('❌ Retry request failed: $retryError');
+
             return handler.next(error);
           }
         } else {
-          print('❌ Invalid refresh response');
+
           await _clearAllTokens();
           return handler.next(error);
         }
       } catch (e) {
-        print('❌ Token refresh failed: $e');
+
         await _clearAllTokens();
         return handler.next(error);
       }
@@ -253,9 +253,9 @@ class DioService {
       await prefs.remove('refresh_token');
       await prefs.remove('id_token');
 
-      print('🗑️ All tokens cleared');
+
     } catch (e) {
-      print('❌ Error clearing tokens: $e');
+
     }
   }
 
@@ -389,24 +389,24 @@ class DioService {
 
   // Test method to verify interceptor functionality
   Future<void> testInterceptor() async {
-    print('🔍 Testing Unified Interceptor...');
+
 
     try {
       // Test 1: Check if token is attached to requests
-      print('📝 Test 1: Checking token attachment...');
+
       final token = await TokenStorage.getAccessToken();
-      print('Current token: ${token != null ? 'Present' : 'Not present'}');
+
 
       // Test 2: Make a request to see interceptor logs
-      print('📝 Test 2: Making test request...');
+
       final response = await mainApi.get('/dashboard/stats');
-      print('✅ Test request successful: ${response.statusCode}');
+
     } catch (e) {
-      print('❌ Test failed: $e');
+
 
       // Test 3: Check if 401 handling works
       if (e.toString().contains('401')) {
-        print('📝 Test 3: 401 error detected - checking refresh logic...');
+
         final newToken = await TokenStorage.getAccessToken();
         print(
           'Token after 401: ${newToken != null ? 'Present' : 'Not present'}',
@@ -423,9 +423,9 @@ final dioService = DioService();
 Future<void> fetchUsers() async {
   try {
     final response = await dioService.get('/users');
-    print('Users: ${response.data}');
+
   } catch (e) {
-    print("Error fetching users: $e");
+
   }
 }
 
@@ -438,9 +438,9 @@ Future<void> uploadImage(String imagePath) async {
     );
 
     final response = await dioService.uploadFile('/upload', formData);
-    print('Upload response: ${response.data}');
+
   } catch (e) {
-    print("Error uploading image: $e");
+
   }
 }
 

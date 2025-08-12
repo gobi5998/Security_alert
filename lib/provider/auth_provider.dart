@@ -40,20 +40,20 @@ class AuthProvider with ChangeNotifier {
           );
           _isLoggedIn = true;
           _errorMessage = '';
-          print('User is logged in: ${_currentUser?.username}');
+
         } else {
-          print('Token validation failed: Invalid token');
+
           // Token is invalid, clear it
           await _clearAllData();
         }
       } else {
-        print('No auth token found');
+
         _isLoggedIn = false;
         _currentUser = null;
         _errorMessage = '';
       }
     } catch (e) {
-      print('Error checking auth status: $e');
+
       _isLoggedIn = false;
       _currentUser = null;
       _errorMessage = '';
@@ -70,7 +70,7 @@ class AuthProvider with ChangeNotifier {
       notifyListeners();
 
       final response = await _apiService.login(username, password);
-      print('Login API response: $response');
+
 
       if (response == null) {
         throw Exception('Invalid response from server');
@@ -101,20 +101,20 @@ class AuthProvider with ChangeNotifier {
         if (isBiometricAvailable) {
           // Set a flag to show biometric setup dialog
           await prefs.setBool('show_biometric_setup', true);
-          print('🔐 Biometric available but not enabled - will show setup dialog');
+
         }
       }
       
-      print('🔐 Login successful for user: ${_currentUser?.username}');
-      print('🔐 Login state - isLoggedIn: $_isLoggedIn');
+
+
 
       return true;
     } catch (e) {
       _errorMessage = e.toString().replaceAll('Exception: ', '');
       _isLoggedIn = false;
       _currentUser = null;
-      print('🔐 Login failed: $_errorMessage');
-      print('🔐 Login state after failure - isLoggedIn: $_isLoggedIn');
+
+
       return false;
     } finally {
       _isLoading = false;
@@ -178,14 +178,14 @@ class AuthProvider with ChangeNotifier {
       // Enable biometric after successful registration
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool('biometric_enabled', true);
-      print('Registration successful for user: ${_currentUser?.username}');
+
 
       return true;
     } catch (e) {
       _errorMessage = e.toString().replaceAll('Exception: ', '');
       _isLoggedIn = false;
       _currentUser = null;
-      print('Registration failed: $_errorMessage');
+
       return false;
     } finally {
       _isLoading = false;
@@ -218,7 +218,7 @@ class AuthProvider with ChangeNotifier {
       _isLoggedIn = false;
       _currentUser = null;
       _errorMessage = '';
-      print('All data cleared, user logged out');
+
       notifyListeners(); // Ensure listeners are notified of the state change
     } catch (e) {
       print('Error clearing data: ${e.toString()}');
@@ -248,15 +248,15 @@ class AuthProvider with ChangeNotifier {
           );
           _isLoggedIn = true;
           _errorMessage = '';
-          print('Login state restored for user: ${_currentUser?.username}');
+
           notifyListeners();
         } else {
-          print('Failed to restore login state: Invalid token');
+
           await _clearAllData();
         }
       }
     } catch (e) {
-      print('Error restoring login state: $e');
+
       await _clearAllData();
     }
   }
@@ -269,7 +269,7 @@ class AuthProvider with ChangeNotifier {
   // Set user data from API response (for auto-login)
   Future<void> setUserData(Map<String, dynamic> userData) async {
     try {
-      print('🔐 Setting user data from API response: $userData');
+
       
       // Extract user information from the API response
       String userId = '';
@@ -309,10 +309,10 @@ class AuthProvider with ChangeNotifier {
       _isLoggedIn = true;
       _errorMessage = '';
       
-      print('🔐 User data set successfully: ${_currentUser?.username}');
+
       notifyListeners();
     } catch (e) {
-      print('🔐 Error setting user data: $e');
+
       _isLoggedIn = false;
       _currentUser = null;
       _errorMessage = 'Failed to set user data: $e';

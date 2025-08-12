@@ -83,7 +83,7 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
         });
       }
     } catch (e) {
-      print('Error getting current location: $e');
+
     } finally {
       setState(() {
         _isLoadingCurrentLocation = false;
@@ -125,7 +125,7 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
         _isSearching = false;
       });
     } catch (e) {
-      print('Error searching places: $e');
+
       setState(() {
         _searchResults = [];
         _isSearching = false;

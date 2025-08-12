@@ -27,7 +27,7 @@ class AuthInterceptor extends Interceptor {
       options.headers.addAll(ApiConfig.defaultHeaders);
 
       if (ApiConfig.enableLogging) {
-        print('→ [Request] ${options.method} ${options.uri}');
+
       }
       handler.next(options);
     } catch (e) {
@@ -91,20 +91,20 @@ class AuthInterceptor extends Interceptor {
             }
             _cachedAccessToken = newAccess;
             if (ApiConfig.enableLogging) {
-              print('✔ Token refreshed successfully.');
+
             }
           } else {
             // Invalid refresh response; clear everything
             await TokenStorage.clearAllTokens();
             if (ApiConfig.enableLogging) {
-              print('✖ Token refresh response invalid.');
+
             }
           }
         } catch (e) {
           // Refresh failed
           await TokenStorage.clearAllTokens();
           if (ApiConfig.enableLogging) {
-            print('✖ Token refresh failed: $e');
+
           }
         }
       });

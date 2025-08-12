@@ -105,7 +105,7 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
 
   Future<void> _testApiConnection() async {
     try {
-      print('🧪 Testing API connection for reports...');
+
       print(
         '🧪 Using URL: ${ApiConfig.reportsBaseUrl}${ApiConfig.reportSecurityIssueEndpoint}',
       );
@@ -114,21 +114,21 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
         ReportsFilter(page: 1, limit: 10),
       );
 
-      print('✅ API test successful - found ${response.length} reports');
+
 
       if (response.isNotEmpty) {
-        print('📋 First report: ${response.first}');
+
       }
     } catch (e) {
-      print('❌ API test failed: $e');
+
     }
   }
 
   List<Map<String, dynamic>> _removeDuplicatesAndSort(
     List<Map<String, dynamic>> reports,
   ) {
-    print('🔍 Starting duplicate removal and sorting...');
-    print('🔍 Original reports count: ${reports.length}');
+
+
 
     // Create a map to track unique reports by ID
     final Map<String, Map<String, dynamic>> uniqueReports = {};
@@ -141,7 +141,7 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
         // If we haven't seen this ID before, or if this report is newer
         if (!uniqueReports.containsKey(reportId)) {
           uniqueReports[reportId] = report;
-          print('✅ Added unique report: $reportId');
+
         } else {
           // Check if this report is newer than the existing one
           final existingReport = uniqueReports[reportId]!;
@@ -150,9 +150,9 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
 
           if (newDate.isAfter(existingDate)) {
             uniqueReports[reportId] = report;
-            print('🔄 Updated report with newer version: $reportId');
+
           } else {
-            print('⏭️ Skipped older duplicate: $reportId');
+
           }
         }
       } else {
@@ -160,7 +160,7 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
         final key = '${report['description']}_${report['createdAt']}';
         if (!uniqueReports.containsKey(key)) {
           uniqueReports[key] = report;
-          print('✅ Added report without ID: $key');
+
         }
       }
     }
@@ -173,7 +173,7 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
       return dateB.compareTo(dateA); // Newest first
     });
 
-    print('🔍 After duplicate removal: ${sortedReports.length} reports');
+
     print(
       '🔍 First report date: ${sortedReports.isNotEmpty ? _parseDateTime(sortedReports.first['createdAt']) : 'No reports'}',
     );
@@ -186,7 +186,7 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
 
   // Add debug method to help identify timestamp issues
   void _debugTimestampIssues() {
-    print('🔍 Debugging timestamp issues...');
+
     print('🔍 Current local time: ${DateTime.now()}');
     print('🔍 Current UTC time: ${DateTime.now().toUtc()}');
     print('🔍 Current ISO string: ${DateTime.now().toIso8601String()}');
@@ -196,20 +196,20 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
 
     // Check a few sample reports
     if (_filteredReports.isNotEmpty) {
-      print('🔍 Sample report timestamps:');
+
       for (int i = 0; i < _filteredReports.length && i < 3; i++) {
         final report = _filteredReports[i];
         final createdAt = report['createdAt'];
-        print('🔍 Report $i:');
-        print('🔍   - Raw createdAt: $createdAt');
-        print('🔍   - Type: ${createdAt.runtimeType}');
+
+
+
         if (createdAt is String) {
           try {
             final parsed = DateTime.parse(createdAt);
-            print('🔍   - Parsed: $parsed');
+
             print('🔍   - Parsed UTC: ${parsed.toUtc()}');
           } catch (e) {
-            print('🔍   - Parse error: $e');
+
           }
         }
       }
@@ -218,7 +218,7 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
 
   // Add method to clear database and recreate with proper timestamps
   Future<void> _clearAndRecreateDatabase() async {
-    print('🧹 Clearing database to fix timestamp issues...');
+
 
     try {
       // Clear all Hive boxes
@@ -230,7 +230,7 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
       await fraudBox.clear();
       await malwareBox.clear();
 
-      print('✅ Database cleared successfully');
+
 
       // Reload data
       await _initializeData();
@@ -247,7 +247,7 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
         );
       }
     } catch (e) {
-      print('❌ Error clearing database: $e');
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -270,15 +270,15 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
     if (dateValue is String) {
       try {
         final parsed = DateTime.parse(dateValue);
-        print('🔍 Parsed date: $parsed from string: $dateValue');
+
         return parsed;
       } catch (e) {
-        print('❌ Error parsing date string: $dateValue, error: $e');
+
         return DateTime.now();
       }
     }
 
-    print('❌ Unknown date type: ${dateValue.runtimeType}');
+
     return DateTime.now();
   }
 
@@ -481,19 +481,19 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
           widget.hasSelectedSeverity;
 
       if (hasFilters) {
-        print('🔍 ThreadDB Debug - hasFilters: $hasFilters');
-        print('🔍 ThreadDB Debug - searchQuery: ${widget.searchQuery}');
+
+
         print(
           '🔍 ThreadDB Debug - selectedCategories: ${widget.selectedCategories}',
         );
-        print('🔍 ThreadDB Debug - selectedTypes: ${widget.selectedTypes}');
+
         print(
           '🔍 ThreadDB Debug - selectedSeverities: ${widget.selectedSeverities}',
         );
         print(
           '🔍 ThreadDB Debug - hasSelectedCategory: ${widget.hasSelectedCategory}',
         );
-        print('🔍 ThreadDB Debug - hasSelectedType: ${widget.hasSelectedType}');
+
         print(
           '🔍 ThreadDB Debug - hasSelectedSeverity: ${widget.hasSelectedSeverity}',
         );
@@ -513,20 +513,20 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
         if (widget.hasSelectedCategory &&
             widget.selectedCategories.isNotEmpty) {
           queryParams['reportCategoryId'] = widget.selectedCategories.first;
-          print('🔍 Using category ID: ${widget.selectedCategories.first}');
+
         }
 
         // Add type ID if selected (use first selected type)
         if (widget.hasSelectedType && widget.selectedTypes.isNotEmpty) {
           queryParams['reportTypeId'] = widget.selectedTypes.first;
-          print('🔍 Using type ID: ${widget.selectedTypes.first}');
+
         }
 
         // Add severity level if selected (use first selected severity)
         if (widget.hasSelectedSeverity &&
             widget.selectedSeverities.isNotEmpty) {
           queryParams['alertLevels'] = widget.selectedSeverities.first;
-          print('🔍 Using severity ID: ${widget.selectedSeverities.first}');
+
         }
 
         // Add empty parameters to match the URL structure
@@ -535,7 +535,7 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
         queryParams['operatingSystemName'] = '';
         queryParams['userId'] = '';
 
-        print('🔍 Constructed query parameters: $queryParams');
+
 
         // Make direct API call with constructed parameters using ReportsFilter
         try {
@@ -555,9 +555,9 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
           );
 
           newReports = await _apiService.fetchReportsWithFilter(filter);
-          print('Direct filter API call returned ${newReports.length} reports');
+
         } catch (apiError) {
-          print('❌ Direct API call failed: $apiError');
+
           // Fallback to complex filter method
           newReports = await _apiService.getReportsWithComplexFilter(
             searchQuery: widget.hasSearchQuery ? widget.searchQuery : null,
@@ -641,8 +641,8 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
       final normalizedJson = _normalizeReportData(json);
       return ReportModel.fromJson(normalizedJson);
     } catch (e) {
-      print('❌ Error converting report model: $e');
-      print('❌ Problematic JSON: $json');
+
+
 
       // Create a safe fallback with proper type handling
       String safeCreatedAt;
@@ -655,7 +655,7 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
           safeCreatedAt = DateTime.now().toIso8601String();
         }
       } catch (dateError) {
-        print('❌ Error handling createdAt: $dateError');
+
         safeCreatedAt = DateTime.now().toIso8601String();
       }
 
@@ -735,7 +735,7 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
       );
       if (normalized['alertLevels'] is Map) {
         final alertMap = normalized['alertLevels'] as Map;
-        print('🔍 ThreadDB - alertLevels is Map: $alertMap');
+
         normalized['alertLevels'] =
             alertMap['name']?.toString() ??
             alertMap['_id']?.toString() ??
@@ -907,8 +907,8 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
 
       return normalized;
     } catch (e) {
-      print('❌ Error normalizing report data: $e');
-      print('❌ Original data: $json');
+
+
 
       // Return a safe fallback
       return {
@@ -938,7 +938,7 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
 
   // Method to refresh data when returning from report creation
   Future<void> refreshData() async {
-    print('🔄 Refreshing thread database data...');
+
     await _resetAndReload();
   }
 
@@ -946,7 +946,7 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
     try {
       // Prevent multiple simultaneous cleanup operations
       if (_isCleanupRunning) {
-        print('⚠️ Cleanup already running, skipping...');
+
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -962,7 +962,7 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
       final now = DateTime.now();
       if (_lastCleanupTime != null &&
           now.difference(_lastCleanupTime!).inSeconds < 30) {
-        print('⚠️ Cleanup called too frequently, skipping...');
+
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -976,7 +976,7 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
       _lastCleanupTime = now;
       _isCleanupRunning = true;
 
-      print('🧹 TARGETED DUPLICATE CLEANUP...');
+
 
       // Clean local duplicates for scam and fraud reports
       await ScamReportService.removeDuplicateScamReports();
@@ -985,7 +985,7 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
       // Refresh data
       await _loadFilteredReports();
 
-      print('✅ TARGETED DUPLICATE CLEANUP COMPLETED');
+
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -998,7 +998,7 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
         );
       }
     } catch (e) {
-      print('❌ Error during targeted cleanup: $e');
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -1015,15 +1015,15 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
   // Auto-cleanup duplicates when loading data
   Future<void> _autoCleanupDuplicates() async {
     try {
-      print('🧹 Auto-cleanup duplicates...');
+
 
       // Clean local duplicates for scam and fraud reports
       await ScamReportService.removeDuplicateScamReports();
       await FraudReportService.removeDuplicateFraudReports();
 
-      print('✅ Auto-cleanup completed');
+
     } catch (e) {
-      print('❌ Error during auto-cleanup: $e');
+
     }
   }
 
@@ -1042,11 +1042,11 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
 
       // Check if we're in offline mode or have local reports
       if (widget.isOffline || widget.localReports.isNotEmpty) {
-        print('📱 Using offline/local data');
+
         reports = widget.localReports.isNotEmpty
             ? widget.localReports
             : await _getLocalReports();
-        print('📱 Loaded ${reports.length} local reports');
+
 
         // Ensure local reports have proper category and type mappings for filtering
         reports = reports.map((report) {
@@ -1098,12 +1098,12 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
 
         try {
           if (hasFilters) {
-            print('🔍 ThreadDB Debug - hasFilters: $hasFilters');
-            print('🔍 ThreadDB Debug - searchQuery: ${widget.searchQuery}');
+
+
             print(
               '🔍 ThreadDB Debug - selectedCategories: ${widget.selectedCategories}',
             );
-            print('🔍 ThreadDB Debug - selectedTypes: ${widget.selectedTypes}');
+
             print(
               '🔍 ThreadDB Debug - selectedSeverities: ${widget.selectedSeverities}',
             );
@@ -1132,20 +1132,20 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
             if (widget.hasSelectedCategory &&
                 widget.selectedCategories.isNotEmpty) {
               queryParams['reportCategoryId'] = widget.selectedCategories.first;
-              print('🔍 Using category ID: ${widget.selectedCategories.first}');
+
             }
 
             // Add type ID if selected (use first selected type)
             if (widget.hasSelectedType && widget.selectedTypes.isNotEmpty) {
               queryParams['reportTypeId'] = widget.selectedTypes.first;
-              print('🔍 Using type ID: ${widget.selectedTypes.first}');
+
             }
 
             // Add severity level if selected (use first selected severity)
             if (widget.hasSelectedSeverity &&
                 widget.selectedSeverities.isNotEmpty) {
               queryParams['alertLevels'] = widget.selectedSeverities.first;
-              print('🔍 Using severity ID: ${widget.selectedSeverities.first}');
+
             }
 
             // Add empty parameters to match the URL structure
@@ -1154,7 +1154,7 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
             queryParams['operatingSystemName'] = '';
             queryParams['userId'] = '';
 
-            print('🔍 Constructed query parameters: $queryParams');
+
 
             // Make direct API call with constructed parameters using ReportsFilter
             try {
@@ -1178,7 +1178,7 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
                 '🔍 Direct filter API call returned ${reports.length} reports',
               );
             } catch (apiError) {
-              print('❌ Direct API call failed: $apiError');
+
               // Fallback to complex filter method
               reports = await _apiService.getReportsWithComplexFilter(
                 searchQuery: widget.hasSearchQuery ? widget.searchQuery : null,
@@ -1214,14 +1214,14 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
             );
           }
         } catch (e) {
-          print('❌ API failed, falling back to local data: $e');
+
           // Fallback to local data
           reports = await _getLocalReports();
         }
 
         // If API returned empty results but we have local data, use local data
         if (reports.isEmpty) {
-          print('⚠️ API returned empty results, checking local data...');
+
           final localReports = await _getLocalReports();
           if (localReports.isNotEmpty) {
             print(
@@ -1240,9 +1240,9 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
           widget.hasSelectedSeverity;
 
       if (hasActiveFilters) {
-        print('🔍 Applying filters to ${reports.length} reports...');
+
         _filteredReports = _applyFilters(reports);
-        print('🔍 After applying filters: ${_filteredReports.length} reports');
+
       } else {
         // No filters applied, show all reports
         _filteredReports = reports;
@@ -1253,7 +1253,7 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
 
       // Debug filter issues if needed
       if (hasActiveFilters && _filteredReports.isEmpty) {
-        print('⚠️ WARNING: Filters applied but no results found!');
+
         _debugFilterIssues();
       }
 
@@ -1269,8 +1269,8 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
           final report = _safeConvertToReportModel(_filteredReports[i]);
           _typedReports.add(report);
         } catch (e) {
-          print('❌ Error converting report $i: $e');
-          print('❌ Report data: ${_filteredReports[i]}');
+
+
         }
       }
       print(
@@ -1285,7 +1285,7 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
         setState(() => _isLoading = false);
       }
     } catch (e) {
-      print('❌ Error in _loadFilteredReports: $e');
+
       if (mounted) {
         setState(() {
           _errorMessage = 'Failed to load reports: $e';
@@ -1311,11 +1311,11 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
             phone.contains(searchTerm) ||
             website.contains(searchTerm);
       }).toList();
-      print('🔍 After search filter: ${filtered.length} reports');
+
     }
 
     if (widget.hasSelectedCategory && widget.selectedCategories.isNotEmpty) {
-      print('🔍 Applying category filter with: ${widget.selectedCategories}');
+
       filtered = filtered.where((report) {
         // Try multiple ways to get category information
         final cat = report['reportCategoryId'];
@@ -1326,18 +1326,18 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
             ? cat['_id']?.toString() ?? cat['id']?.toString()
             : cat?.toString();
 
-        print('🔍 Report category check:');
-        print('🔍   - Category ID: $catId');
-        print('🔍   - Category Name: $categoryName');
-        print('🔍   - Report Type: $type');
-        print('🔍   - Selected Categories: ${widget.selectedCategories}');
+
+
+
+
+
 
         bool matches = false;
 
         // First try exact ID match
         if (catId != null && widget.selectedCategories.contains(catId)) {
           matches = true;
-          print('🔍   ✅ Matched by ID: $catId');
+
         }
 
         // If no match by ID, try matching by name
@@ -1348,7 +1348,7 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
             if (selectedCategoryName != null &&
                 categoryName.contains(selectedCategoryName)) {
               matches = true;
-              print('🔍   ✅ Matched by name: $selectedCategoryName');
+
               break;
             }
           }
@@ -1398,11 +1398,11 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
 
         return matches;
       }).toList();
-      print('🔍 After category filter: ${filtered.length} reports');
+
     }
 
     if (widget.hasSelectedType && widget.selectedTypes.isNotEmpty) {
-      print('🔍 Applying type filter with: ${widget.selectedTypes}');
+
       filtered = filtered.where((report) {
         // Try multiple ways to get type information
         final type = report['reportTypeId'];
@@ -1413,18 +1413,18 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
             ? type['_id']?.toString() ?? type['id']?.toString()
             : type?.toString();
 
-        print('🔍 Report type check:');
-        print('🔍   - Type ID: $typeId');
-        print('🔍   - Type Name: $typeName');
-        print('🔍   - Report Type: $reportType');
-        print('🔍   - Selected Types: ${widget.selectedTypes}');
+
+
+
+
+
 
         bool matches = false;
 
         // First try exact ID match
         if (typeId != null && widget.selectedTypes.contains(typeId)) {
           matches = true;
-          print('🔍   ✅ Matched by ID: $typeId');
+
         }
 
         // If no match by ID, try matching by name
@@ -1434,7 +1434,7 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
             if (selectedTypeName != null &&
                 typeName.contains(selectedTypeName)) {
               matches = true;
-              print('🔍   ✅ Matched by name: $selectedTypeName');
+
               break;
             }
           }
@@ -1483,28 +1483,28 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
 
         return matches;
       }).toList();
-      print('🔍 After type filter: ${filtered.length} reports');
+
     }
 
     if (widget.hasSelectedSeverity && widget.selectedSeverities.isNotEmpty) {
-      print('🔍 === SEVERITY FILTER DEBUG ===');
-      print('🔍 Selected Severities: ${widget.selectedSeverities}');
+
+
       print(
         '🔍 Available Severity Levels: ${widget.severityLevels.map((s) => '${s['_id']}: ${s['name']}').toList()}',
       );
-      print('🔍 Total reports before severity filter: ${filtered.length}');
+
 
       filtered = filtered.where((report) {
         final reportSeverity = _getNormalizedAlertLevel(report);
         final reportSeverityId = _getNormalizedAlertLevelId(report);
 
-        print('🔍 --- Processing Report ---');
-        print('🔍   Report ID: ${report['_id'] ?? report['id']}');
-        print('🔍   Report Description: ${report['description']}');
-        print('🔍   Raw alertLevels: ${report['alertLevels']}');
-        print('🔍   Raw alertSeverityLevel: ${report['alertSeverityLevel']}');
-        print('🔍   Normalized Severity Name: $reportSeverity');
-        print('🔍   Normalized Severity ID: $reportSeverityId');
+
+
+
+
+
+
+
 
         // Check if any of the selected severities match
         bool matches = false;
@@ -1516,7 +1516,7 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
           // First try to match by ID
           if (reportSeverityId != null &&
               reportSeverityId == selectedSeverityId) {
-            print('🔍   ✅ Matched by ID: $selectedSeverityId');
+
             matches = true;
             break;
           }
@@ -1530,7 +1530,7 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
           final selectedSeverityName =
               selectedSeverityLevel['name']?.toString().toLowerCase() ??
               selectedSeverityId.toLowerCase();
-          print('🔍   Selected severity name: $selectedSeverityName');
+
 
           // Debug print to help identify issues
           print(
@@ -1538,18 +1538,18 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
           );
 
           if (reportSeverity == selectedSeverityName) {
-            print('🔍   ✅ Matched by name: $selectedSeverityName');
+
             matches = true;
             break;
           }
         }
 
-        print('🔍   Final match result: $matches');
+
         return matches;
       }).toList();
 
-      print('🔍 Total reports after severity filter: ${filtered.length}');
-      print('🔍 === END SEVERITY FILTER DEBUG ===');
+
+
     }
 
     return filtered;
@@ -1562,7 +1562,7 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
 
     // Get scam reports
     final scamBox = Hive.box<ScamReportModel>('scam_reports');
-    print('🔍 DEBUG: Scam box length: ${scamBox.length}');
+
     for (var report in scamBox.values) {
       print(
         '🔍 DEBUG: Processing scam report: ${report.id} - ${report.description}',
@@ -1593,7 +1593,7 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
 
     // Get fraud reports
     final fraudBox = Hive.box<FraudReportModel>('fraud_reports');
-    print('🔍 DEBUG: Fraud box length: ${fraudBox.length}');
+
     for (var report in fraudBox.values) {
       print(
         '🔍 DEBUG: Processing fraud report: ${report.id} - ${report.description}',
@@ -1626,7 +1626,7 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
 
     // Get malware reports
     final malwareBox = Hive.box<MalwareReportModel>('malware_reports');
-    print('🔍 DEBUG: Malware box length: ${malwareBox.length}');
+
     for (var report in malwareBox.values) {
       print(
         '🔍 DEBUG: Processing malware report: ${report.id} - ${report.malwareType}',
@@ -1661,7 +1661,7 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
       });
     }
 
-    print('🔍 DEBUG: Total reports loaded: ${allReports.length}');
+
     return allReports;
   }
 
@@ -1682,23 +1682,23 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
 
   String _getReportTypeDisplay(Map<String, dynamic> report) {
     // Debug logging
-    print('🔍 Getting report type display for report: ${report['id']}');
-    print('🔍 Report type: ${report['type']}');
-    print('🔍 Category ID: ${report['reportCategoryId']}');
-    print('🔍 Type ID: ${report['reportTypeId']}');
+
+
+
+
 
     // First, try to get names directly from the report
     final categoryName = report['categoryName']?.toString();
     final typeName = report['typeName']?.toString();
 
     if (categoryName?.isNotEmpty == true && typeName?.isNotEmpty == true) {
-      print('✅ Using direct names: $categoryName - $typeName');
+
       return '$categoryName - $typeName';
     } else if (categoryName?.isNotEmpty == true) {
-      print('✅ Using direct category name: $categoryName');
+
       return categoryName!;
     } else if (typeName?.isNotEmpty == true) {
-      print('✅ Using direct type name: $typeName');
+
       return typeName!;
     }
 
@@ -1707,11 +1707,11 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
     final category = report['reportCategory']?.toString();
 
     if (reportType?.isNotEmpty == true) {
-      print('✅ Using reportType: $reportType');
+
       return reportType!;
     }
     if (category?.isNotEmpty == true) {
-      print('✅ Using category: $category');
+
       return category!;
     }
 
@@ -1719,8 +1719,8 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
     String? categoryId = _extractId(report['reportCategoryId']);
     String? typeId = _extractId(report['reportTypeId']);
 
-    print('🔍 Extracted category ID: $categoryId');
-    print('🔍 Extracted type ID: $typeId');
+
+
 
     String? resolvedCategoryName = categoryId?.isNotEmpty == true
         ? _resolveCategoryName(categoryId!)
@@ -1729,8 +1729,8 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
         ? _resolveTypeName(typeId!)
         : null;
 
-    print('🔍 Resolved category name: $resolvedCategoryName');
-    print('🔍 Resolved type name: $resolvedTypeName');
+
+
 
     if (resolvedCategoryName?.isNotEmpty == true &&
         resolvedTypeName?.isNotEmpty == true) {
@@ -1739,16 +1739,16 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
       );
       return '$resolvedCategoryName - $resolvedTypeName';
     } else if (resolvedCategoryName?.isNotEmpty == true) {
-      print('✅ Using resolved category name: $resolvedCategoryName');
+
       return resolvedCategoryName!;
     } else if (resolvedTypeName?.isNotEmpty == true) {
-      print('✅ Using resolved type name: $resolvedTypeName');
+
       return resolvedTypeName!;
     }
 
     // Fallback to report type
     final type = report['type']?.toString().toLowerCase();
-    print('🔍 Using fallback type: $type');
+
 
     switch (type) {
       case 'scam':
@@ -1802,9 +1802,9 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
       _typeIdToName['malware_type'] = 'Malware Report';
     }
 
-    print('🔍 Offline mappings ensured:');
-    print('🔍 Categories: $_categoryIdToName');
-    print('🔍 Types: $_typeIdToName');
+
+
+
   }
 
   Future<void> _loadTypeNames() async {
@@ -1814,9 +1814,9 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
       // Try to load from API first
       try {
         types = await _apiService.fetchReportTypes();
-        print('✅ Loaded ${types.length} types from API');
+
       } catch (e) {
-        print('❌ Failed to load types from API: $e');
+
         // Try to load from local storage
         try {
           final prefs = await SharedPreferences.getInstance();
@@ -1825,10 +1825,10 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
             types = List<Map<String, dynamic>>.from(
               jsonDecode(typesJson).map((x) => Map<String, dynamic>.from(x)),
             );
-            print('✅ Loaded ${types.length} types from local storage');
+
           }
         } catch (e) {
-          print('❌ Failed to load types from local storage: $e');
+
         }
       }
 
@@ -1843,7 +1843,7 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
             'Type ${id ?? 'Unknown'}';
         if (id != null) {
           _typeIdToName[id] = name;
-          print('📝 Type mapping: $id -> $name');
+
         }
       }
 
@@ -1852,7 +1852,7 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
       _typeIdToName['fraud_type'] = 'Fraud Report';
       _typeIdToName['malware_type'] = 'Malware Report';
     } catch (e) {
-      print('Error loading type names: $e');
+
       // Add basic fallback types
       _typeIdToName['scam_type'] = 'Scam Report';
       _typeIdToName['fraud_type'] = 'Fraud Report';
@@ -1867,9 +1867,9 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
       // Try to load from API first
       try {
         categories = await _apiService.fetchReportCategories();
-        print('✅ Loaded ${categories.length} categories from API');
+
       } catch (e) {
-        print('❌ Failed to load categories from API: $e');
+
         // Try to load from local storage
         try {
           final prefs = await SharedPreferences.getInstance();
@@ -1885,7 +1885,7 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
             );
           }
         } catch (e) {
-          print('❌ Failed to load categories from local storage: $e');
+
         }
       }
 
@@ -1899,7 +1899,7 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
             'Category ${id ?? 'Unknown'}';
         if (id != null) {
           _categoryIdToName[id] = name;
-          print('📝 Category mapping: $id -> $name');
+
         }
       }
 
@@ -1908,7 +1908,7 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
       _categoryIdToName['fraud_category'] = 'Report Fraud';
       _categoryIdToName['malware_category'] = 'Report Malware';
     } catch (e) {
-      print('Error loading category names: $e');
+
       // Add basic fallback categories
       _categoryIdToName['scam_category'] = 'Report Scam';
       _categoryIdToName['fraud_category'] = 'Report Fraud';
@@ -2012,17 +2012,17 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
           '';
     }
 
-    print('🔍 ThreadDB - Extracting alert level from report:');
-    print('🔍 ThreadDB - alertLevels field: ${report['alertLevels']}');
+
+
     print(
       '🔍 ThreadDB - alertSeverityLevel field: ${report['alertSeverityLevel']}',
     );
-    print('🔍 ThreadDB - severity field: ${report['severity']}');
-    print('🔍 ThreadDB - level field: ${report['level']}');
-    print('🔍 ThreadDB - priority field: ${report['priority']}');
-    print('🔍 ThreadDB - Final alert level: $alertLevel');
-    print('🔍 ThreadDB - Report type: ${report['type']}');
-    print('🔍 ThreadDB - Report ID: ${report['id']}');
+
+
+
+
+
+
 
     // Normalize the alert level
     final normalized = alertLevel.toLowerCase().trim();
@@ -2073,7 +2073,7 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
         return 'medium';
       }
     } catch (e) {
-      print('❌ Error normalizing alert level: $e');
+
       return 'medium';
     }
   }
@@ -2096,7 +2096,7 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
         return null;
       }
     } catch (e) {
-      print('❌ Error getting alert level ID: $e');
+
       return null;
     }
   }
@@ -2260,7 +2260,7 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
   // Test URL construction and backend connectivity
   Future<void> _testUrlAndBackend() async {
     try {
-      print('🧪 Testing URL construction and backend connectivity...');
+
 
       final apiService = ApiService();
 
@@ -2271,7 +2271,7 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
       final isConnected = await apiService.testBackendConnectivity();
 
       if (isConnected) {
-        print('✅ Backend connectivity test passed');
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('✅ Backend connectivity test passed'),
@@ -2279,7 +2279,7 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
           ),
         );
       } else {
-        print('❌ Backend connectivity test failed');
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('❌ Backend connectivity test failed'),
@@ -2288,7 +2288,7 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
         );
       }
     } catch (e) {
-      print('❌ URL and backend test failed: $e');
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('❌ Test failed: $e'),
@@ -2300,43 +2300,43 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
 
   // Add debug method to help identify filter issues
   void _debugFilterIssues() {
-    print('🔍 === FILTER DEBUG ===');
-    print('🔍 Widget parameters:');
-    print('🔍   - searchQuery: "${widget.searchQuery}"');
-    print('🔍   - selectedCategories: ${widget.selectedCategories}');
-    print('🔍   - selectedTypes: ${widget.selectedTypes}');
-    print('🔍   - selectedSeverities: ${widget.selectedSeverities}');
-    print('🔍   - hasSearchQuery: ${widget.hasSearchQuery}');
-    print('🔍   - hasSelectedCategory: ${widget.hasSelectedCategory}');
-    print('🔍   - hasSelectedType: ${widget.hasSelectedType}');
-    print('🔍   - hasSelectedSeverity: ${widget.hasSelectedSeverity}');
-    print('🔍   - isOffline: ${widget.isOffline}');
-    print('🔍   - localReports count: ${widget.localReports.length}');
-    print('🔍   - severityLevels count: ${widget.severityLevels.length}');
 
-    print('🔍 Category mappings:');
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     _categoryIdToName.forEach((id, name) {
-      print('🔍   - $id -> $name');
+
     });
 
-    print('🔍 Type mappings:');
+
     _typeIdToName.forEach((id, name) {
-      print('🔍   - $id -> $name');
+
     });
 
-    print('🔍 Current filtered reports: ${_filteredReports.length}');
+
     if (_filteredReports.isNotEmpty) {
-      print('🔍 Sample report:');
+
       final sample = _filteredReports.first;
-      print('🔍   - ID: ${sample['id'] ?? sample['_id']}');
-      print('🔍   - Type: ${sample['type']}');
-      print('🔍   - Category ID: ${sample['reportCategoryId']}');
-      print('🔍   - Type ID: ${sample['reportTypeId']}');
-      print('🔍   - Category Name: ${sample['categoryName']}');
-      print('🔍   - Type Name: ${sample['typeName']}');
-      print('🔍   - Alert Level: ${sample['alertLevels']}');
+
+
+
+
+
+
+
     }
-    print('🔍 === END FILTER DEBUG ===');
+
   }
 
   @override

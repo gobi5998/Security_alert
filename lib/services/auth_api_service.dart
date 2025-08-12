@@ -1,5 +1,4 @@
 import 'package:dio/dio.dart';
-import 'package:dio_cookie_manager/dio_cookie_manager.dart';
 import '../config/api_config.dart';
 import 'token_storage.dart';
 import 'dio_service.dart';
@@ -46,6 +45,20 @@ class AuthApiService {
     return await _dioService.authPost(
       'api/auth/upload-profile-image',
       data: formData,
+    );
+  }
+
+  static Future<Response> getProfileImageByUserId(String userId) async {
+    return await _dioService.authGet('api/v1/user/profile-image/$userId');
+  }
+
+  static Future<Response> updateUserProfile(
+    String userId,
+    Map<String, dynamic> profileData,
+  ) async {
+    return await _dioService.authPut(
+      'api/v1/user/update-user/$userId',
+      data: profileData,
     );
   }
 
@@ -130,16 +143,6 @@ class AuthApiService {
     return await _dioService.authPost('/auth/2fa/verify', data: {'code': code});
   }
 }
-
-
-
-
-
-
-
-
-
-
 
 // import 'package:dio/dio.dart';
 // import 'package:dio_cookie_manager/dio_cookie_manager.dart';
