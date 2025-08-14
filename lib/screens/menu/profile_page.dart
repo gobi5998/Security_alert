@@ -626,7 +626,7 @@ class _ProfilePageState extends State<ProfilePage> {
                               //     }
                               //   },
                               // ),
-                    ListTile(
+                              ListTile(
                                 leading: const Icon(
                                   Icons.logout,
                                   color: Colors.red,

@@ -20,6 +20,7 @@ class FileUploadConfig {
   final int
   maxFileSize; // in MB (default 10MB, but server may have different limits)
   final String? customUploadUrl;
+  final int maxvideoSize;
   final Map<String, String>? additionalHeaders;
 
   const FileUploadConfig({
@@ -41,6 +42,7 @@ class FileUploadConfig {
     this.allowedvideoExtensions = const ['mp4'],
     this.maxFileSize =
         5, // 5MB default for screenshots (server nginx limit appears to be lower)
+    this.maxvideoSize=50,
     this.customUploadUrl,
     this.additionalHeaders,
   });
@@ -110,17 +112,26 @@ class FileUploadService {
     }
 
     final fileSize = await file.length();
-    final maxSizeBytes = config.maxFileSize * 1024 * 1024;
+    final fileName = file.path.split('/').last.toLowerCase();
+    final fileSizeMB = fileSize / (1024 * 1024);
+    
+    // Different size limits for different file types
+    int maxSizeMB;
+    if (fileName.endsWith('.mp4') ||
+         fileName.endsWith('.mov') || fileName.endsWith('.avi') || fileName.endsWith('.mkv') || fileName.endsWith('.webm') || fileName.endsWith('.flv') || fileName.endsWith('.wmv') || fileName.endsWith('.mpg') || fileName.endsWith('.mpeg') || fileName.endsWith('.m4v') || fileName.endsWith('.m4a') || fileName.endsWith('.m4b') || fileName.endsWith('.m4p') || fileName.endsWith('.m4v') || fileName.endsWith('.m4a') || fileName.endsWith('.m4b') || fileName.endsWith('.m4p') || fileName.endsWith('.m4v') || fileName.endsWith('.m4a') || fileName.endsWith('.m4b') || fileName.endsWith('.m4p')) {
+      maxSizeMB = 50; // 50MB for video files
+    } else {
+      maxSizeMB = config.maxFileSize; // 5MB for other files
+    }
 
-    if (fileSize > maxSizeBytes) {
-      return 'File size (${(fileSize / (1024 * 1024)).toStringAsFixed(2)}MB) exceeds ${config.maxFileSize}MB limit';
+    if (fileSizeMB > maxSizeMB) {
+      return 'File size (${fileSizeMB.toStringAsFixed(2)}MB) exceeds ${maxSizeMB}MB limit';
     }
 
     if (fileSize == 0) {
       return 'File is empty';
     }
 
-    final fileName = file.path.split('/').last.toLowerCase();
     final extension = fileName.split('.').last;
 
     final allAllowedExtensions = [
@@ -748,7 +759,7 @@ class FileUploadWidgetState extends State<FileUploadWidget> {
     if (selectedImages.length >= 5) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Maximum 5 screenshots allowed. Please remove some screenshots first.'),
+          content: Text('Maximum 5 screenshots allowed. Please remove some screenshots'),
           backgroundColor: Colors.red,
           duration: Duration(seconds: 3),
         ),
@@ -757,15 +768,15 @@ class FileUploadWidgetState extends State<FileUploadWidget> {
     }
     
     // Show current selection status
-    if (selectedImages.isNotEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Currently selected: ${selectedImages.length}/5 screenshots. Adding more...'),
-          backgroundColor: Colors.blue,
-          duration: const Duration(seconds: 2),
-        ),
-      );
-    }
+    // if (selectedImages.isNotEmpty) {
+    //   ScaffoldMessenger.of(context).showSnackBar(
+    //     SnackBar(
+    //       content: Text('Currently selected: ${selectedImages.length}/5 screenshots. Adding more...'),
+    //       backgroundColor: Colors.blue,
+    //       duration: const Duration(seconds: 2),
+    //     ),
+    //   );
+    // }
     
     final images = await _picker.pickMultiImage();
     if (images != null) {
@@ -813,8 +824,7 @@ class FileUploadWidgetState extends State<FileUploadWidget> {
       if (duplicateFiles.isNotEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Skipped duplicates'),
-            // content: Text('Skipped duplicates: ${duplicateFiles.join(', ')}'),
+            content: Text('Already added files: ${duplicateFiles.join(', ')}'),
             backgroundColor: Colors.orange,
             duration: const Duration(seconds: 3),
           ),
@@ -859,7 +869,7 @@ class FileUploadWidgetState extends State<FileUploadWidget> {
     if (selectedDocuments.length >= 5) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Maximum 5 documents allowed. Please remove some documents first.'),
+          content: Text('Maximum 5 documents allowed. Please remove some documents files'),
           backgroundColor: Colors.red,
           duration: Duration(seconds: 3),
         ),
@@ -868,15 +878,15 @@ class FileUploadWidgetState extends State<FileUploadWidget> {
     }
     
     // Show current selection status
-    if (selectedDocuments.isNotEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Currently selected: ${selectedDocuments.length}/5 documents. Adding more...'),
-          backgroundColor: Colors.blue,
-          duration: const Duration(seconds: 2),
-        ),
-      );
-    }
+    // if (selectedDocuments.isNotEmpty) {
+    //   ScaffoldMessenger.of(context).showSnackBar(
+    //     SnackBar(
+    //       content: Text('Currently selected: ${selectedDocuments.length}/5 documents. Adding more...'),
+    //       backgroundColor: Colors.blue,
+    //       duration: const Duration(seconds: 2),
+    //     ),
+    //   );
+    // }
     
     final result = await FilePicker.platform.pickFiles(
       allowMultiple: true,
@@ -931,8 +941,7 @@ class FileUploadWidgetState extends State<FileUploadWidget> {
       if (duplicateFiles.isNotEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Skipped duplicates'),
-            // content: Text('Skipped duplicates: ${duplicateFiles.join(', ')}'),
+            content: Text('Already added files: ${duplicateFiles.join(', ')}'),
             backgroundColor: Colors.orange,
             duration: const Duration(seconds: 3),
           ),
@@ -977,7 +986,7 @@ class FileUploadWidgetState extends State<FileUploadWidget> {
     if (selectedVoiceFiles.length >= 5) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Maximum 5 voice files allowed. Please remove some voice files first.'),
+          content: Text('Maximum 5 voice files allowed. Please remove some voice files'),
           backgroundColor: Colors.red,
           duration: Duration(seconds: 3),
         ),
@@ -986,15 +995,15 @@ class FileUploadWidgetState extends State<FileUploadWidget> {
     }
     
     // Show current selection status
-    if (selectedVoiceFiles.isNotEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Currently selected: ${selectedVoiceFiles.length}/5 voice files. Adding more...'),
-          backgroundColor: Colors.blue,
-          duration: const Duration(seconds: 2),
-        ),
-      );
-    }
+    // if (selectedVoiceFiles.isNotEmpty) {
+    //   ScaffoldMessenger.of(context).showSnackBar(
+    //     SnackBar(
+    //       content: Text('Currently selected: ${selectedVoiceFiles.length}/5 voice files. Adding more...'),
+    //       backgroundColor: Colors.blue,
+    //       duration: const Duration(seconds: 2),
+    //     ),
+    //   );
+    // }
     
     final result = await FilePicker.platform.pickFiles(
       allowMultiple: true,
@@ -1049,8 +1058,7 @@ class FileUploadWidgetState extends State<FileUploadWidget> {
       if (duplicateFiles.isNotEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Skipped duplicates'),
-            // content: Text('Skipped duplicates: ${duplicateFiles.join(', ')}'),
+            content: Text('Already added files: ${duplicateFiles.join(', ')}'),
             backgroundColor: Colors.orange,
             duration: const Duration(seconds: 3),
           ),
@@ -1094,7 +1102,7 @@ class FileUploadWidgetState extends State<FileUploadWidget> {
     if (selectedVideoFiles.length >= 5) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Maximum 5 video files allowed. Please remove some video files first.'),
+          content: Text('Maximum 5 video files allowed. Please remove some video files'),
           backgroundColor: Colors.red,
           duration: Duration(seconds: 3),
         ),
@@ -1103,15 +1111,15 @@ class FileUploadWidgetState extends State<FileUploadWidget> {
     }
     
     // Show current selection status
-    if (selectedVideoFiles.isNotEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Currently selected: ${selectedVideoFiles.length}/5 video files. Adding more...'),
-          backgroundColor: Colors.blue,
-          duration: const Duration(seconds: 2),
-        ),
-      );
-    }
+    // if (selectedVideoFiles.isNotEmpty) {
+    //   ScaffoldMessenger.of(context).showSnackBar(
+    //     SnackBar(
+    //       content: Text('Currently selected: ${selectedVideoFiles.length}/5 video files. Adding more...'),
+    //       backgroundColor: Colors.blue,
+    //       duration: const Duration(seconds: 2),
+    //     ),
+    //   );
+    // }
     
     final result = await FilePicker.platform.pickFiles(
       allowMultiple: true,
@@ -1144,7 +1152,7 @@ class FileUploadWidgetState extends State<FileUploadWidget> {
             continue;
           }
           
-          if (fileSizeMB > 5.0) {
+          if (fileSizeMB > 50.0) { // 50MB limit for video files
             oversizedFiles.add('${file.path.split('/').last} (${fileSizeMB.toStringAsFixed(2)}MB)');
           } else {
             validVideoFiles.add(file);
@@ -1166,8 +1174,7 @@ class FileUploadWidgetState extends State<FileUploadWidget> {
       if (duplicateFiles.isNotEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Skipped duplicates'),
-            // content: Text('Skipped duplicates: ${duplicateFiles.join(', ')}'),
+            content: Text('Already added files: ${duplicateFiles.join(', ')}'),
             backgroundColor: Colors.orange,
             duration: const Duration(seconds: 3),
           ),
@@ -1178,7 +1185,7 @@ class FileUploadWidgetState extends State<FileUploadWidget> {
       if (oversizedFiles.isNotEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Files too large (max 5MB): ${oversizedFiles.join(', ')}'),
+            content: Text('Files too large (max 50MB): ${oversizedFiles.join(', ')}'),
             backgroundColor: Colors.red,
             duration: const Duration(seconds: 5),
           ),
@@ -1260,13 +1267,22 @@ class FileUploadWidgetState extends State<FileUploadWidget> {
     for (File file in allFiles) {
       try {
         final fileSize = file.lengthSync();
-        final maxSizeBytes = widget.config.maxFileSize * 1024 * 1024;
+        final fileName = file.path.split('/').last.toLowerCase();
+        final fileSizeMB = (fileSize / (1024 * 1024));
+        
+        // Different size limits for different file types
+        int maxSizeMB;
+        if (fileName.endsWith('.mp4') ||
+         fileName.endsWith('.mov') || fileName.endsWith('.avi') || fileName.endsWith('.mkv') || fileName.endsWith('.webm') || fileName.endsWith('.flv') || fileName.endsWith('.wmv') || fileName.endsWith('.mpg') || fileName.endsWith('.mpeg') || fileName.endsWith('.m4v') || fileName.endsWith('.m4a') || fileName.endsWith('.m4b') || fileName.endsWith('.m4p') || fileName.endsWith('.m4v') || fileName.endsWith('.m4a') || fileName.endsWith('.m4b') || fileName.endsWith('.m4p') || fileName.endsWith('.m4v') || fileName.endsWith('.m4a') || fileName.endsWith('.m4b') || fileName.endsWith('.m4p')) {
+          maxSizeMB = 50; // 50MB for video files
+        } else {
+          maxSizeMB = widget.config.maxFileSize; // 5MB for other files
+        }
 
-        if (fileSize > maxSizeBytes) {
-          final fileName = file.path.split('/').last;
-          final fileSizeMB = (fileSize / (1024 * 1024)).toStringAsFixed(2);
+        if (fileSizeMB > maxSizeMB) {
+          final fileSizeMBStr = fileSizeMB.toStringAsFixed(2);
           errors.add(
-            '$fileName (${fileSizeMB}MB) exceeds ${widget.config.maxFileSize}MB limit',
+            '$fileName (${fileSizeMBStr}MB) exceeds ${maxSizeMB}MB limit',
           );
         }
       } catch (e) {
@@ -1387,7 +1403,362 @@ class FileUploadWidgetState extends State<FileUploadWidget> {
     );
   }
 
-  // Show current selection summary
+  // Show comprehensive selection summary (all file types)
+  // void _showComprehensiveSelection() {
+  //   showDialog(
+  //     context: context,
+  //     builder: (BuildContext context) {
+  //       return AlertDialog(
+  //         title: Row(
+  //           children: [
+  //             Icon(Icons.info_outline, color: Colors.blue),
+  //             const SizedBox(width: 8),
+  //             Text('Current Selection'),
+  //           ],
+  //         ),
+  //         content: Container(
+  //           width: double.maxFinite,
+  //           child: SingleChildScrollView(
+  //             child: Column(
+  //               mainAxisSize: MainAxisSize.min,
+  //               children: [
+  //                 // Screenshots Section
+  //                 if (selectedImages.isNotEmpty) ...[
+  //                   _buildSectionHeader('Screenshots', Icons.image, selectedImages.length, 5),
+  //                   const SizedBox(height: 8),
+  //                   ...selectedImages.asMap().entries.map((entry) {
+  //                     final index = entry.key;
+  //                     final file = entry.value;
+  //                     return _buildFileItem(
+  //                       file: file,
+  //                       index: index,
+  //                       fileType: 'screenshots',
+  //                       showThumbnail: true,
+  //                     );
+  //                   }).toList(),
+  //                   const SizedBox(height: 16),
+  //                 ],
+  //
+  //                 // Documents Section
+  //                 if (selectedDocuments.isNotEmpty) ...[
+  //                   _buildSectionHeader('Documents', Icons.description, selectedDocuments.length, 5),
+  //                   const SizedBox(height: 8),
+  //                   ...selectedDocuments.asMap().entries.map((entry) {
+  //                     final index = entry.key;
+  //                     final file = entry.value;
+  //                     return _buildFileItem(
+  //                       file: file,
+  //                       index: index,
+  //                       fileType: 'documents',
+  //                       showThumbnail: false,
+  //                     );
+  //                   }).toList(),
+  //                   const SizedBox(height: 16),
+  //                 ],
+  //
+  //                 // Voice Files Section
+  //                 if (selectedVoiceFiles.isNotEmpty) ...[
+  //                   _buildSectionHeader('Voice Messages', Icons.mic, selectedVoiceFiles.length, 5),
+  //                   const SizedBox(height: 8),
+  //                   ...selectedVoiceFiles.asMap().entries.map((entry) {
+  //                     final index = entry.key;
+  //                     final file = entry.value;
+  //                     return _buildFileItem(
+  //                       file: file,
+  //                       index: index,
+  //                       fileType: 'voice',
+  //                       showThumbnail: false,
+  //                     );
+  //                   }).toList(),
+  //                   const SizedBox(height: 16),
+  //                 ],
+  //
+  //                 // Video Files Section
+  //                 if (selectedVideoFiles.isNotEmpty) ...[
+  //                   _buildSectionHeader('Videos', Icons.video_file, selectedVideoFiles.length, 5),
+  //                   const SizedBox(height: 8),
+  //                   ...selectedVideoFiles.asMap().entries.map((entry) {
+  //                     final index = entry.key;
+  //                     final file = entry.value;
+  //                     return _buildFileItem(
+  //                       file: file,
+  //                       index: index,
+  //                       fileType: 'video',
+  //                       showThumbnail: false,
+  //                     );
+  //                   }).toList(),
+  //                   const SizedBox(height: 16),
+  //                 ],
+  //
+  //                 // Summary
+  //                 Container(
+  //                   padding: const EdgeInsets.all(12),
+  //                   decoration: BoxDecoration(
+  //                     color: Colors.blue[50],
+  //                     borderRadius: BorderRadius.circular(8),
+  //                     border: Border.all(color: Colors.blue[200]!),
+  //                   ),
+  //                   child: Row(
+  //                     children: [
+  //                       Icon(Icons.info_outline, color: Colors.blue[700], size: 20),
+  //                       const SizedBox(width: 8),
+  //                       Expanded(
+  //                         child: Text(
+  //                           'Total: ${selectedImages.length + selectedDocuments.length + selectedVoiceFiles.length + selectedVideoFiles.length} files selected',
+  //                           style: TextStyle(
+  //                             color: Colors.blue[700],
+  //                             fontWeight: FontWeight.w500,
+  //                           ),
+  //                         ),
+  //                       ),
+  //                     ],
+  //                   ),
+  //                 ),
+  //               ],
+  //             ),
+  //           ),
+  //         ),
+  //         actions: [
+  //           TextButton(
+  //             onPressed: () {
+  //               Navigator.of(context).pop();
+  //               // Show a dialog to choose which type of file to add
+  //               _showFileTypeSelectionDialog();
+  //             },
+  //             child: Text('Continue Adding'),
+  //           ),
+  //         ],
+  //       );
+  //     },
+  //   );
+  // }
+
+  // Show file type selection dialog
+  // void _showFileTypeSelectionDialog() {
+  //   showDialog(
+  //     context: context,
+  //     builder: (BuildContext context) {
+  //       return AlertDialog(
+  //         title: Row(
+  //           children: [
+  //             Icon(Icons.add_circle, color: Colors.blue),
+  //             const SizedBox(width: 8),
+  //             Text('Add Files'),
+  //           ],
+  //         ),
+  //         content: Column(
+  //           mainAxisSize: MainAxisSize.min,
+  //           children: [
+  //             Text(
+  //               'Choose the type of file you want to add:',
+  //               style: TextStyle(fontSize: 16),
+  //             ),
+  //             const SizedBox(height: 16),
+  //             // Screenshots option
+  //             if (selectedImages.length < 5)
+  //               ListTile(
+  //                 leading: Icon(Icons.image, color: Colors.blue),
+  //                 title: Text('Screenshots'),
+  //                 subtitle: Text('${selectedImages.length}/5 selected'),
+  //                 onTap: () {
+  //                   Navigator.of(context).pop();
+  //                   _pickImages();
+  //                 },
+  //               ),
+  //             // Documents option
+  //             if (selectedDocuments.length < 5)
+  //               ListTile(
+  //                 leading: Icon(Icons.description, color: Colors.green),
+  //                 title: Text('Documents'),
+  //                 subtitle: Text('${selectedDocuments.length}/5 selected'),
+  //                 onTap: () {
+  //                   Navigator.of(context).pop();
+  //                   _pickDocuments();
+  //                 },
+  //               ),
+  //             // Voice files option
+  //             if (selectedVoiceFiles.length < 5)
+  //               ListTile(
+  //                 leading: Icon(Icons.mic, color: Colors.orange),
+  //                 title: Text('Voice Messages'),
+  //                 subtitle: Text('${selectedVoiceFiles.length}/5 selected'),
+  //                 onTap: () {
+  //                   Navigator.of(context).pop();
+  //                   _pickVoiceFiles();
+  //                 },
+  //               ),
+  //             // Video files option
+  //             if (selectedVideoFiles.length < 5)
+  //               ListTile(
+  //                 leading: Icon(Icons.video_file, color: Colors.red),
+  //                 title: Text('Videos'),
+  //                 subtitle: Text('${selectedVideoFiles.length}/5 selected'),
+  //                 onTap: () {
+  //                   Navigator.of(context).pop();
+  //                   _pickVideoFiles();
+  //                 },
+  //               ),
+  //           ],
+  //         ),
+  //         actions: [
+  //           TextButton(
+  //             onPressed: () => Navigator.of(context).pop(),
+  //             child: Text('Cancel'),
+  //           ),
+  //         ],
+  //       );
+  //     },
+  //   );
+  // }
+  //
+  // // Build section header
+  // Widget _buildSectionHeader(String title, IconData icon, int count, int limit) {
+  //   return Container(
+  //     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+  //     decoration: BoxDecoration(
+  //       color: Colors.grey[100],
+  //       borderRadius: BorderRadius.circular(8),
+  //       border: Border.all(color: Colors.grey[300]!),
+  //     ),
+  //     child: Row(
+  //       children: [
+  //         Icon(icon, color: Colors.grey[700], size: 20),
+  //         const SizedBox(width: 8),
+  //         Text(
+  //           '$title ($count/$limit)',
+  //           style: TextStyle(
+  //             fontWeight: FontWeight.w600,
+  //             color: Colors.grey[700],
+  //           ),
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
+  //
+  // // Build file item
+  // Widget _buildFileItem({
+  //   required File file,
+  //   required int index,
+  //   required String fileType,
+  //   required bool showThumbnail,
+  // }) {
+  //   return Container(
+  //     margin: const EdgeInsets.only(bottom: 8),
+  //     padding: const EdgeInsets.all(8),
+  //     decoration: BoxDecoration(
+  //       color: Colors.grey[50],
+  //       borderRadius: BorderRadius.circular(8),
+  //       border: Border.all(color: Colors.grey[300]!),
+  //     ),
+  //     child: Row(
+  //       children: [
+  //         // File icon or thumbnail
+  //         Container(
+  //           width: 40,
+  //           height: 40,
+  //           decoration: BoxDecoration(
+  //             borderRadius: BorderRadius.circular(4),
+  //             border: Border.all(color: Colors.grey[300]!),
+  //           ),
+  //           child: ClipRRect(
+  //             borderRadius: BorderRadius.circular(4),
+  //             child: showThumbnail
+  //               ? Image.file(
+  //                   file,
+  //                   fit: BoxFit.cover,
+  //                   errorBuilder: (context, error, stackTrace) {
+  //                     return Container(
+  //                       color: Colors.grey[200],
+  //                       child: Icon(Icons.image_not_supported, size: 20),
+  //                     );
+  //                   },
+  //                 )
+  //               : Container(
+  //                   color: Colors.grey[200],
+  //                   child: Icon(
+  //                     _getFileTypeIcon(fileType),
+  //                     size: 20,
+  //                     color: Colors.grey[600],
+  //                   ),
+  //                 ),
+  //           ),
+  //         ),
+  //         const SizedBox(width: 12),
+  //         // File info
+  //         Expanded(
+  //           child: Column(
+  //             crossAxisAlignment: CrossAxisAlignment.start,
+  //             children: [
+  //               Text(
+  //                 file.path.split('/').last,
+  //                 style: TextStyle(fontWeight: FontWeight.w500),
+  //                 maxLines: 1,
+  //                 overflow: TextOverflow.ellipsis,
+  //               ),
+  //               Text(
+  //                 'Size: ${_getFileSizeDisplay(file)}',
+  //                 style: TextStyle(
+  //                   color: Colors.grey[600],
+  //                   fontSize: 12,
+  //                 ),
+  //               ),
+  //             ],
+  //           ),
+  //         ),
+  //         // Remove button
+  //         IconButton(
+  //           onPressed: () {
+  //             setState(() {
+  //               switch (fileType) {
+  //                 case 'screenshots':
+  //                   selectedImages.removeAt(index);
+  //                   break;
+  //                 case 'documents':
+  //                   selectedDocuments.removeAt(index);
+  //                   break;
+  //                 case 'voice':
+  //                   selectedVoiceFiles.removeAt(index);
+  //                   break;
+  //                 case 'video':
+  //                   selectedVideoFiles.removeAt(index);
+  //                   break;
+  //               }
+  //             });
+  //             Navigator.of(context).pop();
+  //             if (selectedImages.isNotEmpty || selectedDocuments.isNotEmpty ||
+  //                 selectedVoiceFiles.isNotEmpty || selectedVideoFiles.isNotEmpty) {
+  //
+  //             }
+  //           },
+  //           icon: Icon(Icons.remove_circle, color: Colors.red, size: 20),
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
+
+  // Get file type icon
+  IconData _getFileTypeIcon(String fileType) {
+    switch (fileType) {
+      case 'documents':
+        return Icons.description;
+      case 'voice':
+        return Icons.mic;
+      case 'video':
+        return Icons.video_file;
+      default:
+        return Icons.file_present;
+    }
+  }
+
+  // Get total selected count
+  int _getTotalSelectedCount() {
+    return selectedImages.length + selectedDocuments.length + 
+           selectedVoiceFiles.length + selectedVideoFiles.length;
+  }
+
+  // Show current selection summary (individual file type)
   void _showCurrentSelection([String? fileType]) {
     List<File> files;
     String title;
@@ -1524,6 +1895,8 @@ class FileUploadWidgetState extends State<FileUploadWidget> {
                                 case 'video':
                                   selectedVideoFiles.removeAt(index);
                                   break;
+                                case 'screenshot':
+                                  selectedImages.removeAt(index);
                                 default:
                                   selectedImages.removeAt(index);
                               }
@@ -1544,7 +1917,25 @@ class FileUploadWidgetState extends State<FileUploadWidget> {
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.of(context).pop(),
+              onPressed: () {
+                Navigator.of(context).pop();
+                // Trigger the appropriate file picker based on fileType
+                switch (fileType) {
+                  case 'documents':
+                    _pickDocuments();
+                    break;
+                  case 'voice':
+                    _pickVoiceFiles();
+                    break;
+                  case 'video':
+                    _pickVideoFiles();
+                    break;
+                  case 'screenshot':
+                    _pickImages();
+                  default:
+                    _pickImages();
+                }
+              },
               child: Text('Continue Adding'),
             ),
           ],
@@ -1727,12 +2118,12 @@ class FileUploadWidgetState extends State<FileUploadWidget> {
                     : 'Selected: ${selectedImages.length}/5 (Max 5MB each)'
                       '${selectedImages.isNotEmpty ? ' (${selectedImages.map((f) => _getFileSizeDisplay(f)).join(', ')})' : ''}',
                   style: TextStyle(
-                    color: selectedImages.length >= 6 ? Colors.red : Colors.grey[600],
+                    color: selectedImages.length >= 5 ? Colors.red : Colors.grey[600],
                   ),
                 ),
                 trailing: selectedImages.isNotEmpty
                   ? IconButton(
-                      icon: Icon(Icons.info_outline, color: Colors.blue),
+                      icon: Icon(Icons.remove_red_eye_sharp, color: Colors.blue),
                       onPressed: _showCurrentSelection,
                       tooltip: 'View current selection',
                     )
@@ -1741,7 +2132,7 @@ class FileUploadWidgetState extends State<FileUploadWidget> {
                   ? () {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
-                          content: Text('Maximum 5 screenshots reached. '),
+                          content: Text('Maximum 5 screenshots reached. Please remove some first.'),
                           backgroundColor: Colors.red,
                           duration: Duration(seconds: 2),
                         ),
@@ -1751,108 +2142,108 @@ class FileUploadWidgetState extends State<FileUploadWidget> {
               ),
               
               // Show selected images with previews
-              if (selectedImages.isNotEmpty) ...[
-                const Divider(),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                  child: Text(
-                    'Selected Screenshots:',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 14,
-                      color: Colors.grey[700],
-                    ),
-                  ),
-                ),
-                Container(
-                  height: 120,
-                  child: ListView.builder(
-                    scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                    itemCount: selectedImages.length,
-                    itemBuilder: (context, index) {
-                      final file = selectedImages[index];
-                      return Container(
-                        width: 100,
-                        margin: const EdgeInsets.only(right: 8.0),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: Colors.grey.shade300),
-                        ),
-                        child: Stack(
-                          children: [
-                                                         // Image preview
-                             GestureDetector(
-                               onTap: () => _showImageDetail(file),
-                               child: ClipRRect(
-                                 borderRadius: BorderRadius.circular(8),
-                                 child: Image.file(
-                                   file,
-                                   width: 100,
-                                   height: 120,
-                                   fit: BoxFit.cover,
-                                   errorBuilder: (context, error, stackTrace) {
-                                     return Container(
-                                       width: 100,
-                                       height: 120,
-                                       color: Colors.grey[200],
-                                       child: Icon(
-                                         Icons.image_not_supported,
-                                         color: Colors.grey[400],
-                                       ),
-                                     );
-                                   },
-                                 ),
-                               ),
-                             ),
-                            // Remove button
-                            Positioned(
-                              top: 4,
-                              right: 4,
-                              child: GestureDetector(
-                                onTap: () => _removeFile(selectedImages, index),
-                                child: Container(
-                                  padding: const EdgeInsets.all(2),
-                                  decoration: BoxDecoration(
-                                    color: Colors.red,
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: const Icon(
-                                    Icons.close,
-                                    color: Colors.white,
-                                    size: 16,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            // File size indicator
-                            Positioned(
-                              bottom: 4,
-                              left: 4,
-                              right: 4,
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                                decoration: BoxDecoration(
-                                  color: Colors.black.withOpacity(0.7),
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                                child: Text(
-                                  _getFileSizeDisplay(file),
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 10,
-                                  ),
-                                  textAlign: TextAlign.center,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ],
+              // if (selectedImages.isNotEmpty) ...[
+              //   const Divider(),
+              //   Padding(
+              //     padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              //     child: Text(
+              //       'Selected Screenshots:',
+              //       style: TextStyle(
+              //         fontWeight: FontWeight.w600,
+              //         fontSize: 14,
+              //         color: Colors.grey[700],
+              //       ),
+              //     ),
+              //   ),
+              //   Container(
+              //     height: 120,
+              //     child: ListView.builder(
+              //       scrollDirection: Axis.horizontal,
+              //       padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              //       itemCount: selectedImages.length,
+              //       itemBuilder: (context, index) {
+              //         final file = selectedImages[index];
+              //         return Container(
+              //           width: 100,
+              //           margin: const EdgeInsets.only(right: 8.0),
+              //           decoration: BoxDecoration(
+              //             borderRadius: BorderRadius.circular(8),
+              //             border: Border.all(color: Colors.grey.shade300),
+              //           ),
+              //           child: Stack(
+              //             children: [
+              //                                            // Image preview
+              //                GestureDetector(
+              //                  onTap: () => _showImageDetail(file),
+              //                  child: ClipRRect(
+              //                    borderRadius: BorderRadius.circular(8),
+              //                    child: Image.file(
+              //                      file,
+              //                      width: 100,
+              //                      height: 120,
+              //                      fit: BoxFit.cover,
+              //                      errorBuilder: (context, error, stackTrace) {
+              //                        return Container(
+              //                          width: 100,
+              //                          height: 120,
+              //                          color: Colors.grey[200],
+              //                          child: Icon(
+              //                            Icons.image_not_supported,
+              //                            color: Colors.grey[400],
+              //                          ),
+              //                        );
+              //                      },
+              //                    ),
+              //                  ),
+              //                ),
+              //               // Remove button
+              //               Positioned(
+              //                 top: 4,
+              //                 right: 4,
+              //                 child: GestureDetector(
+              //                   onTap: () => _removeFile(selectedImages, index),
+              //                   child: Container(
+              //                     padding: const EdgeInsets.all(2),
+              //                     decoration: BoxDecoration(
+              //                       color: Colors.red,
+              //                       borderRadius: BorderRadius.circular(12),
+              //                     ),
+              //                     child: const Icon(
+              //                       Icons.close,
+              //                       color: Colors.white,
+              //                       size: 16,
+              //                     ),
+              //                   ),
+              //                 ),
+              //               ),
+              //               // File size indicator
+              //               Positioned(
+              //                 bottom: 4,
+              //                 left: 4,
+              //                 right: 4,
+              //                 child: Container(
+              //                   padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+              //                   decoration: BoxDecoration(
+              //                     color: Colors.black.withOpacity(0.7),
+              //                     borderRadius: BorderRadius.circular(4),
+              //                   ),
+              //                   child: Text(
+              //                     _getFileSizeDisplay(file),
+              //                     style: const TextStyle(
+              //                       color: Colors.white,
+              //                       fontSize: 10,
+              //                     ),
+              //                     textAlign: TextAlign.center,
+              //                   ),
+              //                 ),
+              //               ),
+              //             ],
+              //           ),
+              //         );
+              //       },
+              //     ),
+              //   ),
+              // ],
             ],
           ),
         ),
@@ -1922,7 +2313,7 @@ class FileUploadWidgetState extends State<FileUploadWidget> {
             ),
             trailing: selectedDocuments.isNotEmpty
               ? IconButton(
-                  icon: Icon(Icons.info_outline, color: Colors.blue),
+                  icon: Icon(Icons.remove_red_eye_sharp, color: Colors.blue),
                   onPressed: () => _showCurrentSelection('documents'),
                   tooltip: 'View current selection',
                 )
@@ -2006,7 +2397,7 @@ class FileUploadWidgetState extends State<FileUploadWidget> {
             ),
             trailing: selectedVoiceFiles.isNotEmpty
               ? IconButton(
-                  icon: Icon(Icons.info_outline, color: Colors.blue),
+                  icon: Icon(Icons.remove_red_eye_sharp, color: Colors.black),
                   onPressed: () => _showCurrentSelection('voice'),
                   tooltip: 'View current selection',
                 )
@@ -2053,10 +2444,10 @@ class FileUploadWidgetState extends State<FileUploadWidget> {
                     right: 0,
                     top: 0,
                     child: Container(
-                      padding: const EdgeInsets.all(2),
+                      padding: const EdgeInsets.all(3),
                       decoration: BoxDecoration(
                         color: Colors.green,
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(15),
                       ),
                       child: Text(
                         '${selectedVideoFiles.length}',
@@ -2081,7 +2472,7 @@ class FileUploadWidgetState extends State<FileUploadWidget> {
             subtitle: Text(
               selectedVideoFiles.length >= 5
                 ? 'Maximum 5 video files selected. Remove some to add more.'
-                : 'Selected: ${selectedVideoFiles.length}/5 (Max 5MB each)'
+                : 'Selected: ${selectedVideoFiles.length}/5 (Max 50MB each)'
                   '${selectedVideoFiles.isNotEmpty ? ' (${selectedVideoFiles.map((f) => _getFileSizeDisplay(f)).join(', ')})' : ''}',
               style: TextStyle(
                 color: selectedVideoFiles.length >= 5 ? Colors.red : Colors.grey[600],
@@ -2089,7 +2480,7 @@ class FileUploadWidgetState extends State<FileUploadWidget> {
             ),
             trailing: selectedVideoFiles.isNotEmpty
               ? IconButton(
-                  icon: Icon(Icons.info_outline, color: Colors.blue),
+                  icon: Icon(Icons.remove_red_eye_sharp, color: Colors.blue),
                   onPressed: () => _showCurrentSelection('video'),
                   tooltip: 'View current selection',
                 )

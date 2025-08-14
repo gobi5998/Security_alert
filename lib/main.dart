@@ -6,6 +6,8 @@ import 'package:security_alert/screens/menu/profile_page.dart';
 import 'package:security_alert/screens/menu/ratepage.dart';
 import 'package:security_alert/screens/menu/shareApp.dart';
 import 'package:security_alert/screens/menu/theard_database.dart';
+import 'package:security_alert/screens/menu/thread_database_listpage.dart';
+import 'package:security_alert/screens/menu/filter_page.dart';
 import 'package:security_alert/screens/scam/scam_report_service.dart';
 import 'package:security_alert/screens/scam/report_scam_1.dart';
 import 'package:security_alert/screens/malware/report_malware_1.dart';
@@ -204,7 +206,20 @@ class MyApp extends StatelessWidget {
       routes: {
         '/': (context) => const AuthWrapper(), // Use AuthWrapper for auto-login
         '/profile': (context) => ProfilePage(),
-        '/thread': (context) => ThreadDatabaseFilterPage(),
+        '/thread': (context) => ThreadDatabaseListPage(
+          searchQuery: '',
+          selectedTypes: [],
+          selectedSeverities: [],
+          selectedCategories: [],
+          hasSearchQuery: false,
+          hasSelectedType: false,
+          hasSelectedSeverity: false,
+          hasSelectedCategory: false,
+          isOffline: false,
+          localReports: [],
+          severityLevels: [],
+        ),
+        '/filter': (context) => FilterPage(),
         '/subscription': (context) => SubscriptionPlansPage(),
         '/rate': (context) => Ratepage(),
         '/share': (context) => Shareapp(),
@@ -286,10 +301,8 @@ class _AuthWrapperState extends State<AuthWrapper> {
   void _onAuthStateChanged() {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
 
-
     // If user just logged in and we haven't checked biometric yet
     if (authProvider.isLoggedIn && !_authChecked) {
-
       // Check if we need to show biometric setup dialog
       _checkBiometricSetup();
     }
@@ -301,7 +314,6 @@ class _AuthWrapperState extends State<AuthWrapper> {
       final showBiometricSetup = prefs.getBool('show_biometric_setup') ?? false;
 
       if (showBiometricSetup) {
-
         // Clear the flag first
         await prefs.setBool('show_biometric_setup', false);
 
@@ -310,7 +322,6 @@ class _AuthWrapperState extends State<AuthWrapper> {
           _showBiometricSetupDialog();
         }
       } else {
-
         setState(() {
           _isFreshLogin = true;
           _biometricPassed = true;

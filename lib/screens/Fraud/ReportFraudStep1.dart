@@ -18,6 +18,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:currency_picker/currency_picker.dart';
 import '../../custom/location_picker_screen.dart';
+import '../../services/location_storage_service.dart';
 
 // Get allowed phone number lengths for current country
 List<int> getAllowedPhoneLengths(String? countryCode) {
@@ -859,818 +860,903 @@ class _ReportFraudStep1State extends State<ReportFraudStep1> {
           ),
         ),
       ),
-      body: Form(
-        key: _formKey,
-        child: SingleChildScrollView(
-          padding: EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              CustomDropdown(
-                label: 'Fraud Type*',
-                hint: 'Select a Fraud Type',
-                items: fraudTypes.map((e) => e['name'] as String).toList(),
-                value: fraudTypes.firstWhere(
-                  (e) => e['_id'] == fraudTypeId,
-                  orElse: () => {},
-                )['name'],
-                onChanged: (val) {
-                  setState(() {
-                    if (val != null) {
-                      final selectedType = fraudTypes.firstWhere(
-                        (e) => e['name'] == val,
-                        orElse: () => {'_id': null},
-                      );
-                      fraudTypeId = selectedType['_id'];
-                    }
-                  });
-                },
-              ),
-
-              const SizedBox(height: 12),
-              CustomTextField(
-                label: 'Fraudster Name',
-                hintText: 'Enter fraudster name',
-                controller: _fraudsterNameController,
-                onChanged: (val) {
-                  fraudsterName = val;
-                },
-              ),
-
-              const SizedBox(height: 12),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Phone Number',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.grey[700],
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Container(
-                    decoration: BoxDecoration(
-                      border: Border.all(
-                        color: _phoneError.isNotEmpty
-                            ? Colors.red
-                            : Colors.black,
-                        width: 1,
-                      ),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Row(
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              children: [
+                // Scrollable content area
+                Expanded(
+                  child: SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Expanded(
-                          child: InternationalPhoneNumberInput(
-                            onInputChanged: (PhoneNumber number) {
-                              // Get allowed lengths for current country
-                              final allowedLengths = getAllowedPhoneLengths(
-                                number.isoCode,
-                              );
-
-                              // Extract only the phone number digits (without country code)
-                              String phoneDigits = number.phoneNumber ?? '';
-
-                              // Remove the country code from the phone number if it's included
-                              if (number.dialCode != null &&
-                                  phoneDigits.startsWith(number.dialCode!)) {
-                                phoneDigits = phoneDigits.substring(
-                                  number.dialCode!.length,
+                        CustomDropdown(
+                          label: 'Fraud Type*',
+                          hint: 'Select a Fraud Type',
+                          items: fraudTypes
+                              .map((e) => e['name'] as String)
+                              .toList(),
+                          value: fraudTypes.firstWhere(
+                            (e) => e['_id'] == fraudTypeId,
+                            orElse: () => {},
+                          )['name'],
+                          onChanged: (val) {
+                            setState(() {
+                              if (val != null) {
+                                final selectedType = fraudTypes.firstWhere(
+                                  (e) => e['name'] == val,
+                                  orElse: () => {'_id': null},
                                 );
+                                fraudTypeId = selectedType['_id'];
                               }
-
-                              // Remove any non-digit characters
-                              final digitsOnly = phoneDigits.replaceAll(
-                                RegExp(r'[^\d]'),
-                                '',
-                              );
-
-                              // Check if the current length is valid for this country
-                              if (allowedLengths.contains(digitsOnly.length)) {
-                                // Valid length - accept the input
-                                currentPhoneNumber = PhoneNumber(
-                                  isoCode: number.isoCode,
-                                  dialCode: number.dialCode,
-                                  phoneNumber: digitsOnly,
-                                );
-                                _validatePhoneField();
-                              } else if (digitsOnly.length <
-                                  allowedLengths.first) {
-                                // Still typing - allow input if it's shorter than minimum
-                                currentPhoneNumber = PhoneNumber(
-                                  isoCode: number.isoCode,
-                                  dialCode: number.dialCode,
-                                  phoneNumber: digitsOnly,
-                                );
-                                _validatePhoneField();
-                              } else {
-                                // Invalid length - truncate to the maximum allowed length
-                                final maxAllowedLength = allowedLengths.reduce(
-                                  (a, b) => a > b ? a : b,
-                                );
-                                final truncatedDigits =
-                                    digitsOnly.length > maxAllowedLength
-                                    ? digitsOnly.substring(0, maxAllowedLength)
-                                    : digitsOnly;
-
-                                currentPhoneNumber = PhoneNumber(
-                                  isoCode: number.isoCode,
-                                  dialCode: number.dialCode,
-                                  phoneNumber: truncatedDigits,
-                                );
-                                _validatePhoneField();
-                              }
-                            },
-                            onInputValidated: (bool value) {
-                              setState(() {
-                                _isPhoneValid = value;
-                              });
-                            },
-                            selectorConfig: const SelectorConfig(
-                              selectorType: PhoneInputSelectorType.DROPDOWN,
-                              showFlags: true,
-                              useEmoji: true,
-                              setSelectorButtonAsPrefixIcon: false,
-                              leadingPadding: 4,
-                            ),
-                            ignoreBlank: false,
-                            autoValidateMode: AutovalidateMode.disabled,
-                            selectorTextStyle: const TextStyle(
-                              color: Colors.black,
-                              fontSize: 12,
-                            ),
-                            initialValue: currentPhoneNumber,
-                            formatInput: true,
-                            keyboardType: const TextInputType.numberWithOptions(
-                              signed: true,
-                              decimal: true,
-                            ),
-                            inputDecoration: InputDecoration(
-                              hintText: 'Enter phone number',
-                              border: InputBorder.none,
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 16,
-                              ),
-                              suffixIcon: null,
-                              isDense: false,
-                            ),
-                          ),
+                            });
+                          },
                         ),
-                        if (_phoneController.text.isNotEmpty)
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                _isPhoneValid
-                                    ? Icons.check_circle
-                                    : Icons.error,
-                                color: _isPhoneValid
-                                    ? Colors.green
-                                    : Colors.red,
-                                size: 20,
+
+                        const SizedBox(height: 12),
+                        CustomTextField(
+                          label: 'Fraudster Name',
+                          hintText: 'Enter fraudster name',
+                          controller: _fraudsterNameController,
+                          onChanged: (val) {
+                            fraudsterName = val;
+                          },
+                        ),
+
+                        const SizedBox(height: 12),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Phone Number',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                                color: Colors.grey[700],
                               ),
-                              const SizedBox(width: 4),
-                              IconButton(
-                                onPressed: _addPhoneNumber,
-                                icon: Icon(
-                                  Icons.add,
-                                  color: const Color(0xFF064FAD),
-                                  size: 18,
+                            ),
+                            const SizedBox(height: 8),
+                            Container(
+                              decoration: BoxDecoration(
+                                border: Border.all(
+                                  color: _phoneError.isNotEmpty
+                                      ? Colors.red
+                                      : Colors.black,
+                                  width: 1,
                                 ),
-                                padding: EdgeInsets.zero,
-                                constraints: const BoxConstraints(),
+                                borderRadius: BorderRadius.circular(8),
                               ),
-                            ],
-                          )
-                        else
-                          IconButton(
-                            onPressed: _addPhoneNumber,
-                            icon: Icon(
-                              Icons.add,
-                              color: const Color(0xFF064FAD),
-                              size: 18,
-                            ),
-                            padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints(),
-                          ),
-                      ],
-                    ),
-                  ),
-                  if (_phoneError.isNotEmpty)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 4),
-                      child: Text(
-                        _phoneError,
-                        style: const TextStyle(color: Colors.red, fontSize: 12),
-                      ),
-                    ),
-                ],
-              ),
-              if (phoneNumbersWithCountryCode.isNotEmpty) ...[
-                const SizedBox(height: 8),
-                ...phoneNumbersWithCountryCode.asMap().entries.map((entry) {
-                  final index = entry.key;
-                  final phone = entry.value;
-                  return Container(
-                    margin: EdgeInsets.only(bottom: 4),
-                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: Colors.grey[200],
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            phone,
-                            style: const TextStyle(fontWeight: FontWeight.w500),
-                          ),
-                        ),
-                        IconButton(
-                          onPressed: () => _removePhoneNumber(index),
-                          icon: Icon(Icons.remove_circle, color: Colors.red),
-                          iconSize: 20,
-                        ),
-                      ],
-                    ),
-                  );
-                }).toList(),
-              ],
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: InternationalPhoneNumberInput(
+                                      onInputChanged: (PhoneNumber number) {
+                                        // Get allowed lengths for current country
+                                        final allowedLengths =
+                                            getAllowedPhoneLengths(
+                                              number.isoCode,
+                                            );
 
-              const SizedBox(height: 12),
-              CustomTextField(
-                label: 'Email Address *',
-                hintText: 'Enter email address',
-                controller: _emailController,
-                keyboardType: TextInputType.emailAddress,
-                inputFormatters: [EmailInputFormatter()],
-                onChanged: (val) {
-                  _validateEmailField();
-                },
-                validator: validateEmail,
-                errorText: _emailError.isNotEmpty ? _emailError : null,
-                suffixIcon: _emailController.text.isNotEmpty
-                    ? Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            _isEmailValid ? Icons.check_circle : Icons.error,
-                            color: _isEmailValid ? Colors.green : Colors.red,
-                            size: 20,
-                          ),
-                          const SizedBox(width: 4),
-                          IconButton(
-                            onPressed: _addEmailAddress,
-                            icon: Icon(
-                              Icons.add,
-                              color: const Color(0xFF064FAD),
-                              size: 18,
+                                        // Extract only the phone number digits (without country code)
+                                        String phoneDigits =
+                                            number.phoneNumber ?? '';
+
+                                        // Remove the country code from the phone number if it's included
+                                        if (number.dialCode != null &&
+                                            phoneDigits.startsWith(
+                                              number.dialCode!,
+                                            )) {
+                                          phoneDigits = phoneDigits.substring(
+                                            number.dialCode!.length,
+                                          );
+                                        }
+
+                                        // Remove any non-digit characters
+                                        final digitsOnly = phoneDigits
+                                            .replaceAll(RegExp(r'[^\d]'), '');
+
+                                        // Check if the current length is valid for this country
+                                        if (allowedLengths.contains(
+                                          digitsOnly.length,
+                                        )) {
+                                          // Valid length - accept the input
+                                          currentPhoneNumber = PhoneNumber(
+                                            isoCode: number.isoCode,
+                                            dialCode: number.dialCode,
+                                            phoneNumber: digitsOnly,
+                                          );
+                                          _validatePhoneField();
+                                        } else if (digitsOnly.length <
+                                            allowedLengths.first) {
+                                          // Still typing - allow input if it's shorter than minimum
+                                          currentPhoneNumber = PhoneNumber(
+                                            isoCode: number.isoCode,
+                                            dialCode: number.dialCode,
+                                            phoneNumber: digitsOnly,
+                                          );
+                                          _validatePhoneField();
+                                        } else {
+                                          // Invalid length - truncate to the maximum allowed length
+                                          final maxAllowedLength =
+                                              allowedLengths.reduce(
+                                                (a, b) => a > b ? a : b,
+                                              );
+                                          final truncatedDigits =
+                                              digitsOnly.length >
+                                                  maxAllowedLength
+                                              ? digitsOnly.substring(
+                                                  0,
+                                                  maxAllowedLength,
+                                                )
+                                              : digitsOnly;
+
+                                          currentPhoneNumber = PhoneNumber(
+                                            isoCode: number.isoCode,
+                                            dialCode: number.dialCode,
+                                            phoneNumber: truncatedDigits,
+                                          );
+                                          _validatePhoneField();
+                                        }
+                                      },
+                                      onInputValidated: (bool value) {
+                                        setState(() {
+                                          _isPhoneValid = value;
+                                        });
+                                      },
+                                      selectorConfig: const SelectorConfig(
+                                        selectorType:
+                                            PhoneInputSelectorType.DROPDOWN,
+                                        showFlags: true,
+                                        useEmoji: true,
+                                        setSelectorButtonAsPrefixIcon: false,
+                                        leadingPadding: 4,
+                                      ),
+                                      ignoreBlank: false,
+                                      autoValidateMode:
+                                          AutovalidateMode.disabled,
+                                      selectorTextStyle: const TextStyle(
+                                        color: Colors.black,
+                                        fontSize: 12,
+                                      ),
+                                      initialValue: currentPhoneNumber,
+                                      formatInput: true,
+                                      keyboardType:
+                                          const TextInputType.numberWithOptions(
+                                            signed: true,
+                                            decimal: true,
+                                          ),
+                                      inputDecoration: InputDecoration(
+                                        hintText: 'Enter phone number',
+                                        border: InputBorder.none,
+                                        contentPadding:
+                                            const EdgeInsets.symmetric(
+                                              horizontal: 12,
+                                              vertical: 16,
+                                            ),
+                                        suffixIcon: null,
+                                        isDense: false,
+                                      ),
+                                    ),
+                                  ),
+                                  if (_phoneController.text.isNotEmpty)
+                                    Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          _isPhoneValid
+                                              ? Icons.check_circle
+                                              : Icons.error,
+                                          color: _isPhoneValid
+                                              ? Colors.green
+                                              : Colors.red,
+                                          size: 20,
+                                        ),
+                                        const SizedBox(width: 4),
+                                        IconButton(
+                                          onPressed: _addPhoneNumber,
+                                          icon: Icon(
+                                            Icons.add,
+                                            color: const Color(0xFF064FAD),
+                                            size: 18,
+                                          ),
+                                          padding: EdgeInsets.zero,
+                                          constraints: const BoxConstraints(),
+                                        ),
+                                      ],
+                                    )
+                                  else
+                                    IconButton(
+                                      onPressed: _addPhoneNumber,
+                                      icon: Icon(
+                                        Icons.add,
+                                        color: const Color(0xFF064FAD),
+                                        size: 18,
+                                      ),
+                                      padding: EdgeInsets.zero,
+                                      constraints: const BoxConstraints(),
+                                    ),
+                                ],
+                              ),
                             ),
-                            padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints(),
-                          ),
+                            if (_phoneError.isNotEmpty)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 4),
+                                child: Text(
+                                  _phoneError,
+                                  style: const TextStyle(
+                                    color: Colors.red,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                        if (phoneNumbersWithCountryCode.isNotEmpty) ...[
+                          const SizedBox(height: 8),
+                          ...phoneNumbersWithCountryCode.asMap().entries.map((
+                            entry,
+                          ) {
+                            final index = entry.key;
+                            final phone = entry.value;
+                            return Container(
+                              margin: EdgeInsets.only(bottom: 4),
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 8,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.grey[200],
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      phone,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ),
+                                  IconButton(
+                                    onPressed: () => _removePhoneNumber(index),
+                                    icon: Icon(
+                                      Icons.remove_circle,
+                                      color: Colors.red,
+                                    ),
+                                    iconSize: 20,
+                                  ),
+                                ],
+                              ),
+                            );
+                          }).toList(),
                         ],
-                      )
-                    : IconButton(
-                        onPressed: _addEmailAddress,
-                        icon: Icon(
-                          Icons.add,
-                          color: const Color(0xFF064FAD),
-                          size: 18,
+
+                        const SizedBox(height: 12),
+                        CustomTextField(
+                          label: 'Email Address *',
+                          hintText: 'Enter email address',
+                          controller: _emailController,
+                          keyboardType: TextInputType.emailAddress,
+                          inputFormatters: [EmailInputFormatter()],
+                          onChanged: (val) {
+                            _validateEmailField();
+                          },
+                          validator: validateEmail,
+                          errorText: _emailError.isNotEmpty
+                              ? _emailError
+                              : null,
+                          suffixIcon: _emailController.text.isNotEmpty
+                              ? Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      _isEmailValid
+                                          ? Icons.check_circle
+                                          : Icons.error,
+                                      color: _isEmailValid
+                                          ? Colors.green
+                                          : Colors.red,
+                                      size: 20,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    IconButton(
+                                      onPressed: _addEmailAddress,
+                                      icon: Icon(
+                                        Icons.add,
+                                        color: const Color(0xFF064FAD),
+                                        size: 18,
+                                      ),
+                                      padding: EdgeInsets.zero,
+                                      constraints: const BoxConstraints(),
+                                    ),
+                                  ],
+                                )
+                              : IconButton(
+                                  onPressed: _addEmailAddress,
+                                  icon: Icon(
+                                    Icons.add,
+                                    color: const Color(0xFF064FAD),
+                                    size: 18,
+                                  ),
+                                  padding: EdgeInsets.zero,
+                                  constraints: const BoxConstraints(),
+                                ),
                         ),
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(),
-                      ),
-              ),
-              if (emailAddresses.isNotEmpty) ...[
-                const SizedBox(height: 8),
-                ...emailAddresses.asMap().entries.map((entry) {
-                  final index = entry.key;
-                  final email = entry.value;
-                  return Container(
-                    margin: EdgeInsets.only(bottom: 4),
-                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: Colors.grey[200],
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Row(
-                      children: [
-                        Expanded(child: Text(email)),
-                        IconButton(
-                          onPressed: () => _removeEmailAddress(index),
-                          icon: Icon(Icons.remove_circle, color: Colors.red),
-                          iconSize: 20,
+                        if (emailAddresses.isNotEmpty) ...[
+                          const SizedBox(height: 8),
+                          ...emailAddresses.asMap().entries.map((entry) {
+                            final index = entry.key;
+                            final email = entry.value;
+                            return Container(
+                              margin: EdgeInsets.only(bottom: 4),
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 8,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.grey[200],
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Row(
+                                children: [
+                                  Expanded(child: Text(email)),
+                                  IconButton(
+                                    onPressed: () => _removeEmailAddress(index),
+                                    icon: Icon(
+                                      Icons.remove_circle,
+                                      color: Colors.red,
+                                    ),
+                                    iconSize: 20,
+                                  ),
+                                ],
+                              ),
+                            );
+                          }).toList(),
+                        ],
+
+                        const SizedBox(height: 12),
+                        CustomTextField(
+                          label: 'Website',
+                          hintText: 'Enter website URL',
+                          controller: _websiteController,
+                          keyboardType: TextInputType.url,
+                          onChanged: (val) {
+                            website = val;
+                          },
                         ),
-                      ],
-                    ),
-                  );
-                }).toList(),
-              ],
 
-              const SizedBox(height: 12),
-              CustomTextField(
-                label: 'Website',
-                hintText: 'Enter website URL',
-                controller: _websiteController,
-                keyboardType: TextInputType.url,
-                onChanged: (val) {
-                  website = val;
-                },
-              ),
-
-              const SizedBox(height: 12),
-              CustomTextField(
-                label: 'Company Name',
-                hintText: 'Enter company name',
-                controller: _companyNameController,
-                onChanged: (val) {
-                  companyName = val;
-                },
-              ),
-
-              const SizedBox(height: 12),
-              CustomTextField(
-                label: 'Social Media Handle',
-                hintText: 'Enter social media handle',
-                controller: _socialMediaController,
-                onChanged: (val) {
-                  // Handle social media input
-                },
-                suffixIcon: IconButton(
-                  onPressed: _addSocialMediaHandle,
-                  icon: Icon(
-                    Icons.add,
-                    color: const Color(0xFF064FAD),
-                    size: 18,
-                  ),
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                ),
-              ),
-              if (socialMediaHandles.isNotEmpty) ...[
-                const SizedBox(height: 8),
-                ...socialMediaHandles.asMap().entries.map((entry) {
-                  final index = entry.key;
-                  final handle = entry.value;
-                  return Container(
-                    margin: EdgeInsets.only(bottom: 4),
-                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: Colors.grey[200],
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Row(
-                      children: [
-                        Expanded(child: Text(handle)),
-                        IconButton(
-                          onPressed: () => _removeSocialMediaHandle(index),
-                          icon: Icon(Icons.remove_circle, color: Colors.red),
-                          iconSize: 20,
+                        const SizedBox(height: 12),
+                        CustomTextField(
+                          label: 'Company Name',
+                          hintText: 'Enter company name',
+                          controller: _companyNameController,
+                          onChanged: (val) {
+                            companyName = val;
+                          },
                         ),
-                      ],
-                    ),
-                  );
-                }).toList(),
-              ],
 
-              const SizedBox(height: 12),
-              InkWell(
-                onTap: () async {
-                  final DateTime? pickedDate = await showDatePicker(
-                    context: context,
-                    initialDate: incidentDateTime ?? DateTime.now(),
-                    firstDate: DateTime(2020),
-                    lastDate: DateTime.now(),
-                  );
-                  if (pickedDate != null) {
-                    final TimeOfDay? pickedTime = await showTimePicker(
-                      context: context,
-                      initialTime: TimeOfDay.now(),
-                    );
-                    if (pickedTime != null) {
-                      setState(() {
-                        incidentDateTime = DateTime(
-                          pickedDate.year,
-                          pickedDate.month,
-                          pickedDate.day,
-                          pickedTime.hour,
-                          pickedTime.minute,
-                        );
-                      });
-                    }
-                  }
-                },
-                child: Container(
-                  padding: EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.grey),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(Icons.calendar_today, color: Colors.grey),
-                      const SizedBox(width: 8),
-                      Text(
-                        incidentDateTime != null
-                            ? '${incidentDateTime!.day}/${incidentDateTime!.month}/${incidentDateTime!.year} ${incidentDateTime!.hour}:${incidentDateTime!.minute.toString().padLeft(2, '0')}'
-                            : 'Select date and time',
-                        style: TextStyle(
-                          color: incidentDateTime != null
-                              ? Colors.black
-                              : Colors.grey,
+                        const SizedBox(height: 12),
+                        CustomTextField(
+                          label: 'Social Media Handle',
+                          hintText: 'Enter social media handle',
+                          controller: _socialMediaController,
+                          onChanged: (val) {
+                            // Handle social media input
+                          },
+                          suffixIcon: IconButton(
+                            onPressed: _addSocialMediaHandle,
+                            icon: Icon(
+                              Icons.add,
+                              color: const Color(0xFF064FAD),
+                              size: 18,
+                            ),
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
+                        if (socialMediaHandles.isNotEmpty) ...[
+                          const SizedBox(height: 8),
+                          ...socialMediaHandles.asMap().entries.map((entry) {
+                            final index = entry.key;
+                            final handle = entry.value;
+                            return Container(
+                              margin: EdgeInsets.only(bottom: 4),
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 8,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.grey[200],
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Row(
+                                children: [
+                                  Expanded(child: Text(handle)),
+                                  IconButton(
+                                    onPressed: () =>
+                                        _removeSocialMediaHandle(index),
+                                    icon: Icon(
+                                      Icons.remove_circle,
+                                      color: Colors.red,
+                                    ),
+                                    iconSize: 20,
+                                  ),
+                                ],
+                              ),
+                            );
+                          }).toList(),
+                        ],
 
-              const SizedBox(height: 12),
-              // Combined Currency and Amount Field
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Currency and Amount Involved',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.black,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Container(
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.black),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Row(
-                      children: [
-                        // Currency Picker Button (Left Side)
+                        const SizedBox(height: 12),
                         InkWell(
                           onTap: () async {
-                            try {
-                              showCurrencyPicker(
-                                context: context,
-                                showFlag: true,
-                                showSearchField: true,
-                                showCurrencyName: true,
-                                showCurrencyCode: true,
-                                favorite: ['INR', 'USD', 'EUR'],
-                                onSelect: (Currency currency) {
-                                  print(
-                                    '🪙 Currency selected: ${currency.code} (${currency.symbol})',
+                            final DateTime? pickedDate = await showDatePicker(
+                              context: context,
+                              initialDate: incidentDateTime ?? DateTime.now(),
+                              firstDate: DateTime(2020),
+                              lastDate: DateTime.now(),
+                            );
+                            if (pickedDate != null) {
+                              final TimeOfDay? pickedTime =
+                                  await showTimePicker(
+                                    context: context,
+                                    initialTime: TimeOfDay.now(),
                                   );
-                                  setState(() {
-                                    selectedCurrency = currency.code;
-                                    selectedCurrencySymbol = currency.symbol;
-                                  });
-                                },
-                              );
-                            } catch (e) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    'Error opening currency picker: $e',
-                                  ),
-                                  backgroundColor: Colors.red,
-                                ),
-                              );
+                              if (pickedTime != null) {
+                                setState(() {
+                                  incidentDateTime = DateTime(
+                                    pickedDate.year,
+                                    pickedDate.month,
+                                    pickedDate.day,
+                                    pickedTime.hour,
+                                    pickedTime.minute,
+                                  );
+                                });
+                              }
                             }
                           },
                           child: Container(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 16,
-                            ),
+                            padding: EdgeInsets.all(16),
                             decoration: BoxDecoration(
-                              border: Border(
-                                right: BorderSide(color: Colors.grey.shade300),
-                              ),
+                              border: Border.all(color: Colors.grey),
+                              borderRadius: BorderRadius.circular(8),
                             ),
                             child: Row(
-                              mainAxisSize: MainAxisSize.min,
                               children: [
-                                // Icon(
-                                //   Icons.attach_money,
-                                //   color: const Color(0xFF064FAD),
-                                //   size: 20,
-                                // ),
+                                Icon(Icons.calendar_today, color: Colors.grey),
                                 const SizedBox(width: 8),
                                 Text(
-                                  '$selectedCurrencySymbol $selectedCurrency',
+                                  incidentDateTime != null
+                                      ? '${incidentDateTime!.day}/${incidentDateTime!.month}/${incidentDateTime!.year} ${incidentDateTime!.hour}:${incidentDateTime!.minute.toString().padLeft(2, '0')}'
+                                      : 'Select date and time',
                                   style: TextStyle(
-                                    fontSize: 16,
-                                    color: Colors.black,
-                                    fontWeight: FontWeight.w500,
+                                    color: incidentDateTime != null
+                                        ? Colors.black
+                                        : Colors.grey,
                                   ),
                                 ),
-                                const SizedBox(width: 4),
-                                Icon(Icons.arrow_drop_down, color: Colors.grey),
                               ],
                             ),
                           ),
                         ),
-                        // Amount Input Field (Right Side)
-                        Expanded(
-                          child: TextField(
-                            controller: _amountInvolvedController,
-                            keyboardType: TextInputType.number,
-                            decoration: InputDecoration(
-                              hintText: 'Enter amount involved',
-                              border: InputBorder.none,
-                              contentPadding: EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 16,
-                              ),
-                            ),
-                            onChanged: (val) {
-                              amountInvolved = double.tryParse(val);
-                            },
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
 
-              const SizedBox(height: 12),
-              CustomTextField(
-                label: 'Name',
-                hintText: 'Enter name',
-                controller: _nameController,
-                onChanged: (val) {
-                  name = val;
-                  _validateNameField();
-                },
-                validator: validateName,
-                errorText: _nameError.isNotEmpty ? _nameError : null,
-                suffixIcon: _nameController.text.isNotEmpty
-                    ? Icon(
-                        _isNameValid ? Icons.check_circle : Icons.error,
-                        color: _isNameValid ? Colors.green : Colors.red,
-                        size: 20,
-                      )
-                    : null,
-              ),
-
-              const SizedBox(height: 12),
-              CustomTextField(
-                label: 'Description *',
-                hintText: 'Describe the fraud in detail',
-                controller: _descriptionController,
-                maxLines: 5,
-                minLines: 3,
-                onChanged: (val) {
-                  description = val;
-                  _validateDescriptionField();
-                },
-                validator: validateDescription,
-                errorText: _descriptionError.isNotEmpty
-                    ? _descriptionError
-                    : null,
-                suffixIcon: _descriptionController.text.isNotEmpty
-                    ? Icon(
-                        _isDescriptionValid ? Icons.check_circle : Icons.error,
-                        color: _isDescriptionValid ? Colors.green : Colors.red,
-                        size: 20,
-                      )
-                    : null,
-              ),
-
-              const SizedBox(height: 12),
-              // Age Range Field
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Age Range (if known)',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.black,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Container(
-                    padding: EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.black),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        const SizedBox(height: 12),
+                        // Combined Currency and Amount Field
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Age: ${_ageRange.start.round()} - ${_ageRange.end.round()}',
+                              'Currency and Amount Involved',
                               style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w500,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
                                 color: Colors.black,
                               ),
                             ),
-                            Icon(
-                              Icons.person,
-                              color: const Color(0xFF064FAD),
-                              size: 20,
+                            const SizedBox(height: 8),
+                            Container(
+                              decoration: BoxDecoration(
+                                border: Border.all(color: Colors.black),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Row(
+                                children: [
+                                  // Currency Picker Button (Left Side)
+                                  InkWell(
+                                    onTap: () async {
+                                      try {
+                                        showCurrencyPicker(
+                                          context: context,
+                                          showFlag: true,
+                                          showSearchField: true,
+                                          showCurrencyName: true,
+                                          showCurrencyCode: true,
+                                          favorite: ['INR', 'USD', 'EUR'],
+                                          onSelect: (Currency currency) {
+                                            print(
+                                              '🪙 Currency selected: ${currency.code} (${currency.symbol})',
+                                            );
+                                            setState(() {
+                                              selectedCurrency = currency.code;
+                                              selectedCurrencySymbol =
+                                                  currency.symbol;
+                                            });
+                                          },
+                                        );
+                                      } catch (e) {
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
+                                          SnackBar(
+                                            content: Text(
+                                              'Error opening currency picker: $e',
+                                            ),
+                                            backgroundColor: Colors.red,
+                                          ),
+                                        );
+                                      }
+                                    },
+                                    child: Container(
+                                      padding: EdgeInsets.symmetric(
+                                        horizontal: 12,
+                                        vertical: 16,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        border: Border(
+                                          right: BorderSide(
+                                            color: Colors.grey.shade300,
+                                          ),
+                                        ),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          // Icon(
+                                          //   Icons.attach_money,
+                                          //   color: const Color(0xFF064FAD),
+                                          //   size: 20,
+                                          // ),
+                                          const SizedBox(width: 8),
+                                          Text(
+                                            '$selectedCurrencySymbol $selectedCurrency',
+                                            style: TextStyle(
+                                              fontSize: 16,
+                                              color: Colors.black,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 4),
+                                          Icon(
+                                            Icons.arrow_drop_down,
+                                            color: Colors.grey,
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                  // Amount Input Field (Right Side)
+                                  Expanded(
+                                    child: TextField(
+                                      controller: _amountInvolvedController,
+                                      keyboardType: TextInputType.number,
+                                      decoration: InputDecoration(
+                                        hintText: 'Enter amount involved',
+                                        border: InputBorder.none,
+                                        contentPadding: EdgeInsets.symmetric(
+                                          horizontal: 12,
+                                          vertical: 16,
+                                        ),
+                                      ),
+                                      onChanged: (val) {
+                                        amountInvolved = double.tryParse(val);
+                                      },
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 16),
-                        RangeSlider(
-                          values: _ageRange,
-                          min: 10,
-                          max: 100,
-                          divisions: 90,
-                          activeColor: const Color(0xFF064FAD),
-                          inactiveColor: Colors.grey.shade300,
-                          labels: RangeLabels(
-                            _ageRange.start.round().toString(),
-                            _ageRange.end.round().toString(),
-                          ),
-                          onChanged: (RangeValues values) {
-                            setState(() {
-                              _ageRange = values;
-                              minAge = values.start.round();
-                              maxAge = values.end.round();
-                            });
+
+                        const SizedBox(height: 12),
+                        CustomTextField(
+                          label: 'Name',
+                          hintText: 'Enter name',
+                          controller: _nameController,
+                          onChanged: (val) {
+                            name = val;
+                            _validateNameField();
                           },
+                          validator: validateName,
+                          errorText: _nameError.isNotEmpty ? _nameError : null,
+                          suffixIcon: _nameController.text.isNotEmpty
+                              ? Icon(
+                                  _isNameValid
+                                      ? Icons.check_circle
+                                      : Icons.error,
+                                  color: _isNameValid
+                                      ? Colors.green
+                                      : Colors.red,
+                                  size: 20,
+                                )
+                              : null,
                         ),
-                        const SizedBox(height: 8),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+
+                        const SizedBox(height: 12),
+                        CustomTextField(
+                          label: 'Description *',
+                          hintText: 'Describe the fraud in detail',
+                          controller: _descriptionController,
+                          maxLines: 5,
+                          minLines: 3,
+                          onChanged: (val) {
+                            description = val;
+                            _validateDescriptionField();
+                          },
+                          validator: validateDescription,
+                          errorText: _descriptionError.isNotEmpty
+                              ? _descriptionError
+                              : null,
+                          suffixIcon: _descriptionController.text.isNotEmpty
+                              ? Icon(
+                                  _isDescriptionValid
+                                      ? Icons.check_circle
+                                      : Icons.error,
+                                  color: _isDescriptionValid
+                                      ? Colors.green
+                                      : Colors.red,
+                                  size: 20,
+                                )
+                              : null,
+                        ),
+
+                        const SizedBox(height: 12),
+                        // Age Range Field
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              '10',
+                              'Age Range (if known)',
                               style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.grey[600],
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.black,
                               ),
                             ),
-                            Text(
-                              '100',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.grey[600],
+                            const SizedBox(height: 8),
+                            Container(
+                              padding: EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                border: Border.all(color: Colors.black),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(
+                                        'Age: ${_ageRange.start.round()} - ${_ageRange.end.round()}',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w500,
+                                          color: Colors.black,
+                                        ),
+                                      ),
+                                      Icon(
+                                        Icons.person,
+                                        color: const Color(0xFF064FAD),
+                                        size: 20,
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 16),
+                                  RangeSlider(
+                                    values: _ageRange,
+                                    min: 10,
+                                    max: 100,
+                                    divisions: 90,
+                                    activeColor: const Color(0xFF064FAD),
+                                    inactiveColor: Colors.grey.shade300,
+                                    labels: RangeLabels(
+                                      _ageRange.start.round().toString(),
+                                      _ageRange.end.round().toString(),
+                                    ),
+                                    onChanged: (RangeValues values) {
+                                      setState(() {
+                                        _ageRange = values;
+                                        minAge = values.start.round();
+                                        maxAge = values.end.round();
+                                      });
+                                    },
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(
+                                        '10',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.grey[600],
+                                        ),
+                                      ),
+                                      Text(
+                                        '100',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.grey[600],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
                               ),
                             ),
                           ],
+                        ),
+
+                        const SizedBox(height: 12),
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            // color: Colors.white,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Colors.black),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  // Icon(Icons.location_on, color: Colors.black),
+                                  // const SizedBox(width: 8),
+                                  Text(
+                                    'Location',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.black,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 12),
+                              InkWell(
+                                onTap: () {
+                                  LocationPickerBottomSheet.show(
+                                    context,
+                                    onLocationSelected: (location, address) {
+                                      setState(() {
+                                        selectedLocation = location;
+                                        selectedAddress = address;
+                                      });
+                                      // Persist for offline reuse
+                                      LocationStorageService.saveLastSelectedAddress(
+                                        label: location,
+                                        address: address,
+                                      );
+                                    },
+                                  );
+                                },
+                                child: Container(
+                                  padding: const EdgeInsets.all(16),
+                                  decoration: BoxDecoration(
+                                    // color: Colors.white,
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(color: Colors.black),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        Icons.search,
+                                        color: Colors.black,
+                                        size: 20,
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Text(
+                                          selectedLocation != null
+                                              ? selectedLocation!
+                                              : 'Select location',
+                                          style: TextStyle(
+                                            color: selectedLocation != null
+                                                ? Colors.grey[600]
+                                                : Colors.black,
+                                            fontSize: 16,
+                                          ),
+                                        ),
+                                      ),
+                                      Icon(
+                                        Icons.arrow_forward_ios,
+                                        color: Colors.black,
+                                        size: 16,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              if (selectedAddress != null) ...[
+                                const SizedBox(height: 8),
+                                Container(
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: Colors.blue[50],
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(color: Colors.black),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        Icons.location_on,
+                                        color: const Color(0xFF064FAD),
+                                        size: 16,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: Text(
+                                          selectedAddress!,
+                                          style: TextStyle(
+                                            color: const Color(0xFF064FAD),
+                                            fontSize: 14,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
                         ),
                       ],
                     ),
                   ),
-                ],
-              ),
-
-              const SizedBox(height: 12),
-              // Location
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  // color: Colors.grey[50],
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.black),
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(Icons.location_on, color: Colors.grey[600]),
-                        const SizedBox(width: 8),
-                        Text(
-                          'Location',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w600,
-                            color: Colors.grey[700],
+
+                // Fixed Next button at bottom
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  child: CustomButton(
+                    text: 'Next',
+                    onPressed: () async {
+                      // Check if location is selected
+                      if (selectedLocation == null) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Please select a location'),
+                            backgroundColor: Colors.red,
                           ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    InkWell(
-                      onTap: () {
-                        LocationPickerBottomSheet.show(
-                          context,
-                          onLocationSelected: (location, address) {
-                            setState(() {
-                              selectedLocation = location;
-                              selectedAddress = address;
-                            });
-                          },
                         );
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          // color: Colors.white,
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: Colors.black),
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.search,
-                              color: Colors.grey[600],
-                              size: 20,
+                        return;
+                      }
+
+                      // Trigger validation manually to show errors
+                      if (_formKey.currentState!.validate()) {
+                        await _submitForm();
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              'Please fill all required fields correctly',
                             ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Text(
-                                selectedLocation != null
-                                    ? selectedLocation!
-                                    : 'Select location',
-                                style: TextStyle(
-                                  color: selectedLocation != null
-                                      ? Colors.black87
-                                      : Colors.grey[600],
-                                  fontSize: 16,
-                                ),
-                              ),
-                            ),
-                            Icon(
-                              Icons.arrow_forward_ios,
-                              color: Colors.grey[600],
-                              size: 16,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    if (selectedAddress != null) ...[
-                      const SizedBox(height: 8),
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          // color: Colors.blue[50],
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: Colors.black),
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.location_on,
-                              color: const Color(0xFF064FAD),
-                              size: 16,
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                selectedAddress!,
-                                style: TextStyle(
-                                  color: const Color(0xFF064FAD),
-                                  fontSize: 14,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ],
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      }
+                    },
+                    fontWeight: FontWeight.normal,
+                  ),
                 ),
-              ),
-
-              SizedBox(height: 24),
-              CustomButton(
-                text: 'Next',
-                onPressed: () async {
-                  // Check if location is selected
-                  if (selectedLocation == null) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Please select a location'),
-                        backgroundColor: Colors.red,
-                      ),
-                    );
-                    return;
-                  }
-
-                  // Trigger validation manually to show errors
-                  if (_formKey.currentState!.validate()) {
-                    await _submitForm();
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          'Please fill all required fields correctly',
-                        ),
-                        backgroundColor: Colors.red,
-                      ),
-                    );
-                  }
-                },
-                fontWeight: FontWeight.normal,
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

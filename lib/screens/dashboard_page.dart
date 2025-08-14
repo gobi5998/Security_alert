@@ -20,6 +20,7 @@ import 'ReportedFeatureItem.dart';
 import 'alert.dart';
 import 'malware/report_malware_1.dart';
 import 'menu/theard_database.dart';
+import 'menu/thread_database_listpage.dart';
 import 'server_reports_page.dart';
 import 'menu/profile_page.dart';
 
@@ -515,7 +516,19 @@ class _DashboardPageState extends State<DashboardPage> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => ThreadDatabaseFilterPage(),
+                      builder: (context) => ThreadDatabaseListPage(
+                        searchQuery: '',
+                        selectedTypes: [],
+                        selectedSeverities: [],
+                        selectedCategories: [],
+                        hasSearchQuery: false,
+                        hasSelectedType: false,
+                        hasSelectedSeverity: false,
+                        hasSelectedCategory: false,
+                        isOffline: false,
+                        localReports: [],
+                        severityLevels: [],
+                      ),
                     ),
                   );
                 } else if (index == 2) {
