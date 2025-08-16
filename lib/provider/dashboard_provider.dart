@@ -206,14 +206,7 @@ class DashboardProvider with ChangeNotifier {
       if (_isOnline) {
         // Online: fetch from API and cache
         try {
-          // Load dashboard stats (with error handling)
-          try {
-            final statsData = await _apiService.getDashboardStats();
-            _stats = DashboardStats.fromJson(statsData!);
-            await prefs.setString('dashboard_stats', jsonEncode(statsData));
-          } catch (e) {
-            // Continue with other data
-          }
+          // Dashboard stats endpoint removed - using thread statistics instead
 
           // Load security alerts (with error handling)
           try {

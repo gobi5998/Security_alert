@@ -5,42 +5,42 @@ import 'package:security_alert/screens/menu/feedbackPage.dart';
 import 'package:security_alert/screens/menu/profile_page.dart';
 import 'package:security_alert/screens/menu/ratepage.dart';
 import 'package:security_alert/screens/menu/shareApp.dart';
-import 'package:security_alert/screens/menu/theard_database.dart';
 import 'package:security_alert/screens/menu/thread_database_listpage.dart';
 import 'package:security_alert/screens/menu/filter_page.dart';
 import 'package:security_alert/screens/scam/scam_report_service.dart';
 import 'package:security_alert/screens/scam/report_scam_1.dart';
 import 'package:security_alert/screens/malware/report_malware_1.dart';
 import 'package:security_alert/screens/Fraud/ReportFraudStep1.dart';
+import 'package:security_alert/widgets/auth_guard.dart';
 
 import 'package:security_alert/screens/subscriptionPage/subscription_plans_page.dart';
 
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:security_alert/provider/auth_provider.dart';
 import 'package:security_alert/provider/dashboard_provider.dart';
 import 'package:security_alert/screens/SplashScreen.dart';
 import 'package:security_alert/screens/dashboard_page.dart';
 import 'package:security_alert/screens/login.dart';
-import 'package:security_alert/services/biometric_service.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'dart:async';
 import 'models/scam_report_model.dart'; // ✅ Make sure this file contains: part 'scam_report_model.g.dart';
 import 'models/fraud_report_model.dart'; // at the top, if not already present
 import 'models/malware_report_model.dart';
-import 'models/report_model.dart';
 import 'screens/Fraud/fraud_report_service.dart';
 import 'screens/malware/malware_report_service.dart';
 import 'services/report_update_service.dart';
 import 'services/app_version_service.dart';
 import 'services/api_service.dart';
-import 'services/auth_api_service.dart';
 import 'services/dio_service.dart';
 import 'services/token_storage.dart';
+import 'services/jwt_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Hive.initFlutter();
+
+  // Note: Removed automatic token clearing on startup to preserve user sessions
 
   Hive.registerAdapter(ScamReportModelAdapter());
   Hive.registerAdapter(FraudReportModelAdapter());
@@ -202,438 +202,49 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       // home: const SplashScreen(),
-      initialRoute: '/',
+      initialRoute: '/splashScreen',
       routes: {
-        '/': (context) => const AuthWrapper(), // Use AuthWrapper for auto-login
-        '/profile': (context) => ProfilePage(),
-        '/thread': (context) => ThreadDatabaseListPage(
-          searchQuery: '',
-          selectedTypes: [],
-          selectedSeverities: [],
-          selectedCategories: [],
-          hasSearchQuery: false,
-          hasSelectedType: false,
-          hasSelectedSeverity: false,
-          hasSelectedCategory: false,
-          isOffline: false,
-          localReports: [],
-          severityLevels: [],
+        // Public routes (no authentication required)
+        '/login': (context) => const PublicRoute(child: LoginPage()),
+
+        // Protected routes (authentication required)
+        '/': (context) => const AuthGuard(child: DashboardPage()),
+        '/dashboard': (context) => const AuthGuard(child: DashboardPage()),
+        '/profile': (context) => AuthGuard(child: ProfilePage()),
+        '/thread': (context) => AuthGuard(
+          child: ThreadDatabaseListPage(
+            searchQuery: '',
+            selectedTypes: [],
+            selectedSeverities: [],
+            selectedCategories: [],
+            hasSearchQuery: false,
+            hasSelectedType: false,
+            hasSelectedSeverity: false,
+            hasSelectedCategory: false,
+            isOffline: false,
+            localReports: [],
+            severityLevels: [],
+          ),
         ),
-        '/filter': (context) => FilterPage(),
-        '/subscription': (context) => SubscriptionPlansPage(),
-        '/rate': (context) => Ratepage(),
-        '/share': (context) => Shareapp(),
-        '/feedback': (context) => Feedbackpage(),
-        '/splashScreen': (context) => SplashScreen(),
-        '/scam-report': (context) => ReportScam1(categoryId: 'scam_category'),
+        '/filter': (context) => AuthGuard(child: FilterPage()),
+        '/subscription': (context) => AuthGuard(child: SubscriptionPlansPage()),
+        '/rate': (context) => AuthGuard(child: Ratepage()),
+        '/share': (context) => AuthGuard(child: Shareapp()),
+        '/feedback': (context) => AuthGuard(child: Feedbackpage()),
+        '/splashScreen': (context) => const SplashScreen(),
+        '/scam-report': (context) =>
+            AuthGuard(child: ReportScam1(categoryId: 'scam_category')),
         '/malware-report': (context) =>
-            ReportMalware1(categoryId: 'malware_category'),
+            AuthGuard(child: ReportMalware1(categoryId: 'malware_category')),
         '/fraud-report': (context) =>
-            ReportFraudStep1(categoryId: 'fraud_category'),
+            AuthGuard(child: ReportFraudStep1(categoryId: 'fraud_category')),
       },
     );
   }
 }
 
-class SplashToAuth extends StatefulWidget {
-  const SplashToAuth({super.key});
-
-  @override
-  State<SplashToAuth> createState() => _SplashToAuthState();
-}
-
-class _SplashToAuthState extends State<SplashToAuth> {
-  bool _showAuthWrapper = false;
-
-  @override
-  void initState() {
-    super.initState();
-    Future.delayed(const Duration(seconds: 2), () {
-      setState(() {
-        _showAuthWrapper = true;
-      });
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return _showAuthWrapper ? const AuthWrapper() : const SplashScreen();
-  }
-}
-
-/// AuthWrapper handles the authentication flow:
-/// 1. Fresh Login: User enters email/password -> goes directly to dashboard (no biometric)
-/// 2. Auto-Login: App starts with stored tokens -> checks biometric -> goes to dashboard
-/// 3. Logout: User logs out -> shows login page
-class AuthWrapper extends StatefulWidget {
-  const AuthWrapper({super.key});
-
-  @override
-  State<AuthWrapper> createState() => _AuthWrapperState();
-}
-
-class _AuthWrapperState extends State<AuthWrapper> {
-  bool _authChecked = false;
-  bool _biometricChecked = false;
-  bool _biometricPassed = false;
-  bool _autoLoginAttempted = false;
-  bool _isFreshLogin = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _initializeAuth();
-
-    // Listen to auth provider state changes
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      authProvider.addListener(_onAuthStateChanged);
-    });
-  }
-
-  @override
-  void dispose() {
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    authProvider.removeListener(_onAuthStateChanged);
-    super.dispose();
-  }
-
-  void _onAuthStateChanged() {
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-
-    // If user just logged in and we haven't checked biometric yet
-    if (authProvider.isLoggedIn && !_authChecked) {
-      // Check if we need to show biometric setup dialog
-      _checkBiometricSetup();
-    }
-  }
-
-  Future<void> _checkBiometricSetup() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final showBiometricSetup = prefs.getBool('show_biometric_setup') ?? false;
-
-      if (showBiometricSetup) {
-        // Clear the flag first
-        await prefs.setBool('show_biometric_setup', false);
-
-        // Show biometric setup dialog
-        if (mounted) {
-          _showBiometricSetupDialog();
-        }
-      } else {
-        setState(() {
-          _isFreshLogin = true;
-          _biometricPassed = true;
-          _authChecked = true;
-        });
-      }
-    } catch (e) {
-      setState(() {
-        _isFreshLogin = true;
-        _biometricPassed = true;
-        _authChecked = true;
-      });
-    }
-  }
-
-  void _showBiometricSetupDialog() {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text(
-            'Enable Biometric Login',
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF064FAD),
-            ),
-          ),
-          content: const Text(
-            'Would you like to enable biometric authentication for faster login? You can use fingerprint or face recognition to quickly access the app.',
-            style: TextStyle(fontSize: 16),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () async {
-                Navigator.of(context).pop();
-                // User declined biometric setup
-                setState(() {
-                  _isFreshLogin = true;
-                  _biometricPassed = true;
-                  _authChecked = true;
-                });
-              },
-              child: const Text(
-                'Not Now',
-                style: TextStyle(color: Colors.grey),
-              ),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                Navigator.of(context).pop();
-                // User accepted biometric setup
-                await _setupBiometric();
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF064FAD),
-                foregroundColor: Colors.white,
-              ),
-              child: const Text('Enable'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  Future<void> _setupBiometric() async {
-    try {
-      final passed = await BiometricService.authenticateWithBiometrics();
-
-      if (passed) {
-        // Enable biometric
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setBool('biometric_enabled', true);
-        await BiometricService.enableBiometric();
-
-        // Show success message
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Biometric login enabled successfully!'),
-              backgroundColor: Colors.green,
-              duration: Duration(seconds: 2),
-            ),
-          );
-        }
-      } else {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text(
-                'Biometric authentication failed. You can enable it later in settings.',
-              ),
-              backgroundColor: Colors.orange,
-              duration: Duration(seconds: 3),
-            ),
-          );
-        }
-      }
-
-      // Proceed to dashboard regardless of biometric setup result
-      setState(() {
-        _isFreshLogin = true;
-        _biometricPassed = true;
-        _authChecked = true;
-      });
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Error setting up biometric. You can enable it later in settings.',
-            ),
-            backgroundColor: Colors.orange,
-            duration: Duration(seconds: 3),
-          ),
-        );
-      }
-      setState(() {
-        _isFreshLogin = true;
-        _biometricPassed = true;
-        _authChecked = true;
-      });
-    }
-  }
-
-  Future<void> _initializeAuth() async {
-    try {
-      // First, check the current auth provider state
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      await authProvider.checkAuthStatus();
-
-      // Check if user has enabled biometric authentication
-      final prefs = await SharedPreferences.getInstance();
-      final bioEnabled = prefs.getBool('biometric_enabled') ?? false;
-      final autoLoginEnabled =
-          prefs.getBool('auto_login_enabled') ?? true; // Default to true
-
-      // If user is already logged in (from auth provider), proceed to dashboard
-      if (authProvider.isLoggedIn) {
-        final accessToken = await TokenStorage.getAccessToken();
-        final refreshToken = await TokenStorage.getRefreshToken();
-
-        // If no stored tokens, this is a fresh login - go directly to dashboard
-        if (accessToken == null || refreshToken == null) {
-          setState(() {
-            _isFreshLogin = true;
-            _biometricPassed = true;
-            _authChecked = true;
-          });
-          return;
-        }
-
-        // If we have stored tokens, this is auto-login - check biometric
-        if (bioEnabled) {
-          await _checkBiometrics(authProvider);
-        } else {
-          setState(() {
-            _biometricPassed = true;
-            _authChecked = true;
-          });
-        }
-        return;
-      }
-
-      if (autoLoginEnabled) {
-        // Try to get stored tokens
-        final accessToken = await TokenStorage.getAccessToken();
-        final refreshToken = await TokenStorage.getRefreshToken();
-
-        if (accessToken != null && refreshToken != null) {
-          // Try to validate the token by calling /api/user/me
-          try {
-            final apiService = ApiService();
-            final userResponse = await apiService.get('api/user/me');
-
-            if (userResponse.statusCode == 200 && userResponse.data != null) {
-              // Update auth provider with user data
-              await authProvider.setUserData(userResponse.data);
-
-              // If biometric is enabled, check biometric authentication
-              if (bioEnabled) {
-                await _checkBiometrics(authProvider);
-              } else {
-                setState(() {
-                  _biometricPassed = true;
-                  _authChecked = true;
-                });
-              }
-            } else {
-              await _handleAutoLoginFailure();
-            }
-          } catch (e) {
-            await _handleAutoLoginFailure();
-          }
-        } else {
-          await _handleAutoLoginFailure();
-        }
-      } else {
-        await _handleAutoLoginFailure();
-      }
-    } catch (e) {
-      await _handleAutoLoginFailure();
-    }
-  }
-
-  Future<void> _handleAutoLoginFailure() async {
-    // Clear any invalid tokens
-    await TokenStorage.clearAllTokens();
-
-    // Reset auth provider
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    await authProvider.logout();
-
-    setState(() {
-      _authChecked = true;
-      _biometricPassed = false; // Set to false since no biometric was attempted
-    });
-  }
-
-  Future<void> _checkBiometrics(AuthProvider authProvider) async {
-    if (!_biometricChecked && authProvider.isLoggedIn) {
-      try {
-        final isAvailable = await BiometricService.isBiometricAvailable();
-
-        if (isAvailable) {
-          _biometricChecked = true;
-
-          final passed = await BiometricService.authenticateWithBiometrics();
-
-          if (!passed) {
-            // Allow access to dashboard even if biometric fails
-            setState(() {
-              _biometricPassed = true; // Allow access to dashboard
-              _authChecked = true;
-            });
-
-            // Show a user-friendly message
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text(
-                    'Biometric authentication failed, but you can still access the app.',
-                  ),
-                  backgroundColor: Colors.orange,
-                  duration: Duration(seconds: 3),
-                ),
-              );
-            }
-          } else {
-            setState(() {
-              _biometricPassed =
-                  true; // Always allow access if biometric passes
-              _authChecked = true;
-            });
-          }
-        } else {
-          setState(() {
-            _biometricChecked = true;
-            _biometricPassed = true;
-            _authChecked = true;
-          });
-        }
-      } catch (e) {
-        setState(() {
-          _biometricChecked = true;
-          _biometricPassed = true;
-          _authChecked = true;
-        });
-      }
-    }
-  }
-
-  Future<void> _handleBiometricFailure(AuthProvider authProvider) async {
-    try {
-      // Clear all tokens and data
-      await TokenStorage.clearAllTokens();
-      await authProvider.logout();
-
-      // Force a small delay to ensure state updates are processed
-      await Future.delayed(const Duration(milliseconds: 100));
-
-      // Double-check auth status to ensure logout was successful
-      await authProvider.checkAuthStatus();
-
-      // Biometric failure handled - user logged out
-    } catch (e) {
-      // Error handling biometric failure
-      // Fallback: ensure we're logged out
-      await authProvider.logout();
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Consumer<AuthProvider>(
-      builder: (context, authProvider, child) {
-        if (!_authChecked || authProvider.isLoading) {
-          return const SplashScreen();
-        }
-
-        // If user is logged in, allow access to dashboard regardless of biometric status
-        if (authProvider.isLoggedIn) {
-          return const DashboardPage();
-        }
-
-        // User is not logged in, show login page
-        return const LoginPage();
-      },
-    );
-  }
-}
+// AuthGuard system is now used instead of AuthWrapper
+// The new AuthGuard widget handles all authentication logic
 
 // import 'package:flutter/material.dart';
 // import 'package:provider/provider.dart';

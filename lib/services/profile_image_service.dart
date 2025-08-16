@@ -1,10 +1,11 @@
 import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'auth_api_service.dart';
+import 'api_service.dart';
 import 'jwt_service.dart';
 
 class ProfileImageService {
-  static const String _s3BaseUrl = 'https://mvp.edetectives.co.bw'; // Your S3 bucket base URL
+  static const String _s3BaseUrl =
+      'https://mvp.edetectives.co.bw'; // Your S3 bucket base URL
 
   /// Get the current user's ID from JWT token
   static Future<String?> getCurrentUserId() async {
@@ -14,35 +15,36 @@ class ProfileImageService {
   /// Fetch profile image URL for a specific user ID
   static Future<String?> getProfileImageUrl(String userId) async {
     try {
-      final response = await AuthApiService.getProfileImageByUserId(userId);
-      
+      final apiService = ApiService();
+      final response = await apiService.getProfileImageByUserId(userId);
+
       if (response.statusCode == 200) {
         final data = response.data;
-        
+
         // Handle different response formats
         if (data is Map<String, dynamic>) {
           // If the response contains the image URL directly
           if (data.containsKey('profileImageUrl')) {
             return data['profileImageUrl'];
           }
-          
+
           // If the response contains the image data
           if (data.containsKey('imageUrl')) {
             return data['imageUrl'];
           }
-          
+
           // If the response contains S3 key
           if (data.containsKey('s3Key')) {
             return '$_s3BaseUrl/${data['s3Key']}';
           }
         }
-        
+
         // If response is a direct URL string
         if (data is String && data.isNotEmpty) {
           return data;
         }
       }
-      
+
       return null;
     } catch (e) {
       print('Error fetching profile image URL: $e');
@@ -54,12 +56,13 @@ class ProfileImageService {
   static Future<String?> uploadAndUpdateProfileImage(FormData formData) async {
     try {
       // First upload the image
-      final uploadResponse = await AuthApiService.uploadProfileImage(formData);
-      
+      final apiService = ApiService();
+      final uploadResponse = await apiService.uploadProfileImage(formData);
+
       if (uploadResponse.statusCode == 200) {
         final uploadData = uploadResponse.data;
         String? imageUrl;
-        
+
         // Extract image URL from upload response
         if (uploadData is Map<String, dynamic>) {
           if (uploadData.containsKey('imageUrl')) {
@@ -70,24 +73,24 @@ class ProfileImageService {
             imageUrl = uploadData['url'];
           }
         }
-        
+
         if (imageUrl != null) {
           // Get current user ID
           final userId = await getCurrentUserId();
           if (userId != null) {
             // Update user profile with the new image URL
-            final updateResponse = await AuthApiService.updateUserProfile(
-              userId,
-              {'profileImageUrl': imageUrl}
-            );
-            
-            if (updateResponse.statusCode == 200) {
+            final apiService = ApiService();
+            final updateResponse = await apiService.updateUserProfile({
+              'profileImageUrl': imageUrl,
+            });
+
+            if (updateResponse.containsKey('message')) {
               return imageUrl;
             }
           }
         }
       }
-      
+
       return null;
     } catch (e) {
       print('Error uploading and updating profile image: $e');
@@ -109,11 +112,11 @@ class ProfileImageService {
     try {
       final userId = await getCurrentUserId();
       if (userId != null) {
-        final response = await AuthApiService.updateUserProfile(
-          userId,
-          {'profileImageUrl': imageUrl}
-        );
-        return response.statusCode == 200;
+        final apiService = ApiService();
+        final response = await apiService.updateUserProfile({
+          'profileImageUrl': imageUrl,
+        });
+        return response.containsKey('message');
       }
       return false;
     } catch (e) {

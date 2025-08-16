@@ -5,6 +5,7 @@ import 'package:synchronized/synchronized.dart';
 import '../config/api_config.dart';
 import 'jwt_service.dart';
 import 'token_storage.dart';
+import 'auth_interceptor.dart';
 
 class DioService {
   static final DioService _instance = DioService._internal();
@@ -19,6 +20,7 @@ class DioService {
   // A lock to ensure single refresh at once
   final Lock _refreshLock = Lock();
   String? _cachedAccessToken;
+  bool _isRefreshing = false;
 
   DioService._internal() {
     _initClients();
@@ -74,76 +76,9 @@ class DioService {
   }
 
   void _applyUnifiedInterceptors(Dio dio) {
-    // Add CookieManager interceptor for cookie handling
-    dio.interceptors.add(CookieManager(TokenStorage.cookieJar));
-
-    dio.interceptors.add(
-      InterceptorsWrapper(
-        onRequest: (options, handler) async {
-          try {
-            // Add default headers
-            options.headers.addAll(ApiConfig.defaultHeaders);
-
-            // Add authorization token from secure storage with fallback
-            String? accessToken = await TokenStorage.getAccessToken();
-
-            // Fallback to JWT service if secure storage is empty
-            if (accessToken == null || accessToken.isEmpty) {
-              accessToken = await JwtService.getTokenWithFallback();
-            }
-
-            if (accessToken != null && accessToken.isNotEmpty) {
-              options.headers['Authorization'] = 'Bearer $accessToken';
-            }
-
-            // Add logging if enabled
-            if (ApiConfig.enableLogging) {
-
-
-
-
-              if (options.data != null) {
-
-              }
-            }
-
-            handler.next(options);
-          } catch (e) {
-
-            handler.next(options); // still proceed
-          }
-        },
-        onResponse: (response, handler) {
-          if (ApiConfig.enableLogging) {
-            print(
-              '✅ API Response: ${response.statusCode} ${response.requestOptions.path}',
-            );
-
-          }
-          handler.next(response);
-        },
-        onError: (DioException error, handler) async {
-          if (ApiConfig.enableLogging) {
-            print(
-              '❌ API Error: ${error.response?.statusCode} ${error.requestOptions.path}',
-            );
-
-
-
-
-
-          }
-
-          // Handle 401 Unauthorized with token refresh
-          if (error.response?.statusCode == 401 &&
-              !error.requestOptions.extra.containsKey('retried')) {
-            await _handleTokenRefresh(error, handler, dio);
-          } else {
-            handler.next(error);
-          }
-        },
-      ),
-    );
+    // Add AuthInterceptor for token management and logging
+    // Pass authApi as the authDio for refresh token requests
+    dio.interceptors.add(AuthInterceptor(dio, authDio: authApi));
   }
 
   Future<void> _handleTokenRefresh(
@@ -153,13 +88,23 @@ class DioService {
   ) async {
     await _refreshLock.synchronized(() async {
       try {
-
-
+        if (_isRefreshing) {
+          print(
+            '🔄 DioService: Token refresh already in progress, skipping...',
+          );
+          return;
+        }
+        _isRefreshing = true;
+        print('🔄 DioService: Starting token refresh...');
+        print('🔄 DioService: Original request: ${error.requestOptions.path}');
         // If token was already refreshed by another waiting request, reuse it
         final currentAccess = await TokenStorage.getAccessToken();
         if (currentAccess != null &&
             currentAccess.isNotEmpty &&
             currentAccess != _cachedAccessToken) {
+          print(
+            '🔄 DioService: Token already refreshed by another request, reusing...',
+          );
           _cachedAccessToken = currentAccess;
           return;
         }
@@ -174,7 +119,7 @@ class DioService {
         }
 
         if (refreshToken == null || refreshToken.isEmpty) {
-
+          print('❌ DioService: No refresh token available');
           await _clearAllTokens();
           return handler.next(error);
         }
@@ -189,16 +134,25 @@ class DioService {
           ),
         );
 
+        print('🔄 DioService: Making refresh token request...');
+        print(
+          '🔄 DioService: Refresh token: ${refreshToken.substring(0, 20)}...',
+        );
         final refreshResponse = await refreshDio.post(
-          '/auth/refresh-token',
+          '/api/v1/auth/refresh-token',
           data: {'refreshToken': refreshToken},
           options: Options(headers: {'Content-Type': 'application/json'}),
         );
+        print(
+          '🔄 DioService: Refresh response status: ${refreshResponse.statusCode}',
+        );
+        print('🔄 DioService: Refresh response data: ${refreshResponse.data}');
 
         final newAccessToken = refreshResponse.data['access_token'];
         final newRefreshToken = refreshResponse.data['refresh_token'];
 
         if (newAccessToken != null && newAccessToken.isNotEmpty) {
+          print('✅ DioService: Token refresh successful');
           // Save new tokens to both storages
           await TokenStorage.setAccessToken(newAccessToken);
           if (newRefreshToken != null && newRefreshToken.isNotEmpty) {
@@ -216,27 +170,40 @@ class DioService {
 
           _cachedAccessToken = newAccessToken;
 
-
           // Retry original request with new token
           final requestOptions = error.requestOptions;
           requestOptions.headers['Authorization'] = 'Bearer $newAccessToken';
           requestOptions.extra['retried'] = true;
 
           try {
+            print('🔄 DioService: Retrying original request with new token...');
             final retryResponse = await dio.fetch(requestOptions);
+            print('✅ DioService: Retry successful');
+            _isRefreshing = false;
             return handler.resolve(retryResponse);
           } catch (retryError) {
-
+            print('❌ DioService: Retry failed: $retryError');
+            _isRefreshing = false;
             return handler.next(error);
           }
         } else {
-
+          print('❌ DioService: Invalid refresh response - no access token');
           await _clearAllTokens();
+          _isRefreshing = false;
           return handler.next(error);
         }
       } catch (e) {
-
+        print('❌ DioService: Token refresh failed: $e');
+        // Check if it's a 401 error on refresh token
+        if (e.toString().contains('401')) {
+          print('❌ DioService: Refresh token is invalid, clearing tokens');
+          await _clearAllTokens();
+          _isRefreshing = false;
+          // Don't retry, just pass the error through
+          return handler.next(error);
+        }
         await _clearAllTokens();
+        _isRefreshing = false;
         return handler.next(error);
       }
     });
@@ -244,6 +211,7 @@ class DioService {
 
   Future<void> _clearAllTokens() async {
     try {
+      print('🗑️ DioService: Clearing all tokens...');
       await TokenStorage.clearAllTokens();
       await JwtService.clearToken();
 
@@ -252,10 +220,9 @@ class DioService {
       await prefs.remove('auth_token');
       await prefs.remove('refresh_token');
       await prefs.remove('id_token');
-
-
+      print('✅ DioService: All tokens cleared successfully');
     } catch (e) {
-
+      print('❌ DioService: Error clearing tokens: $e');
     }
   }
 
@@ -389,24 +356,17 @@ class DioService {
 
   // Test method to verify interceptor functionality
   Future<void> testInterceptor() async {
-
-
     try {
       // Test 1: Check if token is attached to requests
 
       final token = await TokenStorage.getAccessToken();
 
-
       // Test 2: Make a request to see interceptor logs
 
-      final response = await mainApi.get('/dashboard/stats');
-
+      // Removed dashboard stats call - endpoint doesn't exist
     } catch (e) {
-
-
       // Test 3: Check if 401 handling works
       if (e.toString().contains('401')) {
-
         final newToken = await TokenStorage.getAccessToken();
         print(
           'Token after 401: ${newToken != null ? 'Present' : 'Not present'}',
@@ -423,10 +383,7 @@ final dioService = DioService();
 Future<void> fetchUsers() async {
   try {
     final response = await dioService.get('/users');
-
-  } catch (e) {
-
-  }
+  } catch (e) {}
 }
 
 Future<void> uploadImage(String imagePath) async {
@@ -438,18 +395,8 @@ Future<void> uploadImage(String imagePath) async {
     );
 
     final response = await dioService.uploadFile('/upload', formData);
-
-  } catch (e) {
-
-  }
+  } catch (e) {}
 }
-
-
-
-
-
-
-
 
 // import 'package:dio/dio.dart';
 // import 'package:dio_cookie_manager/dio_cookie_manager.dart';

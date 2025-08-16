@@ -7,7 +7,6 @@ import '../services/biometric_service.dart'; // Added import for BiometricServic
 
 class AuthProvider with ChangeNotifier {
   final ApiService _apiService = ApiService();
-
   bool _isLoggedIn = false;
   bool _isLoading = false;
   String _errorMessage = '';
@@ -40,20 +39,16 @@ class AuthProvider with ChangeNotifier {
           );
           _isLoggedIn = true;
           _errorMessage = '';
-
         } else {
-
           // Token is invalid, clear it
           await _clearAllData();
         }
       } else {
-
         _isLoggedIn = false;
         _currentUser = null;
         _errorMessage = '';
       }
     } catch (e) {
-
       _isLoggedIn = false;
       _currentUser = null;
       _errorMessage = '';
@@ -69,51 +64,44 @@ class AuthProvider with ChangeNotifier {
       _errorMessage = '';
       notifyListeners();
 
-      final response = await _apiService.login(username, password);
+      final success = await _apiService.login(username, password);
 
-
-      if (response == null) {
-        throw Exception('Invalid response from server');
+      if (!success) {
+        throw Exception('Login failed');
       }
 
-      // Extract user data from JWT token instead of making separate profile call
-      final accessToken = response['access_token'];
-      if (accessToken == null) {
-        throw Exception('No access token received');
-      }
-
-      // Decode JWT token to get user information
-      final userData = JwtService.decodeToken(accessToken);
+      // Get user data from the API using the preferred endpoint
+      final userData = await _apiService.getUserMe();
       if (userData == null) {
-        throw Exception('Failed to decode user token');
+        throw Exception('Failed to get user data');
       }
 
       // Use setUserData method to ensure consistency
       await setUserData(userData);
 
+      // Set login status to true
+      _isLoggedIn = true;
+      _errorMessage = '';
+
       // Check if biometric is available but not yet enabled
       final prefs = await SharedPreferences.getInstance();
       final bioEnabled = prefs.getBool('biometric_enabled') ?? false;
-      
+
       if (!bioEnabled) {
         // Check if biometric is available on device
-        final isBiometricAvailable = await BiometricService.isBiometricAvailable();
+        final isBiometricAvailable =
+            await BiometricService.isBiometricAvailable();
         if (isBiometricAvailable) {
           // Set a flag to show biometric setup dialog
           await prefs.setBool('show_biometric_setup', true);
-
         }
       }
-      
-
-
 
       return true;
     } catch (e) {
       _errorMessage = e.toString().replaceAll('Exception: ', '');
       _isLoggedIn = false;
       _currentUser = null;
-
 
       return false;
     } finally {
@@ -122,7 +110,7 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
- Future<bool> register(
+  Future<bool> register(
     String firstname,
     String lastname,
     String username,
@@ -134,7 +122,7 @@ class AuthProvider with ChangeNotifier {
       _errorMessage = '';
       notifyListeners();
 
-      final response = await _apiService.register(
+      final success = await _apiService.register(
         firstname,
         lastname,
         username,
@@ -142,35 +130,17 @@ class AuthProvider with ChangeNotifier {
         role,
       );
 
-      if (response == null) {
-        throw Exception('Invalid response from server');
+      if (!success) {
+        throw Exception('Registration failed');
       }
 
-      // Check if we have an access token from registration
-      final accessToken = response['access_token'];
-      if (accessToken != null) {
-        // Decode JWT token to get user information
-        final userData = JwtService.decodeToken(accessToken);
-        if (userData != null) {
-          // Create user object from JWT token data
-          final user = User(
-            id: userData['sub'] ?? '',
-            username: userData['preferred_username'] ?? username,
-            email: userData['email'] ?? username,
-          );
-          _currentUser = user;
-        } else {
-          throw Exception('Failed to decode user token');
-        }
-      } else {
-        // If no token returned, create user object from registration data
-        final user = User(
-          id: '', // Will be set when user logs in
-          username: username,
-          email: username,
-        );
-        _currentUser = user;
-      }
+      // Create user object from registration data
+      final user = User(
+        id: '', // Will be set when user logs in
+        username: username,
+        email: username,
+      );
+      _currentUser = user;
 
       _isLoggedIn = true;
       _errorMessage = '';
@@ -178,7 +148,6 @@ class AuthProvider with ChangeNotifier {
       // Enable biometric after successful registration
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool('biometric_enabled', true);
-
 
       return true;
     } catch (e) {
@@ -251,12 +220,10 @@ class AuthProvider with ChangeNotifier {
 
           notifyListeners();
         } else {
-
           await _clearAllData();
         }
       }
     } catch (e) {
-
       await _clearAllData();
     }
   }
@@ -269,8 +236,6 @@ class AuthProvider with ChangeNotifier {
   // Set user data from API response (for auto-login)
   Future<void> setUserData(Map<String, dynamic> userData) async {
     try {
-
-      
       // Extract user information from the API response
       String userId = '';
       String username = '';
@@ -300,19 +265,13 @@ class AuthProvider with ChangeNotifier {
       }
 
       // Create user object
-      _currentUser = User(
-        id: userId,
-        username: username,
-        email: email,
-      );
+      _currentUser = User(id: userId, username: username, email: email);
 
       _isLoggedIn = true;
       _errorMessage = '';
-      
 
       notifyListeners();
     } catch (e) {
-
       _isLoggedIn = false;
       _currentUser = null;
       _errorMessage = 'Failed to set user data: $e';
@@ -338,15 +297,6 @@ class AuthProvider with ChangeNotifier {
   //   }
   // }
 }
-
-
-
-
-
-
-
-
-
 
 // import 'package:flutter/material.dart';
 // import '../services/api_service.dart';

@@ -32,9 +32,7 @@ class DashboardPage extends StatefulWidget {
 }
 
 class _DashboardPageState extends State<DashboardPage> {
-  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>(
-    debugLabel: 'dashboard_scaffold',
-  );
+  // Removed GlobalKey to prevent conflicts
   List<Map<String, dynamic>> reportTypes = [];
   bool isLoadingTypes = true;
   List<Map<String, dynamic>> reportCategories = [];
@@ -114,9 +112,11 @@ class _DashboardPageState extends State<DashboardPage> {
   Future<void> _loadReportTypes() async {
     reportTypes = await ScamReportService.fetchReportTypes();
 
-    setState(() {
-      isLoadingTypes = false;
-    });
+    if (mounted) {
+      setState(() {
+        isLoadingTypes = false;
+      });
+    }
   }
 
   Future<void> _loadReportCategories() async {
@@ -168,9 +168,11 @@ class _DashboardPageState extends State<DashboardPage> {
       }
     }
 
-    setState(() {
-      isLoadingCategories = false;
-    });
+    if (mounted) {
+      setState(() {
+        isLoadingCategories = false;
+      });
+    }
   }
 
   @override
@@ -178,7 +180,7 @@ class _DashboardPageState extends State<DashboardPage> {
     final provider = Provider.of<DashboardProvider>(context);
 
     return ResponsiveScaffold(
-      key: _scaffoldKey,
+      // key: _scaffoldKey,
       drawer: const DashboardDrawer(),
       extendBody: true,
       backgroundColor: Colors.transparent,
@@ -210,7 +212,7 @@ class _DashboardPageState extends State<DashboardPage> {
         ),
         leading: IconButton(
           icon: const Icon(Icons.menu, color: Colors.white, size: 24),
-          onPressed: () => _scaffoldKey.currentState?.openDrawer(),
+          onPressed: () => Scaffold.of(context).openDrawer(),
         ),
         actions: [
           Stack(

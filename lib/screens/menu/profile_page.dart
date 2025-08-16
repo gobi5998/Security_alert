@@ -7,7 +7,7 @@ import '../../utils/responsive_helper.dart';
 import '../../widgets/responsive_widget.dart';
 import 'edit_profile_page.dart';
 import '../../services/app_version_service.dart';
-import '../../services/auth_api_service.dart';
+import '../../services/api_service.dart';
 import '../../models/user_model.dart';
 import '../../services/biometric_service.dart';
 import '../../services/token_storage.dart';
@@ -75,18 +75,17 @@ class _ProfilePageState extends State<ProfilePage> {
         return;
       }
 
-      final response = await AuthApiService.getUserProfile();
+      final apiService = ApiService();
+      final userData = await apiService.getUserProfile();
 
-      print('📦 Full response: ${response.toString()}');
+      print('📦 Full response: ${userData.toString()}');
 
-      if (response.statusCode == 200) {
-        final userData = response.data;
-
+      if (userData != null) {
         print('📦 User data keys: ${userData.keys.toList()}');
 
         // Check if response is wrapped in a data field
         Map<String, dynamic> actualUserData;
-        if (userData is Map<String, dynamic> && userData.containsKey('data')) {
+        if (userData.containsKey('data')) {
           actualUserData = userData['data'];
         } else {
           actualUserData = userData;
@@ -106,8 +105,7 @@ class _ProfilePageState extends State<ProfilePage> {
         await _loadDynamicProfileImage();
       } else {
         setState(() {
-          _errorMessage =
-              'Failed to load profile (Status: ${response.statusCode})';
+          _errorMessage = 'Failed to load profile';
           _isLoading = false;
         });
       }
@@ -948,7 +946,8 @@ class _ChangePasswordDialogState extends State<ChangePasswordDialog> {
         final userData = JwtService.decodeToken(token);
         final email = userData?['email'] ?? 'your email';
 
-        final response = await AuthApiService.forgotPassword(email);
+        final apiService = ApiService();
+        final response = await apiService.forgotPassword(email);
 
         setState(() => _isLoading = false);
 

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../services/auth_api_service.dart';
+import '../services/api_service.dart';
 
 import 'reset_password_success.dart';
 
@@ -16,7 +16,7 @@ class _ResetPasswordRequestScreenState
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _emailController = TextEditingController();
   bool _isLoading = false;
-  final AuthApiService _authApiService = AuthApiService();
+  final ApiService _apiService = ApiService();
   String _errorMessage = '';
 
   // Validation states
@@ -217,9 +217,7 @@ class _ResetPasswordRequestScreenState
                                   final email = _emailController.text.trim();
 
                                   final response =
-                                      await AuthApiService.forgotPassword(
-                                        email,
-                                      );
+                                      await _apiService.forgotPassword(email);
 
                                   setState(() => _isLoading = false);
 
