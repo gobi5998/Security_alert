@@ -1168,11 +1168,16 @@ class ApiService {
         );
       }
 
+      print('🔄 Fraud report response status: ${response.statusCode}');
+      print('🔄 Fraud report response data: ${response.data}');
+
       if (response.statusCode != 200 && response.statusCode != 201) {
         throw Exception(
           'Backend returned status ${response.statusCode}: ${response.data}',
         );
       }
+
+      print('✅ Fraud report submitted successfully');
     } catch (e) {
       if (e is DioException) {
         // Handle authentication errors gracefully
@@ -1978,15 +1983,44 @@ class ApiService {
       print(
         '🔄 Using general reports endpoint: ${ApiConfig.malwareReportsEndpoint}',
       );
+      print('🔄 Malware payload keys: ${malwarePayload.keys.toList()}');
+      print(
+        '🔄 Screenshots count: ${(malwarePayload['screenshots'] as List?)?.length ?? 0}',
+      );
+      print(
+        '🔄 Documents count: ${(malwarePayload['documents'] as List?)?.length ?? 0}',
+      );
+      print(
+        '🔄 Voice messages count: ${(malwarePayload['voiceMessages'] as List?)?.length ?? 0}',
+      );
+      print(
+        '🔄 Video files count: ${(malwarePayload['videofiles'] as List?)?.length ?? 0}',
+      );
 
       final response = await _dioService.reportsPost(
         ApiConfig.malwareReportsEndpoint,
         data: malwarePayload,
       );
 
-      return true;
+      print('🔄 Response status: ${response.statusCode}');
+      print('🔄 Response data: ${response.data}');
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        print('✅ Malware report created successfully');
+        return true;
+      } else {
+        print(
+          '❌ Malware report creation failed with status: ${response.statusCode}',
+        );
+        return false;
+      }
     } catch (e) {
-      if (e is DioException) {}
+      print('❌ Error creating malware report: $e');
+      if (e is DioException) {
+        print('❌ DioException type: ${e.type}');
+        print('❌ DioException message: ${e.message}');
+        print('❌ DioException response: ${e.response?.data}');
+      }
       return false;
     }
   }
@@ -1994,14 +2028,47 @@ class ApiService {
   // Create new fraud report with the provided payload structure
   Future<bool> createFraudReport(Map<String, dynamic> fraudPayload) async {
     try {
+      print(
+        '🔄 Using fraud reports endpoint: ${ApiConfig.fraudReportsEndpoint}',
+      );
+      print('🔄 Fraud payload keys: ${fraudPayload.keys.toList()}');
+      print(
+        '🔄 Screenshots count: ${(fraudPayload['screenshots'] as List?)?.length ?? 0}',
+      );
+      print(
+        '🔄 Documents count: ${(fraudPayload['documents'] as List?)?.length ?? 0}',
+      );
+      print(
+        '🔄 Voice messages count: ${(fraudPayload['voiceMessages'] as List?)?.length ?? 0}',
+      );
+      print(
+        '🔄 Video files count: ${(fraudPayload['videofiles'] as List?)?.length ?? 0}',
+      );
+
       final response = await _dioService.reportsPost(
         ApiConfig.fraudReportsEndpoint,
         data: fraudPayload,
       );
 
-      return true;
+      print('🔄 Response status: ${response.statusCode}');
+      print('🔄 Response data: ${response.data}');
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        print('✅ Fraud report created successfully');
+        return true;
+      } else {
+        print(
+          '❌ Fraud report creation failed with status: ${response.statusCode}',
+        );
+        return false;
+      }
     } catch (e) {
-      if (e is DioException) {}
+      print('❌ Error creating fraud report: $e');
+      if (e is DioException) {
+        print('❌ DioException type: ${e.type}');
+        print('❌ DioException message: ${e.message}');
+        print('❌ DioException response: ${e.response?.data}');
+      }
       return false;
     }
   }

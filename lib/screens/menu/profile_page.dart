@@ -36,6 +36,17 @@ class _ProfilePageState extends State<ProfilePage> {
   void initState() {
     super.initState();
     _loadUserProfile();
+
+    // Also check AuthProvider for user data
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      if (authProvider.currentUser != null && _user == null) {
+        setState(() {
+          _user = authProvider.currentUser;
+          _isLoading = false;
+        });
+      }
+    });
   }
 
   Future<void> _loadDynamicProfileImage() async {
@@ -59,6 +70,20 @@ class _ProfilePageState extends State<ProfilePage> {
         _errorMessage = '';
       });
 
+      // First try to get user data from AuthProvider
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      if (authProvider.currentUser != null) {
+        print('✅ Found user data in AuthProvider');
+        setState(() {
+          _user = authProvider.currentUser;
+          _isLoading = false;
+        });
+        await _loadDynamicProfileImage();
+        return;
+      }
+
+      print('❌ No user data in AuthProvider, trying API call...');
+
       // Check if we have a valid token
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('auth_token');
@@ -76,12 +101,16 @@ class _ProfilePageState extends State<ProfilePage> {
       }
 
       final apiService = ApiService();
-      final userData = await apiService.getUserProfile();
+      final userData = await apiService.getUserMe();
 
       print('📦 Full response: ${userData.toString()}');
 
       if (userData != null) {
         print('📦 User data keys: ${userData.keys.toList()}');
+        print('📦 Email field: ${userData['email']}');
+        print('📦 Username field: ${userData['username']}');
+        print('📦 Name field: ${userData['name']}');
+        print('📦 Preferred username field: ${userData['preferred_username']}');
 
         // Check if response is wrapped in a data field
         Map<String, dynamic> actualUserData;
@@ -110,6 +139,7 @@ class _ProfilePageState extends State<ProfilePage> {
         });
       }
     } catch (e) {
+      print('❌ Error loading profile: $e');
       setState(() {
         _errorMessage = 'Failed to load profile: ${e.toString()}';
         _isLoading = false;

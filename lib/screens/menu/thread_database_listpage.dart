@@ -471,10 +471,7 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
 
     final connectivityResult = await Connectivity().checkConnectivity();
     if (connectivityResult == ConnectivityResult.none) {
-      _handleError(
-        'No internet connection. Cannot load more data.',
-        isWarning: true,
-      );
+      // Removed snackbar - silently handle no internet connection
       return;
     }
 
@@ -680,7 +677,8 @@ class _ThreadDatabaseListPageState extends State<ThreadDatabaseListPage> {
       }
     } catch (e) {
       _currentPage--;
-      _handleError('Failed to load more data: $e');
+      // Removed snackbar - silently handle loading errors
+      print('❌ Failed to load more data: $e');
     } finally {
       if (mounted) setState(() => _isLoadingMore = false);
     }

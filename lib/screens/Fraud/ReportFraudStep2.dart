@@ -359,6 +359,18 @@ class _ReportFraudStep2State extends State<ReportFraudStep2> {
 
       print('🚀 Form data prepared for backend submission');
       print('🚀 Form data keys: ${formData.keys.toList()}');
+      print(
+        '🚀 Screenshots in form data: ${(formData['screenshots'] as List).length}',
+      );
+      print(
+        '🚀 Documents in form data: ${(formData['documents'] as List).length}',
+      );
+      print(
+        '🚀 Voice messages in form data: ${(formData['voiceMessages'] as List).length}',
+      );
+      print(
+        '🚀 Video files in form data: ${(formData['videofiles'] as List).length}',
+      );
       print('🚀 Report Category ID: ${formData['reportCategoryId']}');
       print('🚀 Report Type ID: ${formData['reportTypeId']}');
       print('🚀 Alert Levels: ${formData['alertLevels']}');
