@@ -32,7 +32,8 @@ class DashboardPage extends StatefulWidget {
 }
 
 class _DashboardPageState extends State<DashboardPage> {
-  // Removed GlobalKey to prevent conflicts
+  // Add GlobalKey for drawer control
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   List<Map<String, dynamic>> reportTypes = [];
   bool isLoadingTypes = true;
   List<Map<String, dynamic>> reportCategories = [];
@@ -180,7 +181,7 @@ class _DashboardPageState extends State<DashboardPage> {
     final provider = Provider.of<DashboardProvider>(context);
 
     return ResponsiveScaffold(
-      // key: _scaffoldKey,
+      key: _scaffoldKey,
       drawer: const DashboardDrawer(),
       extendBody: true,
       backgroundColor: Colors.transparent,
@@ -212,7 +213,10 @@ class _DashboardPageState extends State<DashboardPage> {
         ),
         leading: IconButton(
           icon: const Icon(Icons.menu, color: Colors.white, size: 24),
-          onPressed: () => Scaffold.of(context).openDrawer(),
+          onPressed: () {
+            // Use the GlobalKey to open the drawer reliably
+            _scaffoldKey.currentState?.openDrawer();
+          },
         ),
         actions: [
           Stack(
